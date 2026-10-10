@@ -95,7 +95,7 @@ kbd {
   flex: 0 0 auto;
 }
 
-/* 设置页 logo：96×96。图形来自 assets/logo.svg —— 换图标只改那一个文件 */
+/* 设置页 logo：96×96。图形来自 assets/logo-source.png —— 换图标只改原图再跑导出脚本 */
 .brand-logo {
   width: 96px;
   height: 96px;
@@ -104,6 +104,36 @@ kbd {
 }
 
 .app-head-text { min-width: 0; }
+
+/* 语言切换：ENG / 华文，当前语言那半边点亮 */
+.lang-btn {
+  margin-left: auto;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #101722;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lang-btn .lang-sep { opacity: 0.5; }
+.lang-btn .lang-opt { opacity: 0.55; }
+
+.lang-btn .lang-opt.is-on {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.lang-btn:active { transform: translateY(1px); }
 
 .app-head h1 {
   margin: 0;

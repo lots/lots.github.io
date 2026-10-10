@@ -1,7 +1,10 @@
-# CoQ 棋钟 · CoQ Chess Clock
+# CoQ 棋钟 · CoQ Chess & Weiqi Clock
 
 一个**给社区赛 / 校际赛当场就能用**的网页棋钟：纯 HTML5 + 原生 JavaScript，零依赖、零后端、**断网可用**。
-手机浏览器打开就能当比赛棋钟用，电脑上双击 `index.html` 也能当裁判台用。
+**国际象棋与围棋（Weiqi / Go）通用** —— 围棋用它也很合适：Byoyomi 读秒本来就是围棋赛制，整块半屏当按键
+对局双方各自拍钟同样顺手。手机浏览器打开就能当比赛棋钟用，电脑上双击 `index.html` 也能当裁判台用。
+
+界面**中英双语**：设置页右上角的 `ENG / 华文` 按钮随时切换，选择会记住（也可用 `index.html?lang=en` 直接指定）。
 
 > 另有一份 **Defold（Lua）移植版**：[`Defold/`](Defold/README.md) —— 同一个产品、同一套计时语义
 > （两边的 8 个常量与 30 个用例都有自动比对），可打包成 Windows / macOS / Linux / Android / iOS / HTML5 原生应用。
@@ -18,6 +21,7 @@
 
 | 实体棋钟功能 | 本棋钟 | 说明 |
 | --- | --- | --- |
+| 适用棋类 | 国际象棋 + 围棋 | 读秒（Byoyomi）本就是围棋赛制；详见第四节的「围棋怎么用」 |
 | 双方独立倒计时、大字号显示 | ✅ | 数字按面板尺寸自动撑满，桌子对面也看得清 |
 | 跷跷板按键：按自己这侧，停自己、走对方 | ✅ | **整块半屏都是按键**，手掌拍下去即可，不用瞄准小按钮 |
 | 走子换手逻辑（未走棋时按自己一侧无效） | ✅ | 与实体钟一致：按在非活动方不产生任何效果 |
@@ -146,6 +150,20 @@ node serve.js            # 默认 8080 端口；也可 PORT=8081 node serve.js
 
 > 社区和校际赛建议 **10+5 或 15+10**：初学者不至于因为找不到棋钟按钮而瞬间掉时间。
 
+### 围棋（Weiqi / Go）怎么用
+
+这台棋钟**不只给国际象棋用**，围棋同样直接可用——围棋的赛制本来就是「保留时间 + 读秒」，正好是本棋钟的
+Byoyomi 模式：
+
+| 围棋常见赛制 | 本棋钟怎么设 |
+| --- | --- |
+| 保留时间 40 分钟，之后每手 30 秒 × 3 次 | 选 **Byoyomi 读秒**，基础时间 40 分钟、读秒 30 秒、段数 3 |
+| 保留时间 1 小时，之后每手 60 秒，超时判负 | 同上，基础时间 60 分钟、读秒 60 秒、段数 1 |
+| 包干制（只有保留时间，用完即负） | 选 **无加秒**，只填基础时间 |
+
+对局时和象棋一样：手机平放在两位选手之间、开启**对坐模式**，谁下完一手就拍自己那一侧的整块面板；
+数字会自动撑满面板，桌子对面也看得清。围棋常用的「一手 30 秒读秒」在最后 10 秒还有每秒滴答提示音。
+
 ---
 
 ## 五、摆放方式（对坐模式）
@@ -189,7 +207,8 @@ ChessClock/
 ├── index.html            页面结构（唯一的入口）
 ├── styles.css            样式：竖屏上下分屏 / 横屏左右分屏 / 对坐旋转 / 读秒配色
 ├── engine.js             计时引擎：纯逻辑、无 DOM、时间由外部注入 → 可单元测试
-├── app.js                界面与操作层：渲染、触摸/键盘、声音、常亮、本地存储
+├── i18n.js               ★ 双语词条表（zh / en）+ 语言解析，界面文案全在这里
+├── app.js                界面与操作层：渲染、触摸/键盘、声音、常亮、本地存储、切语言
 ├── assets/
 │   ├── logo-source.png   ★ 图标原图（当前为 TARUMT 校徽，447×447 带透明通道）
 │   ├── logo-brand.png    设置页 logo，288×288（页面按 96×96 显示）
@@ -204,7 +223,7 @@ ChessClock/
 ├── serve.js              零依赖静态服务器（局域网给手机用）
 ├── tests/
 │   ├── engine.test.js    计时引擎测试（30 项）
-│   ├── project.test.js   项目完整性测试（10 项）
+│   ├── project.test.js   项目完整性测试（13 项，含 3 项双语校验）
 │   ├── run.js            单进程测试入口
 │   └── visual/           无头 Chrome 视觉验证台（截图）＋ out/*.png 截图产物
 ├── Defold/               Defold（Lua）移植版：原生应用 / HTML5 都能出，见 Defold/README.md
@@ -212,16 +231,40 @@ ChessClock/
 ```
 
 ```bash
-npm test        # 40 项测试：计时逻辑 + 页面/图标完整性
+npm test        # 43 项测试：计时逻辑 + 页面/图标/双语完整性
 npm start       # 启动局域网服务，手机即可访问
 npm run shots   # 用无头 Chrome 把各场景重新截图（需要本机有 Chrome/Edge）
+```
+
+截图脚本还能挑场景 / 选像素密度 / 指定语言（改完样式或文案时很有用，不必跑满全部场景）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup,midgame-portrait'          # 只截这两张（手机 2×）
+powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Scale 1                  # PC 密度（1×）
+powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Lang en                 # 英文界面 → out/setup-en.png
 ```
 
 测试覆盖了这些**容易出错**的地方：加秒从第一步就生效、延时只免 N 秒、读秒每步重新满格、
 多段读秒「5 段 = 允许超时 4 次，第 5 次判负」、读秒阶段落子会扣段数、主时间中途耗尽时的读秒衔接、
 按在非活动方无效、同一次触摸重复投递会被去抖、暂停时先结算时间与段数、
 超时后再按钟不能「救回」时间、页面被挂起 30 分钟后仍能判出正确的超时方、
-时间格式（小时 / 分钟 / 0.1 秒）、logo 源文件与两处 PNG 的像素尺寸。
+时间格式（小时 / 分钟 / 0.1 秒）、logo 源文件与两处 PNG 的像素尺寸、
+中英词条 key 完全一致且页面/JS 用到的 key 都存在、app.js 里不再有写死的文案。
+
+### 双语界面（华文 / English）
+
+设置页右上角有 **`ENG / 华文`** 按钮，点一下整体切换；当前语言那半边会点亮。选择存在
+`localStorage`（`chessclock.settings.v1` 的 `lang` 字段），下次打开还是上次的语言。
+
+* 没存过设置时**跟随浏览器语言**（`navigator.language`）：中文环境给中文，其余给英文；
+* 想给某个链接指定语言：`index.html?lang=en` 或 `?lang=zh`（URL 优先于存档，分享英文版链接很方便）；
+* 所有文案都在 **[i18n.js](i18n.js)** 的 `DICT` 里。加第三种语言：在 `DICT` 与 `LANGS` 各加一份，
+  再在 `index.html` 的语言按钮里加一个 `data-lang-name="xx"` 的名字即可，其余代码不用动；
+* 加新文案时：页面静态文字写 `data-i18n="key"`（含 HTML 的用 `data-i18n-html`，属性和占位符分别用
+  `data-i18n-title/aria-label/alt/placeholder`），JS 里统一 `t('key', {vars})`。
+  测试会核对「中英 key 完全一致」「用到的 key 都存在」「占位符两边一致」「app.js 里没有写死的中文」；
+* 看两种语言的实际渲染：`shoot.ps1 -Only 'setup' -Lang en`（英文）与 `-Lang zh`（中文），
+  产物分别叫 `out/setup-en.png`、`out/setup-zh.png`。
 
 ### 换 logo / 图标
 

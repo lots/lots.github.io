@@ -58,14 +58,95 @@ test('棋钟界面关键节点齐全（白/黑两块面板）', () => {
   ['w', 'b'].forEach((side) => {
     assert.ok(html.includes('class="pane pane-' + side + '" data-side="' + side + '"'), '缺少 ' + side + ' 方面板');
     assert.ok(html.includes('class="time" data-side="' + side + '"'), '缺少 ' + side + ' 方时间显示');
-    assert.ok(html.includes('class="side-tag"'), '缺少 ' + side + ' 方的「白方/黑方」标签');
+    assert.ok(html.includes('class="side-tag" data-i18n="side.' + side + '"'), '缺少 ' + side + ' 方的「白方/黑方」标签（应带 data-i18n）');
     assert.ok(!html.includes('class="pane-name"'), '姓名输入功能已移除，面板上不该再有姓名节点');
     assert.ok(html.includes('class="moves" data-side="' + side + '"'), '缺少 ' + side + ' 方步数显示');
     assert.ok(html.includes('class="state-chip" data-side="' + side + '"'), '缺少 ' + side + ' 方状态标记');
   });
-  ['btnToggle', 'btnSound', 'btnRotate', 'btnFull', 'btnSetup', 'btnStartGame', 'btnRematch'].forEach((id) => {
+  ['btnToggle', 'btnSound', 'btnRotate', 'btnFull', 'btnSetup', 'btnStartGame', 'btnRematch', 'btnLang'].forEach((id) => {
     assert.ok(html.includes('id="' + id + '"'), '缺少按钮：#' + id);
   });
+});
+
+/* ================= 双语（i18n） ================= */
+
+const I18N = require(path.join(ROOT, 'i18n.js'));
+
+test('i18n：中英词条的 key 完全一致（少一个就会露出 key 本身）', () => {
+  const zh = Object.keys(I18N.DICT.zh).sort();
+  const en = Object.keys(I18N.DICT.en).sort();
+  const missingInEn = zh.filter((k) => !(k in I18N.DICT.en));
+  const missingInZh = en.filter((k) => !(k in I18N.DICT.zh));
+  assert.deepEqual(missingInEn, [], '英文缺少这些词条：' + missingInEn.join(', '));
+  assert.deepEqual(missingInZh, [], '中文缺少这些词条：' + missingInZh.join(', '));
+  assert.deepEqual(zh, en, '两种语言的 key 集合不一致');
+  I18N.LANGS.forEach((l) => { assert.ok(I18N.DICT[l], '缺少语言表：' + l); });
+});
+
+test('i18n：页面与 JS 里用到的 key 都存在，且占位符能对上', () => {
+  const dicts = [I18N.DICT.zh, I18N.DICT.en];
+
+  // 1) index.html 上的 data-i18n* 标记（先去掉 HTML 注释，注释里举例的 key 不算）
+  const htmlCode = html.replace(/<!--[\s\S]*?-->/g, '');
+  const used = new Set();
+  const reAttr = /data-i18n(?:-html|-title|-aria-label|-alt|-placeholder)?="([^"]+)"/g;
+  let m;
+  while ((m = reAttr.exec(htmlCode)) !== null) { used.add(m[1]); }
+
+  // 2) app.js 里的 t('key')（先去掉注释，免得注释里举例的 t('key') 被当成调用）
+  const appCode = app.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const reCall = /\bt\('([a-z][\w]*\.[a-z][\w.]*)'/g;
+  while ((m = reCall.exec(appCode)) !== null) { used.add(m[1]); }
+  ['fischer', 'delay', 'byoyomi', 'sudden'].forEach((mode) => { used.add('hint.' + mode); });
+
+  // 3) app.js 里 PRESETS 的类别名（预设按钮上显示的那行字）
+  const rePreset = /name:\s*'(preset\.[a-z]+)'/g;
+  while ((m = rePreset.exec(app)) !== null) { used.add(m[1]); }
+
+  assert.ok(used.size > 40, '解析出的词条太少（' + used.size + '），检查上面的正则是否失效');
+
+  const missing = [];
+  dicts.forEach((d, i) => {
+    const name = i === 0 ? 'zh' : 'en';
+    used.forEach((k) => { if (d[k] === undefined) { missing.push(name + ':' + k); } });
+  });
+  assert.deepEqual(missing, [], '这些词条缺失：' + missing.join(', '));
+
+  // 占位符必须两种语言一致（否则切换语言会出现 {n} 字样）
+  used.forEach((k) => {
+    const holders = (s) => (String(s).match(/\{(\w+)\}/g) || []).sort().join(',');
+    assert.equal(holders(I18N.DICT.en[k]), holders(I18N.DICT.zh[k]),
+      k + ' 的占位符两种语言不一致：' + I18N.DICT.zh[k] + ' / ' + I18N.DICT.en[k]);
+  });
+});
+
+test('i18n：语言按钮、脚本顺序与「不许再写死文案」的防线', () => {
+  // ENG / 华文 按钮：两个语言各一个可点亮的名字
+  assert.ok(/class="lang-btn"[^>]*id="btnLang"/.test(html), '设置页应有 ENG / 华文 语言按钮');
+  I18N.LANGS.forEach((l) => {
+    assert.ok(html.includes('data-lang-name="' + l + '"'), '语言按钮缺少 ' + l + ' 那一半');
+  });
+  assert.ok(/data-i18n-aria-label="lang\.button\.aria"/.test(html), '语言按钮缺少无障碍标签');
+
+  // i18n.js 必须在 app.js 之前加载
+  const i18nAt = html.indexOf('src="i18n.js"');
+  const appAt = html.indexOf('src="app.js"');
+  assert.ok(i18nAt > 0 && appAt > i18nAt, 'index.html 里 i18n.js 必须在 app.js 之前');
+
+  // app.js 里除了「i18n 还没加载」时的双语告警，不该再有写死的中文
+  const stripped = app.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const hard = [];
+  const reStr = /'([^'\\]*)'|"([^"\\]*)"/g;
+  let m;
+  while ((m = reStr.exec(stripped)) !== null) {
+    const s = m[1] !== undefined ? m[1] : m[2];
+    if (!/[\u4e00-\u9fff]/.test(s)) { continue; }
+    // 启动早期（i18n 尚未就绪）用于提示脚本加载失败的整句，允许直接写成双语
+    if (/engine\.js|i18n\.js/.test(s)) { continue; }
+    hard.push(s.trim());
+  }
+  assert.deepEqual(hard, [],
+    'app.js 里还有写死的中文文案，请挪进 i18n.js 并改用 t(\'key\')：\n  ' + hard.join('\n  '));
 });
 
 test('app.js 与 engine.js 语法可编译', () => {
@@ -155,10 +236,12 @@ test('站点图标（favicon / iOS 主屏）都指向 logo 资源，且 PNG 已�
   });
 });
 
-test('读秒模式在引擎 / 设置项 / 时间字段三处都接上了', () => {
+test('读秒模式在引擎 / 设置项 / 文案 / 时间字段四处都接上了', () => {
   assert.ok(/BYOYOMI:\s*'byoyomi'/.test(engine), 'engine.js 应定义 byoyomi 模式');
   assert.ok(/data-mode="byoyomi"/.test(html), 'index.html 缺少读秒模式按钮');
-  assert.ok(/byoyomi:/.test(app), 'app.js 缺少读秒模式说明');
+  assert.ok(/t\('hint\.'\s*\+/.test(app), 'app.js 应按模式取说明（t(\'hint.\' + mode)）');
+  assert.ok(/'hint\.byoyomi'/.test(fs.readFileSync(path.join(ROOT, 'i18n.js'), 'utf8')),
+    'i18n.js 缺少读秒说明词条 hint.byoyomi');
   assert.ok(/id="periodsField"/.test(html), 'index.html 缺少读秒段数字段');
   assert.ok(/id="periods"/.test(html), 'index.html 缺少读秒段数输入框');
   assert.ok(/byoyomiMs/.test(app) && /byoyomiPeriods/.test(app), 'app.js 应把读秒参数传给引擎');

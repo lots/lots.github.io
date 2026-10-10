@@ -255,6 +255,69 @@ test('主题：下拉框三项与三套 CSS 变量一一对应（另含首屏防
   assert.ok(/queryParam\('theme'\)/.test(app), 'app.js 应支持 ?theme= 覆盖');
 });
 
+/* ================= 首次打开的默认值 / 围棋预设 ================= */
+
+test('首次打开：英文 + Byoyomi 10+3×20，且围棋预设恰好是那 8 档', () => {
+  const defs = /var DEFAULTS = \{([\s\S]*?)\n  \};/.exec(app);
+  assert.ok(defs, '找不到 app.js 的 DEFAULTS');
+  const d = defs[1];
+  assert.ok(/mode:\s*'byoyomi'/.test(d), '默认计时模式应为 Byoyomi');
+  assert.ok(/baseMin:\s*10\b/.test(d), '默认基础时间应为 10 分钟');
+  assert.ok(/incSec:\s*20\b/.test(d), '默认读秒应为每手 20 秒');
+  assert.ok(/periods:\s*3\b/.test(d), '默认读秒段数应为 3');
+  assert.ok(/presetId:\s*'10\+3x20'/.test(d), '默认预设应为 10+3×20');
+  assert.ok(/lang:\s*'en'/.test(d), '默认语言应为英文');
+  assert.ok(!/lang:\s*I18N\.detect\(\)/.test(d),
+    '默认语言不应该再跟随浏览器（需求：首次打开固定 ENG）');
+
+  // 围棋预设 = 需求给的那 8 档，顺序也保持
+  const block = /var PRESETS_BYOYOMI = \[([\s\S]*?)\n  \];/.exec(app);
+  assert.ok(block, '找不到 PRESETS_BYOYOMI');
+  const got = [];
+  const re = /\{ id:\s*'([^']+)',\s*baseMin:\s*(\d+),\s*incSec:\s*(\d+),\s*periods:\s*(\d+)/g;
+  let m;
+  while ((m = re.exec(block[1])) !== null) {
+    got.push(m[2] + '+' + m[4] + '×' + m[3]);      // 基础时间 + 段数×每手秒数
+  }
+  assert.deepEqual(got, [
+    '5+3×20', '10+3×20', '10+3×30', '15+3×30',
+    '20+5×30', '30+5×30', '30+3×60', '60+5×60'
+  ], '围棋预设应恰好是这 8 档（含顺序）');
+
+  // 这组预设只用在 Byoyomi；其它模式仍用国际象棋那组
+  assert.ok(/mode === E\.MODES\.BYOYOMI \? PRESETS_BYOYOMI : PRESETS_CHESS/.test(app),
+    'presetsFor() 应只把围棋预设用在 Byoyomi 模式');
+  assert.ok(/var PRESETS_CHESS = \[/.test(app), '应保留国际象棋那组预设给其它模式');
+
+  // 静态兜底与默认一致：没有 JS / 首屏时不会看到另一套默认值
+  assert.ok(/<html lang="en">/.test(html), '静态 HTML 的语言应为英文（默认语言）');
+  assert.ok(/id="incSec"[^>]*value="20"/.test(html), '静态 HTML 的读秒输入框应为 20');
+  assert.ok(/id="periods"[^>]*value="3"/.test(html), '静态 HTML 的段数输入框应为 3');
+  assert.ok(/data-mode="byoyomi"[^>]*aria-pressed="true"/.test(html), '静态 HTML 应默认选中 Byoyomi');
+  assert.ok(!/id="periodsField"[^>]*hidden/.test(html), 'Byoyomi 是默认模式，段数字段不该默认隐藏');
+});
+
+/* ================= 截图场景（视觉验证台） ================= */
+
+test('截图场景：每个场景显式设模式，且不会写进用户设置', () => {
+  const driver = read('tests/visual/build.js');
+
+  // 场景页靠真实交互驱动界面 → 会触发 saveSettings()。
+  // 必须把 setItem 打桩，否则谁用普通浏览器打开 _scene-*.html，谁的设置就被改了。
+  assert.ok(/localStorage\.setItem = function \(\) \{\}/.test(driver),
+    '场景脚本应把 localStorage.setItem 打桩（否则打开 _scene-*.html 会覆盖用户设置）');
+
+  // 每个非 setup 场景都要显式选模式：不能依赖默认值，默认值是会变的
+  ['measure', 'midgame', 'byoyomi', 'critical', 'states'].forEach((s) => {
+    const re = new RegExp('scene === "' + s + '"[\\s\\S]{0,500}?mode\\("');
+    assert.ok(re.test(driver), '场景 ' + s + ' 应显式调用 mode("…")，不要依赖默认模式');
+  });
+
+  // 读秒场景的读秒部分应与默认档 10+3×20 一致（20 秒 × 3 段），免得看图的人以为默认是别的
+  assert.ok(/setNum\("baseMin", 1\); setNum\("incSec", 20\); setNum\("periods", 3\);/.test(driver),
+    'byoyomi 场景的读秒应为 20 秒 × 3 段（与默认档的读秒部分一致）');
+});
+
 /* ================= 图标 / logo ================= */
 
 test('logo：原图 → 各尺寸 PNG，每个用途只有一个文件且不用 srcset', () => {

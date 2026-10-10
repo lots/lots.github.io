@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0d12">
-<meta name="description" content="可在手机浏览器直接使用的棋类比赛虚拟棋钟（国际象棋 / 围棋）：Fischer 加秒 / Bronstein 延时 / Byoyomi 读秒 / 无加秒，纯本地运行，无需联网。">
+<meta name="description" content="A board-game clock that runs in any phone browser — for chess and Weiqi (Go): Fischer increment / Bronstein delay / Byoyomi / sudden death. Fully local, no network needed.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="棋钟">
-<title>CoQ 棋钟</title>
+<meta name="apple-mobile-web-app-title" content="CoQ Clock">
+<title>CoQ Chess &amp; Weiqi Clock</title>
 <!--
   双语界面：所有文案都在 i18n.js 的 DICT 里（zh / en 两份，key 必须一一对应）。
   页面静态文字用 data-i18n="key" 标记，JS 里的动态文字走 t('key', {vars})；
@@ -46,13 +46,13 @@
 <!-- ============ 设置 ============ -->
 <main id="screen-setup" class="screen setup">
   <header class="app-head">
-    <img class="brand-logo" src="assets/logo-brand.png" alt="CoQ 棋钟" width="96" height="96" data-i18n-alt="app.title">
+    <img class="brand-logo" src="assets/logo-brand.png" alt="CoQ Chess &amp; Weiqi Clock" width="96" height="96" data-i18n-alt="app.title">
     <div class="app-head-text">
-      <h1 data-i18n="app.title">CoQ 棋钟</h1>
-      <p class="sub" data-i18n="app.subtitle">国际象棋与围棋通用 · 按实体棋钟习惯设计 · 手机横竖屏通用 · 断网可用</p>
+      <h1 data-i18n="app.title">CoQ Chess &amp; Weiqi Clock</h1>
+      <p class="sub" data-i18n="app.subtitle">For chess and Weiqi (Go) · modelled on real clocks · portrait &amp; landscape · works offline</p>
     </div>
     <button type="button" class="lang-btn" id="btnLang"
-            aria-label="切换界面语言：ENG / 华文" data-i18n-aria-label="lang.button.aria"
+            aria-label="Switch interface language: ENG / 华文" data-i18n-aria-label="lang.button.aria"
             title="切换界面语言 / Switch language">
       <span class="lang-opt" data-lang-name="en">ENG</span><span class="lang-sep">/</span><span class="lang-opt" data-lang-name="zh">华文</span>
     </button>
@@ -60,71 +60,75 @@
 
   <div class="scroll">
     <section class="card">
-      <h2 data-i18n="setup.mode.heading">1. 计时模式</h2>
-      <div class="segmented" id="modeGroup" role="group" aria-label="计时模式" data-i18n-aria-label="setup.mode.aria">
-        <button type="button" class="seg" data-mode="fischer" aria-pressed="true" data-i18n="mode.fischer">Fischer 加秒</button>
-        <button type="button" class="seg" data-mode="delay" aria-pressed="false" data-i18n="mode.delay">Bronstein 延时</button>
-        <button type="button" class="seg" data-mode="byoyomi" aria-pressed="false" data-i18n="mode.byoyomi">Byoyomi 读秒</button>
-        <button type="button" class="seg" data-mode="sudden" aria-pressed="false" data-i18n="mode.sudden">无加秒</button>
+      <h2 data-i18n="setup.mode.heading">1. Time mode</h2>
+      <div class="segmented" id="modeGroup" role="group" aria-label="Time mode" data-i18n-aria-label="setup.mode.aria">
+        <button type="button" class="seg" data-mode="fischer" aria-pressed="false" data-i18n="mode.fischer">Fischer (increment)</button>
+        <button type="button" class="seg" data-mode="delay" aria-pressed="false" data-i18n="mode.delay">Bronstein (delay)</button>
+        <button type="button" class="seg is-on" data-mode="byoyomi" aria-pressed="true" data-i18n="mode.byoyomi">Byoyomi</button>
+        <button type="button" class="seg" data-mode="sudden" aria-pressed="false" data-i18n="mode.sudden">Sudden death</button>
       </div>
       <p class="hint" id="modeHint"></p>
     </section>
 
     <section class="card">
-      <h2 data-i18n="setup.time.heading">2. 时间</h2>
+      <h2 data-i18n="setup.time.heading">2. Time control</h2>
       <div class="presets" id="presets"></div>
       <div class="fields">
-        <label class="field"><span data-i18n="setup.base.label">基础时间（分钟）</span>
+        <label class="field"><span data-i18n="setup.base.label">Base time (minutes)</span>
           <input id="baseMin" type="number" inputmode="numeric" min="1" max="180" step="1" value="10">
         </label>
-        <label class="field"><span id="incLabel">每步加秒（秒）</span>
-          <input id="incSec" type="number" inputmode="numeric" min="0" max="180" step="1" value="5">
+        <label class="field"><span id="incLabel">Byoyomi (seconds)</span>
+          <input id="incSec" type="number" inputmode="numeric" min="0" max="180" step="1" value="20">
         </label>
-        <label class="field" id="periodsField" hidden><span data-i18n="setup.periods.label">读秒段数（段）</span>
-          <input id="periods" type="number" inputmode="numeric" min="1" max="20" step="1" value="1">
+        <label class="field" id="periodsField"><span data-i18n="setup.periods.label">Byoyomi periods</span>
+          <input id="periods" type="number" inputmode="numeric" min="1" max="20" step="1" value="3">
         </label>
       </div>
       <p class="summary" id="summary"></p>
     </section>
 
     <section class="card">
-      <h2 data-i18n="setup.options.heading">3. 选项</h2>
-      <label class="switch"><input type="checkbox" id="optSound" checked><span data-i18n="opt.sound">走子提示音与超时警报</span></label>
-      <label class="switch"><input type="checkbox" id="optFacing" checked><span data-i18n="opt.facing">对坐模式：把对面那一侧的数字转正（竖屏）</span></label>
-      <label class="switch"><input type="checkbox" id="optWake" checked><span data-i18n="opt.wake">对局中保持屏幕常亮</span></label>
+      <h2 data-i18n="setup.options.heading">3. Options</h2>
+      <label class="switch"><input type="checkbox" id="optSound" checked><span data-i18n="opt.sound">Move sound and time-up alarm</span></label>
+      <label class="switch"><input type="checkbox" id="optFacing" checked><span data-i18n="opt.facing">Facing mode: turn the far side’s digits upright (portrait)</span></label>
+      <label class="switch"><input type="checkbox" id="optWake" checked><span data-i18n="opt.wake">Keep the screen awake during a game</span></label>
       <div class="select-row">
-        <label for="themeSelect" data-i18n="setup.theme.label">界面主题</label>
+        <label for="themeSelect" data-i18n="setup.theme.label">Colour theme</label>
         <select id="themeSelect">
-          <option value="light" data-i18n="theme.light">浅色</option>
-          <option value="medium" data-i18n="theme.medium">中性</option>
-          <option value="dark" data-i18n="theme.dark">深色</option>
+          <option value="light" data-i18n="theme.light">Light</option>
+          <option value="medium" data-i18n="theme.medium">Medium</option>
+          <option value="dark" data-i18n="theme.dark">Dark</option>
         </select>
       </div>
       <p class="hint" data-i18n-html="setup.keys.hint">
-        电脑上可用键盘当棋钟：<kbd>A</kbd>/<kbd>←</kbd> 白方按键 ·
-        <kbd>L</kbd>/<kbd>→</kbd> 黑方按键 · <kbd>空格</kbd> 开始 / 暂停 ·
-        <kbd>F</kbd> 全屏
+        On a computer you can use the keyboard: <kbd>A</kbd>/<kbd>←</kbd> White ·
+        <kbd>L</kbd>/<kbd>→</kbd> Black · <kbd>Space</kbd> start / pause ·
+        <kbd>F</kbd> fullscreen
       </p>
     </section>
 
     <section class="card">
-      <h2 data-i18n="setup.how.heading">怎么用</h2>
+      <h2 data-i18n="setup.how.heading">How to use</h2>
       <p class="hint" data-i18n-html="how.facing">
-        <strong>竖屏平放在两位选手之间</strong>（推荐）：下半屏是白方，上半屏是黑方，并且黑方的数字已旋转 180°，
-        坐在对面的选手看到的就是正的。谁走完棋，就用手掌拍一下自己那一侧的整块面板，时间立刻交给对方。<br>
-        裁判先点「开始对局」，再点中间的「开始」，白方即开始计时。<br>
-        横屏时左右分屏（黑左白右），适合把手机立起来、或由裁判/观众查看。
+        <strong>Lay the phone flat between the two players</strong> (recommended): the lower half is White,
+        the upper half is Black, and Black’s digits are rotated 180° so the player sitting opposite reads them
+        upright. After your move, tap your own half with your palm — the time passes to the opponent.<br>
+        The arbiter taps “Start game”, then “Start” in the middle, and White’s clock begins.<br>
+        In landscape the screen splits left/right (Black left, White right) — handy for propping the phone up
+        or for the arbiter and spectators.
       </p>
       <p class="hint" data-i18n-html="how.byoyomi">
-        <strong>读秒（Byoyomi）</strong>：主时间用完后，每一手重新给固定的秒数（用不完不累积），
-        超了就算输；「30 秒 × 5 段」表示允许你超时思考 4 次，第 5 次才判负。
-        读秒阶段数字转紫色，最后 10 秒每秒有提示音。围棋、将棋、中国象棋常用这种制式。
+        <strong>Byoyomi</strong>: after the main time is gone, every move gets a fresh fixed number of seconds
+        (unused time does not accumulate); overstepping loses. A setting such as 10+3×20 means 10 minutes of main
+        time plus 20 seconds per move for 3 periods — you may overthink on two moves and lose on the third.
+        During byoyomi the digits turn purple and the last 10 seconds tick audibly.
+        Common in Weiqi (Go), Shogi and Xiangqi.
       </p>
     </section>
   </div>
 
   <footer class="app-foot">
-    <button type="button" class="btn primary big" id="btnStartGame" data-i18n="setup.start">开始对局</button>
+    <button type="button" class="btn primary big" id="btnStartGame" data-i18n="setup.start">Start game</button>
   </footer>
 </main>
 
@@ -132,10 +136,10 @@
 <section id="screen-clock" class="screen clock" hidden>
   <div class="panes">
     <!-- 竖屏：黑方在上（对面选手），白方在下（离主控者近的一侧）；横屏：黑左白右 -->
-    <button type="button" class="pane pane-b" data-side="b" aria-label="黑方按键（走完棋按这里）" data-i18n-aria-label="pane.b.aria">
+    <button type="button" class="pane pane-b" data-side="b" aria-label="Black button (tap here after your move)" data-i18n-aria-label="pane.b.aria">
       <span class="pane-inner">
         <span class="pane-head">
-          <span class="side-tag" data-i18n="side.b">黑方</span>
+          <span class="side-tag" data-i18n="side.b">Black</span>
           <span class="state-chip" data-side="b"></span>
         </span>
         <span class="time" data-side="b">10:00</span>
@@ -143,19 +147,19 @@
       </span>
     </button>
 
-    <div class="strip" role="toolbar" aria-label="棋钟操作" data-i18n-aria-label="strip.aria">
+    <div class="strip" role="toolbar" aria-label="Clock controls" data-i18n-aria-label="strip.aria">
       <img class="strip-logo" src="assets/logo-strip.png" alt="" width="48" height="48">
-      <button type="button" class="icon-btn primary" id="btnToggle"><span id="btnToggleLabel" data-i18n="clock.start">开始</span></button>
-      <button type="button" class="icon-btn" id="btnSound" title="声音开关" aria-pressed="true" data-i18n-title="clock.sound.off">🔊</button>
-      <button type="button" class="icon-btn" id="btnRotate" title="对坐模式开关" data-i18n-title="clock.facing.title">⇅</button>
-      <button type="button" class="icon-btn" id="btnFull" title="全屏" data-i18n-title="clock.full.title">⛶</button>
-      <button type="button" class="icon-btn" id="btnSetup" title="返回设置" data-i18n-title="clock.setup.title">⚙</button>
+      <button type="button" class="icon-btn primary" id="btnToggle"><span id="btnToggleLabel" data-i18n="clock.start">Start</span></button>
+      <button type="button" class="icon-btn" id="btnSound" title="Turn sound off" aria-pressed="true" data-i18n-title="clock.sound.off">🔊</button>
+      <button type="button" class="icon-btn" id="btnRotate" title="Facing mode" data-i18n-title="clock.facing.title">⇅</button>
+      <button type="button" class="icon-btn" id="btnFull" title="Fullscreen" data-i18n-title="clock.full.title">⛶</button>
+      <button type="button" class="icon-btn" id="btnSetup" title="Back to setup" data-i18n-title="clock.setup.title">⚙</button>
     </div>
 
-    <button type="button" class="pane pane-w" data-side="w" aria-label="白方按键（走完棋按这里）" data-i18n-aria-label="pane.w.aria">
+    <button type="button" class="pane pane-w" data-side="w" aria-label="White button (tap here after your move)" data-i18n-aria-label="pane.w.aria">
       <span class="pane-inner">
         <span class="pane-head">
-          <span class="side-tag" data-i18n="side.w">白方</span>
+          <span class="side-tag" data-i18n="side.w">White</span>
           <span class="state-chip" data-side="w"></span>
         </span>
         <span class="time" data-side="w">10:00</span>
@@ -173,8 +177,8 @@
     <p id="overlaySub" class="overlay-sub"></p>
     <p id="overlayDetail" class="overlay-detail"></p>
     <div class="overlay-actions">
-      <button type="button" class="btn primary" id="btnRematch" data-i18n="overlay.rematch">再来一局（交换先后手）</button>
-      <button type="button" class="btn" id="btnBackToSetup" data-i18n="overlay.back">返回设置</button>
+      <button type="button" class="btn primary" id="btnRematch" data-i18n="overlay.rematch">Rematch (swap colours)</button>
+      <button type="button" class="btn" id="btnBackToSetup" data-i18n="overlay.back">Back to setup</button>
     </div>
   </div>
 </div>
@@ -182,7 +186,7 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <noscript>
-  <p style="padding:20px;color:#e9eef7">本棋钟需要启用 JavaScript 才能运行。<br>This clock needs JavaScript to be enabled.</p>
+  <p style="padding:20px;color:#e9eef7">This clock needs JavaScript to be enabled.<br>本棋钟需要启用 JavaScript 才能运行。</p>
 </noscript>
 
 <script src="engine.js" defer></script>

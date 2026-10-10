@@ -1,279 +1,362 @@
-# CoQ 棋钟 · CoQ Chess & Weiqi Clock
+# CoQ Chess & Weiqi Clock
 
-一个**给社区赛 / 校际赛当场就能用**的网页棋钟：纯 HTML5 + 原生 JavaScript，零依赖、零后端、**断网可用**。
-**国际象棋与围棋（Weiqi / Go）通用** —— 围棋用它也很合适：Byoyomi 读秒本来就是围棋赛制，整块半屏当按键
-对局双方各自拍钟同样顺手。手机浏览器打开就能当比赛棋钟用，电脑上双击 `index.html` 也能当裁判台用。
+**English** · [华文](README_CN.md)
 
-界面**中英双语**：设置页右上角的 `ENG / 华文` 按钮随时切换，选择会记住（也可用 `index.html?lang=en` 直接指定）。
+A web clock you can put on the table **at a community or school event right now**: plain HTML5 + vanilla
+JavaScript, zero dependencies, no backend, **works offline**. It is **for both chess and Weiqi (Go)** — it suits
+Go very well, since byoyomi *is* the standard Go time system, and the whole half-screen is a press button so
+either player can just slap their own side. Open it in a phone browser and it is a tournament clock; double-click
+`index.html` on a PC and it is an arbiter's desk clock.
 
-> 另有一份 **Defold（Lua）移植版**：[`Defold/`](Defold/README.md) —— 同一个产品、同一套计时语义
-> （两边的 8 个常量与 30 个用例都有自动比对），可打包成 Windows / macOS / Linux / Android / iOS / HTML5 原生应用。
+The interface is **bilingual (English / Chinese)**: the `ENG / 华文` button at the top right of the setup page
+switches it at any time and the choice is remembered (you can also force it with `index.html?lang=zh`).
 
-![竖屏对坐](tests/visual/out/midgame-portrait.png)
-![读秒（Byoyomi）模式](tests/visual/out/byoyomi-portrait.png)
-![横屏](tests/visual/out/midgame-landscape.png)
+> There is also a **Defold (Lua) port**: [`Defold/`](Defold/README.md) — the same product with the same timing
+> semantics (the 8 constants and 30 test cases are cross-checked automatically), and it can be packaged as a
+> native Windows / macOS / Linux / Android / iOS / HTML5 app. (Its README is in Chinese for now.)
+
+<img src="tests/visual/out/midgame-portrait.png" alt="Facing mode, portrait (default dark theme)" width="390">
+<img src="tests/visual/out/byoyomi-portrait.png" alt="Byoyomi mode" width="390">
+<img src="tests/visual/out/midgame-landscape.png" alt="Landscape" width="390">
+
+> These are produced automatically by `tests/visual/`. **The screenshot scenes shorten the main time to 1 minute**
+> so that the byoyomi phase shows up inside the virtual-time budget (the byoyomi part is still the default
+> 20 s × 3 periods), so the digits differ from the 10+3×20 you get on first launch — that is expected.
+> Also, `_scene-*.html` files are **throwaway test pages**: don't open them in your everyday browser (they stub
+> `localStorage.setItem`, so they can't change your settings, but there is no reason to).
 
 ---
 
-## 一、先看实体棋钟有什么：功能取舍依据
+## 1. What a real chess clock offers, and what was kept
 
-我按比赛用实体钟（DGT 2010 / Chronos / Garde 这一类）逐个对照，只保留"比赛真的会用到"的部分：
+I went through tournament clocks (DGT 2010 / Chronos / Garde and friends) item by item and kept only what a game
+actually uses:
 
-| 实体棋钟功能 | 本棋钟 | 说明 |
+| Real clock feature | This clock | Notes |
 | --- | --- | --- |
-| 适用棋类 | 国际象棋 + 围棋 | 读秒（Byoyomi）本就是围棋赛制；详见第四节的「围棋怎么用」 |
-| 界面主题 | 浅色 / 中性 / 深色 | 设置页下拉框随时切换，选择会记住；见第七节的「界面主题」 |
-| 双方独立倒计时、大字号显示 | ✅ | 数字按面板尺寸自动撑满，桌子对面也看得清 |
-| 跷跷板按键：按自己这侧，停自己、走对方 | ✅ | **整块半屏都是按键**，手掌拍下去即可，不用瞄准小按钮 |
-| 走子换手逻辑（未走棋时按自己一侧无效） | ✅ | 与实体钟一致：按在非活动方不产生任何效果 |
-| Fischer 加秒（每步走完立即加秒） | ✅ | 国际比赛最常用，**默认模式** |
-| Bronstein 延时（每步前 N 秒不计时） | ✅ | 适合初学者，慌张时不掉时间 |
-| Byoyomi 读秒（主时间用完后每手重置 X 秒，可多段） | ✅ | 围棋 / 将棋 / 中国象棋的制式，见第四节 |
-| 无加秒（突然死亡） | ✅ | 最简模式，社区赛常用 |
-| 旗倒判负（超时提示） | ✅ | 红字 + 警报声 + 震动 + 结果覆盖层 |
-| 剩余时间告警 | ✅ | ≤1 分钟转黄，≤20 秒转红并显示 0.1 秒 |
-| 读秒提示 | ✅ | 读秒阶段数字转紫、显示剩余段数，最后 10 秒每秒滴答 |
-| 步数计数 | ✅ | 每方面板显示已走步数 |
-| 暂停 / 继续（裁判记谱、处理争议时用） | ✅ | 暂停会把这一手已用时间（含读秒段数）精确入账 |
-| 复位 / 再来一局（自动交换先后手） | ✅ | 一局结束一键开下一局 |
-| 声音开关 | ✅ | 走子提示音 + 超时警报（现场合成，无音频文件） |
-| 双面朝向（两位选手对坐各看一面） | ✅ | 「对坐模式」，见第五节 |
-| 屏幕常亮 | ✅ | Wake Lock API，对局中不熄屏 |
-| 可替换的图标 / favicon | ✅ | 覆盖 `assets/logo-source.png` 后跑 `node tools/export-icons.js` 重出各尺寸，见第七节 |
-| 电池电量指示 | ❌ | 手机自带，不必重复 |
-| 多时段（如 40 步/90 分钟 + 30 分钟） | ❌ | 单时段；读秒的「多段」是另一回事。见第八节 |
-| 自动判定将杀 / 和棋 | ❌ | 棋钟无法知道局面，超时判罚由裁判宣布，见第六节 |
+| Games supported | Chess + Weiqi (Go) | Byoyomi is the Go system; see “Using it for Weiqi” in section 4 |
+| Colour themes | Light / Medium / Dark | Dropdown on the setup page, remembered; see “Colour themes” in section 7 |
+| Independent countdown per side, huge digits | ✅ | Digits grow to fill the panel so the far side of the table can read them |
+| See-saw buttons: press your side, stop yourself and start the opponent | ✅ | **The whole half-screen is the button** — slap it with your palm, no aiming |
+| Move-order logic (pressing your own side before moving does nothing) | ✅ | Same as a real clock: pressing the inactive side has no effect |
+| Fischer increment (added after each move) | ✅ | Most common in tournaments; shares one preset list with Bronstein and sudden death |
+| Byoyomi (fresh X seconds per move once the main time is gone, multi-period) | ✅ | **The default mode on first launch**; the Go / Shogi / Xiangqi system, see section 4 |
+| Bronstein delay (first N seconds of each move are free) | ✅ | Good for beginners — no panic time loss |
+| Sudden death (no increment) | ✅ | The simplest mode, common in community events |
+| Flag fall (time-up handling) | ✅ | Red digits + alarm + vibration + result overlay |
+| Time warnings | ✅ | Amber at ≤1 minute, red with 0.1 s resolution at ≤20 seconds |
+| Byoyomi indicator | ✅ | Digits turn purple, remaining periods shown, ticks every second for the last 10 |
+| Move counter | ✅ | Each panel shows how many moves that side has played |
+| Pause / resume (for the arbiter taking notation or settling a dispute) | ✅ | Pausing banks the exact time (and byoyomi periods) used on the current move |
+| Reset / rematch (swapping colours) | ✅ | One tap starts the next game |
+| Sound switch | ✅ | Move beep + time-up alarm (synthesised live, no audio files) |
+| Two-sided facing layout (both players read their own side) | ✅ | “Facing mode”, see section 5 |
+| Keep screen awake | ✅ | Wake Lock API, the screen stays on during a game |
+| Replaceable logo / favicon | ✅ | Overwrite `assets/logo-source.png`, run `node tools/export-icons.js`, see section 7 |
+| Battery indicator | ❌ | The phone has one; no need to duplicate it |
+| Multiple time controls (e.g. 40 moves/90 min + 30 min) | ❌ | Single period only; byoyomi “periods” are a different thing. See section 8 |
+| Automatic checkmate / draw detection | ❌ | A clock cannot see the position; the arbiter declares time-out results, see section 6 |
 
 ---
 
-## 二、怎么跑起来
+## 2. Running it
 
-### 方式 1：手机当棋钟（推荐，比赛现场用这个）
+### Option 1 — phone as the clock (recommended, this is what you use at the event)
 
-在电脑上：
+On the PC:
 
 ```bash
-node serve.js            # 默认 8080 端口；也可 PORT=8081 node serve.js
+node serve.js            # port 8080 by default; or PORT=8081 node serve.js
 ```
 
-终端会打印出手机可访问的地址，例如：
+The terminal prints addresses your phone can reach, for example:
 
 ```
 棋钟已启动（同一 Wi-Fi 下的手机可直接访问）：
-  本机：    http://localhost:8080/
-  手机：    http://192.168.1.23:8080/
+Clock is running — open it on a phone on the same Wi-Fi:
+  本机 / local:  http://localhost:8080/
+  手机 / phone:  http://192.168.1.23:8080/
+按 Ctrl+C 停止 / press Ctrl+C to stop.
 ```
 
-手机连同一个 Wi-Fi，浏览器输入那个 `192.168.x.x` 地址即可。
-（若手机打不开，多半是 Windows 防火墙拦了 Node —— 首次运行会弹窗，选"允许专用网络"。）
+Connect the phone to the same Wi-Fi and open that `192.168.x.x` address in its browser.
+(If the phone cannot open it, Windows Firewall is usually blocking Node — the first run pops up a dialog, choose
+“allow on private networks”.)
 
-### 方式 2：电脑本地用
+### Option 2 — local use on a PC
 
-直接双击 `index.html`。全部功能（含对坐旋转、声音、全屏）都可用，无需任何服务器。
+Just double-click `index.html`. Everything works (including facing rotation, sound and fullscreen) with no server
+at all.
 
-### 方式 3：托管到网上（选手自带手机扫码打开）
+### Option 3 — host it online (players open it on their own phones)
 
-整个目录都是静态文件，扔到任意静态托管即可，**不需要后端、不需要数据库**：
+The whole folder is static: drop it on any static host, **no backend, no database**:
 
-* GitHub Pages：把本目录推到仓库，Settings → Pages → 选分支根目录
-* Netlify Drop：把文件夹直接拖到 <https://app.netlify.com/drop>
-* Vercel / Cloudflare Pages：同上
+* GitHub Pages: push this folder to a repo, Settings → Pages → pick the branch root
+* Netlify Drop: drag the folder onto <https://app.netlify.com/drop>
+* Vercel / Cloudflare Pages: same idea
 
-### 顺手做两件事（强烈建议）
+### Two things worth doing (strongly recommended)
 
-1. **加到主屏幕**：手机浏览器菜单 →「添加到主屏幕」。这样打开没有地址栏，接近全屏，且可离线打开（文件已在本地缓存）。
-2. **开飞行模式或免打扰**：比赛中来电会打断计时（见第六节）。
-
----
-
-## 三、操作说明
-
-### 比赛流程
-
-1. 在设置页选好**计时模式**和**时间**（也可以用预设），点「开始对局」。
-2. 进入棋钟页，点中间的「**开始**」——白方开始计时。也可以直接拍一下任意一侧面板开始（白先走）。
-3. 谁走完棋，就**拍自己那一侧的整块面板**，时间立刻交给对方。
-4. 一方时间归零：立即停表、响警报、震动，弹出结果（"某某 超时 / 某某 获胜"）。
-   → 「再来一局（交换先后手）」或「返回设置」。
-5. 需要临时停表（记谱、处理争议）：点「暂停」，再点「继续」。
-
-### 中间的操做条
-
-| 按钮 | 作用 |
-| --- | --- |
-| 开始 / 暂停 / 继续 | 主控按钮，未开表时点它开白方 |
-| 🔊 / 🔇 | 声音开关（走子音 + 超时警报） |
-| ⇅ | 对坐模式开关（见第五节） |
-| ⛶ | 全屏（iOS Safari 不支持网页全屏，用"添加到主屏幕"代替） |
-| ⚙ | 返回设置（对局中会二次确认） |
-
-### 电脑当棋钟时的键盘
-
-| 键 | 作用 |
-| --- | --- |
-| `A` / `←` | 白方按键 |
-| `L` / `→` | 黑方按键 |
-| `空格` | 开始 / 暂停 / 继续 |
-| `F` | 全屏 |
+1. **Add to home screen**: phone browser menu → “Add to Home Screen”. No address bar, nearly fullscreen, and it
+   opens offline (the files are cached locally).
+2. **Turn on airplane mode or do-not-disturb**: an incoming call interrupts the clock (see section 6).
 
 ---
 
-## 四、计时模式与推荐配置
+## 3. Using it
 
-| 模式 | 规则 | 什么时候用 |
+### Game flow
+
+1. On the setup page pick the **timing mode** and the **time control** (a preset is fine), then tap “Start game”.
+2. On the clock screen tap **Start** in the middle — White's clock begins. You can also just slap either panel to
+   begin (White moves first).
+3. Whoever has moved **slaps their own half of the screen**; the time immediately passes to the opponent.
+4. When a side reaches zero: the clock stops at once, the alarm sounds, the phone vibrates and a result overlay
+   appears (“… ran out of time / … wins”).
+   → “Rematch (swap colours)” or “Back to setup”.
+5. To stop the clock temporarily (notation, settling a dispute): tap “Pause”, then “Resume”.
+
+### The middle toolbar
+
+| Button | What it does |
+| --- | --- |
+| Start / Pause / Resume | The main control; before the clock starts it starts White |
+| 🔊 / 🔇 | Sound switch (move beep + time-up alarm) |
+| ⇅ | Facing mode (see section 5) |
+| ⛶ | Fullscreen (iOS Safari has no web fullscreen — use “Add to Home Screen” instead) |
+| ⚙ | Back to setup (asks for confirmation during a game) |
+
+### Keyboard, when a PC is the clock
+
+| Key | What it does |
+| --- | --- |
+| `A` / `←` | White's button |
+| `L` / `→` | Black's button |
+| `Space` | Start / pause / resume |
+| `F` | Fullscreen |
+
+---
+
+## 4. Timing modes and recommended settings
+
+| Mode | Rule | When to use it |
 | --- | --- | --- |
-| **Fischer 加秒**（推荐） | 每走完一步，自己钟上立即加上固定秒数 | FIDE 现行标准。10+5、15+10 最常用 |
-| **Bronstein 延时** | 每步开始后的前 N 秒不计时，超过才开始扣 | 初学者、少儿赛：前几秒不会因慌张掉时间 |
-| **Byoyomi 读秒** | 主时间用完后，**每一手重新给固定的 X 秒**（用不完不累积）；可设 N 段，超时一次消耗一段，段数用尽再超即判负 | 围棋 / 将棋 / 中国象棋的制式；也适合"最后阶段每步限时"的场合 |
-| **无加秒** | 只有基础时间 | 最简单的突然死亡制 |
+| **Fischer increment** (recommended) | A fixed number of seconds is added to your own clock after each move | The current FIDE standard. 10+5 and 15+10 are the usual choices |
+| **Bronstein delay** | The first N seconds of each move are not counted; the clock starts after that | Beginners and junior events: no time lost to panic in the first seconds |
+| **Byoyomi** | Once the main time is gone, **each move gets a fresh X seconds** (unused time does not carry over); with N periods, one overstep consumes a period and going over again after the last one loses | The Go / Shogi / Xiangqi system; also good for “a limit per move in the final phase” |
+| **Sudden death** | Main time only | The simplest sudden-death control |
 
-**读秒到底怎么算**（60 分钟 + 30 秒 × 3 段 为例）：
+**How byoyomi actually works** (example: 60 minutes + 30 seconds × 3 periods):
 
-1. 主时间 60 分钟内随便想；第 1 步开始就有加秒的模式是 Fischer，读秒**不**在前期生效。
-2. 主时间用尽 → 进入读秒：每一手都给满 30 秒。这手用 12 秒安全，**下一手照样是完整的 30 秒**（不累积、不结转）。
-3. 某一手超过 30 秒没落子 → 消耗一段，读数重置回 30 秒继续想；「30 秒 × 3 段」意味着**允许你超时思考 2 次**，第 3 次超时就判负。
-4. 界面表现：读秒阶段数字转**紫色**并显示「读秒 2/3 段」，主时间告急的琥珀色不会在此阶段出现，但最后 20 秒仍会转红；最后 10 秒每秒有滴答提示音。
+1. Think freely inside the 60 minutes of main time; modes that add time from move 1 are Fischer — byoyomi does
+   **not** apply early.
+2. Main time exhausted → byoyomi starts: every move gets a full 30 seconds. Using 12 seconds on this move is
+   safe, and **the next move still gets a full 30 seconds** (nothing accumulates or carries over).
+3. If a move goes past 30 seconds → one period is consumed, the count resets to 30 seconds and you carry on
+   thinking; “30 s × 3 periods” means **you may overthink twice**, and the third overstep loses.
+4. On screen: during byoyomi the digits turn **purple** and show “Byoyomi 2/3”; the amber main-time warning does
+   not appear in this phase, but the last 20 seconds still turn red, and the last 10 seconds tick every second.
 
-> 读秒与 Bronstein 延时最容易混：Bronstein 从**第 1 步**起每步就送 N 秒；读秒是**存款花光后才开始发月薪**。
+> Byoyomi and Bronstein delay are the pair people mix up: Bronstein hands you N seconds on **every move from move
+> 1**; byoyomi is **the monthly salary that starts only after your savings are gone**.
 
-内置预设（可自定义 1–180 分钟 / 0–180 秒读秒、1–20 段）：
+Built-in presets (you can always type your own: 1–180 minutes / 0–180 byoyomi seconds / 1–20 periods) —
+**the presets follow the mode**:
 
-| 预设 | 档次 | 典型场合 |
+**Chess-style modes** (Fischer / Bronstein / sudden death):
+
+| Preset | Class | Typical use |
 | --- | --- | --- |
-| 1+0 | 子弹 | 娱乐快赛 |
-| 3+2 | 超快棋 | FIDE 超快棋标准 |
-| 5+0 / 5+3 | 快棋 | 校园快棋赛 |
-| **10+5** | 快棋 | **社区/校际赛推荐**（默认值） |
-| 15+10 | 快棋 | FIDE 快棋标准，时间充裕 |
-| 25+10 / 30+0 | 慢棋 | 俱乐部联赛 |
-| 60+30 | 慢棋 | 读秒制的经典配置（60 分钟 + 每步 30 秒读秒） |
-| 90+30 | 慢棋 | 正式慢棋单时段近似 |
+| 1+0 | Bullet | Casual rapid events |
+| 3+2 | Blitz | FIDE blitz standard |
+| 5+0 / 5+3 | Rapid | School rapid events |
+| **10+5** | Rapid | **Recommended for community / school events** |
+| 15+10 | Rapid | FIDE rapid standard, comfortable |
+| 25+10 / 30+0 | Classical | Club league |
+| 60+30 | Classical | The classic byoyomi-style chess control (60 min + 30 s per move) |
+| 90+30 | Classical | A good approximation of a single-period classical control |
 
-> 社区和校际赛建议 **10+5 或 15+10**：初学者不至于因为找不到棋钟按钮而瞬间掉时间。
+**Weiqi (Byoyomi) mode** — the notation is “**main time + periods × seconds per move**”, so `10+3×20` means
+10 minutes of main time, then 20 seconds per move for 3 periods (you may overthink twice and lose on the third):
 
-### 围棋（Weiqi / Go）怎么用
+| Preset | Read as | Typical use |
+| --- | --- | --- |
+| 5+3×20 | 5 min + 20 s × 3 periods | Junior / fast Go events |
+| **10+3×20** | 10 min + 20 s × 3 periods | **The default** (this is what you get on first launch) |
+| 10+3×30 | 10 min + 30 s × 3 periods | School Go events |
+| 15+3×30 | 15 min + 30 s × 3 periods | School / community events |
+| 20+5×30 | 20 min + 30 s × 5 periods | Standard amateur events |
+| 30+5×30 | 30 min + 30 s × 5 periods | Club events |
+| 30+3×60 | 30 min + 60 s × 3 periods | Slow games |
+| 60+5×60 | 60 min + 60 s × 5 periods | Formal slow games |
 
-这台棋钟**不只给国际象棋用**，围棋同样直接可用——围棋的赛制本来就是「保留时间 + 读秒」，正好是本棋钟的
-Byoyomi 模式：
+> The small line under each button (e.g. `20s × 3`) spells the order out: it is the same thing as the main
+> notation `3×20`.
+> For community and school events I suggest **10+3×20** (the default) or **15+3×30**: beginners won't lose time
+> just because they couldn't find the button.
 
-| 围棋常见赛制 | 本棋钟怎么设 |
+### Using it for Weiqi (Go)
+
+This clock is **not only for chess** — it works for Go as-is, because the Go system *is* “main time + byoyomi”,
+which is exactly this clock's Byoyomi mode, and **that is what you get on first launch** (English + Byoyomi +
+`10+3×20`).
+
+| Common Go control | How to set it here |
 | --- | --- |
-| 保留时间 40 分钟，之后每手 30 秒 × 3 次 | 选 **Byoyomi 读秒**，基础时间 40 分钟、读秒 30 秒、段数 3 |
-| 保留时间 1 小时，之后每手 60 秒，超时判负 | 同上，基础时间 60 分钟、读秒 60 秒、段数 1 |
-| 包干制（只有保留时间，用完即负） | 选 **无加秒**，只填基础时间 |
+| 10 min main time, then 20 s × 3 per move | Pick the preset **10+3×20** (the default, ready to go) |
+| 30 min main time, then 30 s × 5 per move | Pick the preset **30+5×30** |
+| 1 hour main time, then 60 s × 5 per move | Pick the preset **60+5×60** |
+| 40 min main time, then 30 s × 3 per move | There is no 40-minute preset: choose **Byoyomi** and change the three numbers to 40 / 30 / 3 |
+| Absolute time only (flag falls, you lose) | Choose **Sudden death**, or set the byoyomi periods to 1 |
 
-对局时和象棋一样：手机平放在两位选手之间、开启**对坐模式**，谁下完一手就拍自己那一侧的整块面板；
-数字会自动撑满面板，桌子对面也看得清。围棋常用的「一手 30 秒读秒」在最后 10 秒还有每秒滴答提示音。
+The preset buttons use “main time + periods × seconds per move”: `30+5×30` is 30 minutes of main time, then
+30 seconds per move for 5 periods (you may overthink 4 times and lose on the fifth); the small `30s × 5` line is
+the same thing written in the other order.
+
+During the game it works like chess: lay the phone flat between the two players, turn on **facing mode**, and
+whoever has just played slaps their own half of the screen. The digits fill the panel automatically so they are
+readable from across the table. The usual Go “30 seconds per move” byoyomi ticks audibly for the last 10 seconds.
 
 ---
 
-## 五、摆放方式（对坐模式）
+## 5. Placement (facing mode)
 
-手机平放在两位选手之间，屏幕朝上：
+Lay the phone flat between the two players, screen up:
 
 ```
-        黑方选手（对面）
+        Black player (opposite side)
    ┌──────────────────┐
-   │   ███ 黑方 2:57   │  ← 上方面板内容旋转 180°，对面看是正的
+   │   ███ Black 2:57  │  ← the top panel is rotated 180°, upright for the far side
    ├──────────────────┤
-   │  ▣ 暂停 🔊 ⇅ ⛶ ⚙  │  ← 操作条：最左边是 logo，左右两侧都够得着
+   │  ▣ Pause 🔊 ⇅ ⛶ ⚙ │  ← toolbar: logo on the left, reachable from both sides
    ├──────────────────┤
-   │   白方 3:01 ███   │  ← 下方面板不旋转，近侧选手看是正的
+   │   White 3:01 ███  │  ← the bottom panel is not rotated, upright for the near side
    └──────────────────┘
-        白方选手（近侧）
+        White player (near side)
 ```
 
-* **竖屏（推荐）**：上下分屏，黑方在上、白方在下。开启「对坐模式」后，**上方面板整体旋转 180°**，对面选手看自己的数字是正的。若手机是立起来给裁判/观众看的，把对坐模式关掉即可两边都正向。
-* **横屏**：左右分屏（黑左白右），**不做旋转**。因为横屏时两块面板落在同一条视线上，任何单面板旋转都无法让两位选手同时读正 —— 横屏更适合把手机立起来、或由裁判与观众查看。
+* **Portrait (recommended)**: split top/bottom — Black on top, White below. With facing mode on, **the top panel
+  is rotated 180°** so the far player reads their own digits upright. If the phone stands up for an arbiter or
+  spectators, turn facing mode off and both sides read normally.
+* **Landscape**: split left/right (Black left, White right) and **never rotated**. In landscape both panels sit on
+  the same line of sight, so no single-panel rotation can make both players read upright — landscape is better for
+  propping the phone up or for the arbiter and spectators.
 
 ---
 
-## 六、裁判须知与已知限制（重要，请先读）
+## 6. Arbiter notes and known limits (important — read first)
 
-1. **超时判罚的边界**：本棋钟只负责"时间到 → 停表 → 提示"，**不判断局面**。按 FIDE 规则 6.9，若超时一方的对手"无法以任何合法着法序列将杀"（例如王对王、王单马、王单象），该局应判**和棋**而不是判负。覆盖层给的是"超时/获胜"，最终判罚请裁判根据局面宣布。
-2. **一格设备只能下一盘**：两个浏览器页面之间**没有**时间同步。一盘棋用一台设备。
-3. **后台/息屏不会算错时间**：手机息屏或被切到后台时，浏览器会限流甚至冻结定时器。本棋钟的所有显示与判负都基于**绝对时间戳**推算（"已入账时间 − 本手开始时刻"），所以回到前台时会立刻得到正确结果与正确的超时方 —— 最多"晚发现 1 秒"，不会多送或少算时间。这一点有单元测试覆盖。
-4. **来电、通知、误触**：建议比赛时开飞行模式或免打扰、关掉弹窗通知；对局中刷新/关页面会有二次确认。误触方面：整块面板就是按键，所以请把手机放稳（不要放在棋盘边缘），并确认"按在非走棋方"不会产生任何效果（已如此实现）。
-5. **电量与亮度**：建议插充电宝，亮度调高（户外）。对局中已自动申请屏幕常亮（Wake Lock），但 iOS 16.4 以下、部分浏览器不支持，此时请手动把自动锁屏设为"永不"。
-6. **浏览器要求**：iOS 13+ / Android Chrome 55+（需要 Pointer Events）。桌面 Chrome / Edge / Firefox / Safari 均可。
-7. **隐私**：不联网、不上传任何数据，设置（模式/时间/声音）只存在本机 `localStorage`。
-8. **读秒的判负依据**：读秒模式下是"**读秒段数用尽**"而不是主时间归零。面板步数那一行会显示「读秒 2/3 段」；只剩最后一段时请格外留意。裁判按暂停会先结算已经跨过的段数，恢复后当前那个读秒窗口重新满格（不会让选手白丢读秒）。
+1. **Where a time-out ruling ends**: this clock only does “time ran out → stop the clock → tell you”. It **does
+   not judge the position**. Under FIDE rule 6.9, if the opponent of the player who flagged “cannot checkmate by
+   any possible series of legal moves” (king vs king, king and knight, king and bishop), the game is **drawn**,
+   not lost. The overlay says “time out / wins”; the arbiter makes the final ruling based on the position.
+2. **One device per game**: there is **no** time synchronisation between browser pages. Use one device per game.
+3. **Background/screen-off timing stays correct**: when the phone screen turns off or the tab is backgrounded, the
+   browser throttles or freezes timers. All display and flag decisions here are derived from **absolute
+   timestamps** (“banked time − the moment this move started”), so coming back to the foreground immediately gives
+   the right numbers and the right side to flag — at worst a time-out is noticed a second late, never added or
+   lost. This is covered by unit tests.
+4. **Calls, notifications, accidental taps**: at an event, turn on airplane mode or do-not-disturb and switch off
+   popup notifications; refreshing or closing the page during a game asks for confirmation. On accidental taps:
+   the whole panel is the button, so put the phone down firmly (not on the edge of the board), and note that
+   pressing the side that is not to move has no effect at all (implemented that way).
+5. **Battery and brightness**: bring a power bank and turn the brightness up (outdoors). The clock requests a wake
+   lock during a game, but iOS below 16.4 and some browsers do not support it — in that case set auto-lock to
+   “Never” manually.
+6. **Browser requirements**: iOS 13+ / Android Chrome 55+ (Pointer Events needed). Desktop Chrome / Edge /
+   Firefox / Safari all work.
+7. **Privacy**: no network access, nothing uploaded; settings (mode/time/sound) live only in your own
+   `localStorage`.
+8. **What loses in byoyomi mode**: **exhausting the byoyomi periods**, not the main time reaching zero. The move
+   line on the panel shows “Byoyomi 2/3”; watch out when only the last period is left. Pausing banks the periods
+   already crossed, and on resume the current byoyomi window is refilled (so nobody loses byoyomi time to a
+   pause).
 
 ---
 
-## 七、目录结构与测试
+## 7. Directory layout and tests
 
 ```
 ChessClock/
-├── index.html            页面结构（唯一的入口）
-├── styles.css            样式：竖屏上下分屏 / 横屏左右分屏 / 对坐旋转 / 读秒配色 + 三套主题变量
-├── engine.js             计时引擎：纯逻辑、无 DOM、时间由外部注入 → 可单元测试
-├── i18n.js               ★ 双语词条表（zh / en）+ 语言解析，界面文案全在这里
-├── app.js                界面与操作层：渲染、触摸/键盘、声音、常亮、本地存储、切语言
+├── index.html            page structure (the only entry point)
+├── README.md             this file (English, default)
+├── README_CN.md          the same document in Chinese
+├── styles.css            styling: portrait split / landscape split / facing rotation / byoyomi colours + the three theme variable blocks
+├── engine.js             timing engine: pure logic, no DOM, time injected from outside → unit-testable
+├── i18n.js               ★ the bilingual string table (zh / en) + language resolution; all UI copy lives here
+├── app.js                UI and input layer: rendering, touch/keyboard, sound, wake lock, local storage, language switch
 ├── assets/
-│   ├── logo-source.png   ★ 图标原图（当前为 TARUMT 校徽，447×447 带透明通道）
-│   ├── logo-brand.png    设置页 logo，288×288（页面按 96×96 显示）
-│   ├── logo-strip.png    棋钟操作条 logo，144×144（页面按 48×48 显示）
+│   ├── logo-source.png   ★ the master logo (currently the TARUMT shield, 447×447 with alpha)
+│   ├── logo-brand.png    setup-page logo, 288×288 (displayed at 96×96)
+│   ├── logo-strip.png    toolbar logo, 144×144 (displayed at 48×48)
 │   ├── icon-32.png       favicon
-│   ├── icon-64.png       favicon（高分屏）
-│   ├── icon-180.png      iOS「添加到主屏幕」图标
-│   ├── logo.svg          旧版 CoQ 矢量图形（备用，当前界面不使用）
-│   └── README.md         换图标的方法 + 「手机没图」那个坑的说明
+│   ├── icon-64.png       favicon (high DPI)
+│   ├── icon-180.png      iOS “Add to Home Screen” icon
+│   ├── logo.svg          the old CoQ vector art (unused, kept as a backup)
+│   └── README.md         how to swap the icon + the “logo missing on phones” pitfall
 ├── tools/
-│   └── export-icons.js   由 logo-source.png 导出上面那些 PNG
-├── serve.js              零依赖静态服务器（局域网给手机用）
+│   └── export-icons.js   derives all those PNGs from logo-source.png
+├── serve.js              zero-dependency static server (for phones on the LAN)
 ├── tests/
-│   ├── engine.test.js    计时引擎测试（30 项）
-│   ├── project.test.js   项目完整性测试（14 项，含 3 项双语 + 1 项主题校验）
-│   ├── run.js            单进程测试入口
-│   └── visual/           无头 Chrome 视觉验证台（截图）＋ out/*.png 截图产物
-├── Defold/               Defold（Lua）移植版：原生应用 / HTML5 都能出，见 Defold/README.md
+│   ├── engine.test.js    timing engine tests (30)
+│   ├── project.test.js   project-integrity tests (16: i18n / themes / defaults / presets / scenes / icons …)
+│   ├── run.js            single-process test entry point
+│   └── visual/           headless-Chrome visual rig (screenshots) + out/*.png artefacts
+├── Defold/               the Defold (Lua) port: native apps and HTML5, see Defold/README.md
 └── package.json          npm test / npm start / npm run shots
 ```
 
 ```bash
-npm test        # 44 项测试：计时逻辑 + 页面/图标/双语/主题完整性
-npm start       # 启动局域网服务，手机即可访问
-npm run shots   # 用无头 Chrome 把各场景重新截图（需要本机有 Chrome/Edge）
+npm test        # 46 tests: timing logic + page/icon/bilingual/theme/defaults/screenshot-scene integrity
+npm start       # start the LAN server, open it on your phone
+npm run shots   # re-shoot every scene with headless Chrome (needs Chrome/Edge installed)
 ```
 
-截图脚本还能挑场景 / 选像素密度 / 指定语言（改完样式或文案时很有用，不必跑满全部场景）：
+The screenshot script can also pick scenes, pixel density and language (handy after a styling or copy change, so
+you don't have to run every scene):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup,midgame-portrait'          # 只截这两张（手机 2×）
-powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Scale 1                  # PC 密度（1×）
-powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Lang en                 # 英文界面 → out/setup-en.png
-powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Theme light            # 浅色主题 → out/setup-light.png
+powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup,midgame-portrait'          # just these two (phone 2×)
+powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Scale 1                  # PC density (1×)
+powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Lang zh                  # Chinese UI → out/setup-zh.png
+powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Theme light              # light theme → out/setup-light.png
 ```
 
-测试覆盖了这些**容易出错**的地方：加秒从第一步就生效、延时只免 N 秒、读秒每步重新满格、
-多段读秒「5 段 = 允许超时 4 次，第 5 次判负」、读秒阶段落子会扣段数、主时间中途耗尽时的读秒衔接、
-按在非活动方无效、同一次触摸重复投递会被去抖、暂停时先结算时间与段数、
-超时后再按钟不能「救回」时间、页面被挂起 30 分钟后仍能判出正确的超时方、
-时间格式（小时 / 分钟 / 0.1 秒）、logo 源文件与两处 PNG 的像素尺寸、
-中英词条 key 完全一致且页面/JS 用到的 key 都存在、app.js 里不再有写死的文案。
+The tests cover the places that **break easily**: the increment applies from move 1, delay only forgives N
+seconds, each byoyomi move refills the window, multi-period byoyomi (“5 periods = 4 oversteps allowed, the fifth
+loses”), a move played during byoyomi consumes a period, the hand-off when the main time runs out mid-move,
+pressing the inactive side does nothing, duplicate delivery of one touch is debounced, pausing banks time and
+periods first, pressing the clock after a flag cannot “rescue” time, a page suspended for 30 minutes still flags
+the correct side, time formatting (hours / minutes / 0.1 s), the logo master and both PNG pixel sizes, identical
+key sets across both languages with every used key present, and no hard-coded copy left in `app.js`.
 
-### 双语界面（华文 / English）
+### Bilingual UI (English / 华文)
 
-设置页右上角有 **`ENG / 华文`** 按钮，点一下整体切换；当前语言那半边会点亮。选择存在
-`localStorage`（`chessclock.settings.v1` 的 `lang` 字段），下次打开还是上次的语言。
+The setup page has an **`ENG / 华文`** button at the top right; one tap switches the whole interface and the half
+for the active language lights up. The choice is stored in `localStorage` (the `lang` field of
+`chessclock.settings.v1`), so the next visit keeps it.
 
-* 没存过设置时**跟随浏览器语言**（`navigator.language`）：中文环境给中文，其余给英文；
-* 想给某个链接指定语言：`index.html?lang=en` 或 `?lang=zh`（URL 优先于存档，分享英文版链接很方便）；
-* 所有文案都在 **[i18n.js](i18n.js)** 的 `DICT` 里。加第三种语言：在 `DICT` 与 `LANGS` 各加一份，
-  再在 `index.html` 的语言按钮里加一个 `data-lang-name="xx"` 的名字即可，其余代码不用动；
-* 加新文案时：页面静态文字写 `data-i18n="key"`（含 HTML 的用 `data-i18n-html`，属性和占位符分别用
-  `data-i18n-title/aria-label/alt/placeholder`），JS 里统一 `t('key', {vars})`。
-  测试会核对「中英 key 完全一致」「用到的 key 都存在」「占位符两边一致」「app.js 里没有写死的中文」；
-* 看两种语言的实际渲染：`shoot.ps1 -Only 'setup' -Lang en`（英文）与 `-Lang zh`（中文），
-  产物分别叫 `out/setup-en.png`、`out/setup-zh.png`。
+* With no saved settings the default is **English (ENG)** — tap `ENG / 华文` once for Chinese and it is remembered;
+* To force a language for a link: `index.html?lang=en` or `?lang=zh` (the URL wins over the saved setting, which
+  makes sharing a Chinese link easy);
+* All copy lives in the `DICT` table of **[i18n.js](i18n.js)**. To add a third language, add one entry to `DICT`
+  and one to `LANGS`, plus a `data-lang-name="xx"` name in the `index.html` language button — no other code
+  changes;
+* When adding copy: static page text uses `data-i18n="key"` (use `data-i18n-html` when it contains HTML, and
+  `data-i18n-title/aria-label/alt/placeholder` for attributes and placeholders); in JS always use
+  `t('key', {vars})`. The tests check that both languages have identical key sets, that every used key exists,
+  that placeholders match, and that no hard-coded Chinese is left in `app.js`;
+* To see both languages rendered: `shoot.ps1 -Only 'setup' -Lang en` (English) and `-Lang zh` (Chinese), producing
+  `out/setup-en.png` and `out/setup-zh.png`.
 
-### 界面主题（浅色 / 中性 / 深色）
+### Colour themes (Light / Medium / Dark)
 
-设置页「3. 选项」里有一个**界面主题**下拉框，三选一：浅色 / 中性（石板灰）/ 深色（默认）。
-选择同样存在 `localStorage`，也能用 `index.html?theme=light`（或 `medium` / `dark`）直接指定。
+The “3. Options” card on the setup page has a **Colour theme** dropdown with three choices: Light / Medium
+(slate) / Dark (the default). The choice is stored in `localStorage` too and can be forced with
+`index.html?theme=light` (or `medium` / `dark`).
 
-实现方式：主题只是一组 CSS 变量。`styles.css` 顶部有三块
+Implementation: a theme is just a set of CSS variables. The top of `styles.css` has three blocks:
 
 ```css
 :root, :root[data-theme="dark"] { --bg: …; --fg: …; --card: …; --accent: … }
@@ -281,54 +364,72 @@ powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -T
 :root[data-theme="light"]  { … }
 ```
 
-切换时 `app.js` 只做一件事：给 `<html>` 打上 `data-theme="…"`（顺带把手机浏览器地址栏的
-`theme-color` 设成当前 `--bg`）。**两块对局面板始终是「黑方深、白方浅」**——那是棋局语义，不随主题变；
-浅色主题下白方面板会自动加一圈细边（`--pane-edge`），免得和页面底色糊在一起。
+Switching does exactly one thing in `app.js`: it puts `data-theme="…"` on `<html>` (and points the mobile
+browser's `theme-color` at the current `--bg`). **The two game panels always stay “Black dark, White light”** —
+that is game semantics, not decoration; in the light theme the White panel automatically gets a hairline
+`--pane-edge` so it does not blend into the page background.
 
-* 想微调某个主题：只改对应的变量块即可（`--card`/`--sunken`/`--btn` 分别是卡片、凹陷槽、按钮底色）；
-* 想加第四套主题：`styles.css` 加一块变量 + `app.js` 的 `THEMES` 加一项 + `index.html` 加一个
-  `<option value="…">` + `i18n.js` 加词条（测试会核对这四处是否一一对应）；
-* 首屏不闪：`<head>` 里有一段内联脚本，在页面绘制前就把存档里的主题打到 `<html>` 上
-  （否则选了浅色的人每次打开都会先闪一下深色）。
+* To tweak a theme, edit only its variable block (`--card` is the card surface, `--sunken` a recessed well,
+  `--btn` a button surface);
+* To add a fourth theme: one variable block in `styles.css` + one entry in `THEMES` in `app.js` + one
+  `<option value="…">` in `index.html` + the strings in `i18n.js` (a test checks those four places agree);
+* No flash on load: a small inline script in `<head>` applies the saved theme to `<html>` before the first paint
+  (otherwise a light-theme user would see a dark flash on every visit).
 
-### 换 logo / 图标
+### Restoring the factory defaults
 
-原图只有一个：**`assets/logo-source.png`**（当前是 TARUMT 校徽，447×447，带透明通道）。
-页面实际引用的是由它导出的成品，**每个用途只有一个文件**：
+The defaults (English / Byoyomi / 10+3×20 / Dark) only apply to a browser that has **never saved settings**. If
+your browser has an older save, run this once in the developer console:
 
-| PNG | 用在哪 | 文件像素 | 页面显示 |
+```js
+localStorage.removeItem('chessclock.settings.v1'); location.reload();
+```
+
+> Avoid opening `tests/visual/_scene-*.html` (generated in the project root, named `_scene-*.html`) in your
+> everyday browser: they drive the UI through real interactions, which goes through `saveSettings()`. The script
+> stubs `localStorage.setItem`, but it is simpler to only run them via `npm run shots`.
+
+### Swapping the logo / icons
+
+There is exactly one master: **`assets/logo-source.png`** (currently the TARUMT shield, 447×447 with alpha).
+The page references derived files, and **each use has exactly one file**:
+
+| PNG | Used for | File pixels | Displayed at |
 | --- | --- | --- | --- |
-| `logo-brand.png` | 设置页 logo | 288×288 | 96×96 |
-| `logo-strip.png` | 棋钟操作条 logo | 144×144 | 48×48 |
-| `icon-32/64/180.png` | favicon / iOS 主屏 | 32 / 64 / 180 | — |
+| `logo-brand.png` | setup-page logo | 288×288 | 96×96 |
+| `logo-strip.png` | toolbar logo | 144×144 | 48×48 |
+| `icon-32/64/180.png` | favicon / iOS home screen | 32 / 64 / 180 | — |
 
-用新图覆盖 `logo-source.png`，重跑一次就会把上面全部刷新（用无头 Chrome，无需装依赖）：
+Overwrite `logo-source.png` with your artwork and re-run this once to refresh all of them (headless Chrome, no
+dependencies to install):
 
 ```bash
 node tools/export-icons.js
 ```
 
-> ⚠️ **页面里刻意不写 `srcset`。** 早先写成
-> `src="…-96.png 1x, …-96@2x.png 2x"` 时，手机（像素密度 ≥2）只会取 `2x` 那个文件，
-> 手工只替换 `1x` 就会出现「**PC 上正常、手机上 logo 不见了**」。
-> 现在每个用途只导出一个文件、并按显示尺寸的 **3 倍**出图：手机上清晰，PC 上由浏览器缩小，
-> 换图也只需要换一个文件。
+> ⚠️ **`srcset` is deliberately not used.** When it was written as
+> `src="…-96.png 1x, …-96@2x.png 2x"`, phones (pixel ratio ≥2) only ever fetched the `2x` file, so replacing only
+> the `1x` copy produced the “**fine on PC, logo missing on the phone**” bug.
+> Now each use exports exactly one file at **3× the displayed size**: sharp on phones, downscaled by the browser
+> on PCs, and swapping artwork means replacing a single file.
 
-想调显示尺寸：改 `styles.css` 里 `.brand-logo` / `.strip-logo` 的 `width/height`、
-`index.html` 上对应的 `width`/`height`，以及脚本里的 `JOBS` 尺寸，测试会一起核对。
+To change a displayed size, edit `width/height` for `.brand-logo` / `.strip-logo` in `styles.css`, the matching
+`width`/`height` in `index.html`, and the `JOBS` sizes in the script — the tests check all of them together.
 
-（`logo.svg` 是旧版 CoQ 矢量图形，现在只作备用。细节见 [assets/README.md](assets/README.md)。）
+(`logo.svg` is the old CoQ vector art, kept only as a backup. Details in [assets/README.md](assets/README.md).)
 
 ---
 
-## 八、后续可以扩展（本期故意没做）
+## 8. Possible extensions (deliberately not done this round)
 
-* 多时段控制（例如 40 步 / 90 分钟 + 30 分钟 + 每步 30 秒）——需要在引擎里加"时段"概念，界面也要多一栏。
-* 两台手机同步（WebRTC / WebSocket），让双方各看自己手机。
-* 局面输入（FEN）后自动判和：超时时若对方只剩单马/单象，自动按 FIDE 6.9 判和。
-* PWA 离线缓存 + 清单文件，装到主屏后完全离线。
-* 记录每步用时（可用于复盘"时间分配"）。
+* Multi-stage controls (e.g. 40 moves / 90 minutes + 30 minutes + 30 s per move) — needs a “stage” concept in the
+  engine and an extra field in the UI.
+* Two-phone sync (WebRTC / WebSocket) so each player watches their own phone.
+* Position input (FEN) for automatic draw detection: when a player flags and the opponent has only a knight or
+  bishop left, rule it a draw under FIDE 6.9 automatically.
+* PWA offline cache + manifest so an installed home-screen app works fully offline.
+* Recording each move's time (useful for reviewing time management).
 
-## 许可
+## Licence
 
-MIT。随意用于社区赛、校际赛、俱乐部活动。
+MIT. Use it freely for community events, school events and club activities.

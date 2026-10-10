@@ -14,8 +14,11 @@
 
   var STORAGE_KEY = 'chessclock.settings.v1';
 
-  /** 常见比赛用时（单时段）；name 是 i18n 的 key，不是显示文字 */
-  var PRESETS = [
+  /**
+   * 常见比赛用时（国际象棋类：Fischer 加秒 / Bronstein 延时 / 无加秒共用）。
+   * name 是 i18n 的 key，不是显示文字。
+   */
+  var PRESETS_CHESS = [
     { id: '1+0',   baseMin: 1,  incSec: 0,  name: 'preset.bullet' },
     { id: '3+2',   baseMin: 3,  incSec: 2,  name: 'preset.blitz' },
     { id: '5+0',   baseMin: 5,  incSec: 0,  name: 'preset.rapid' },
@@ -29,16 +32,50 @@
     { id: '90+30', baseMin: 90, incSec: 30, name: 'preset.classical' }
   ];
 
+  /**
+   * 围棋（Byoyomi）常用制式。记法沿用围棋习惯：
+   *
+   *     基础时间 + 段数 × 每手秒数
+   *
+   * 例：10+3×20 = 主时间 10 分钟；主时间用完后每手 20 秒、共 3 段
+   *（可超时思考 2 次，第 3 次超时判负）。段数=1 时可自定义为「超时即负」。
+   *
+   * sub 是按钮下方那行小字：写成「20s × 3」把顺序讲明白，
+   * 免得与主记法「3×20」的读法混淆（两种写法意思相同）。
+   */
+  var PRESETS_BYOYOMI = [
+    { id: '5+3x20',  baseMin: 5,  incSec: 20, periods: 3, sub: '20s × 3' },
+    { id: '10+3x20', baseMin: 10, incSec: 20, periods: 3, sub: '20s × 3' },
+    { id: '10+3x30', baseMin: 10, incSec: 30, periods: 3, sub: '30s × 3' },
+    { id: '15+3x30', baseMin: 15, incSec: 30, periods: 3, sub: '30s × 3' },
+    { id: '20+5x30', baseMin: 20, incSec: 30, periods: 5, sub: '30s × 5' },
+    { id: '30+5x30', baseMin: 30, incSec: 30, periods: 5, sub: '30s × 5' },
+    { id: '30+3x60', baseMin: 30, incSec: 60, periods: 3, sub: '60s × 3' },
+    { id: '60+5x60', baseMin: 60, incSec: 60, periods: 5, sub: '60s × 5' }
+  ];
+
+  /** 当前模式下该显示哪一组预设 */
+  function presetsFor(mode) {
+    return mode === E.MODES.BYOYOMI ? PRESETS_BYOYOMI : PRESETS_CHESS;
+  }
+
+  /** 预设按钮上的主记法：10+5 / 10+3×20 */
+  function presetLabel(p) {
+    return p.periods
+      ? (p.baseMin + '+' + p.periods + '×' + p.incSec)
+      : (p.baseMin + '+' + p.incSec);
+  }
+
   var DEFAULTS = {
-    mode: 'fischer',
+    mode: 'byoyomi',                  // 首次打开：围棋读秒制
     baseMin: 10,
-    incSec: 5,
-    periods: 1,
-    presetId: '10+5',
+    incSec: 20,                       // 读秒每手 20 秒
+    periods: 3,                       // 共 3 段
+    presetId: '10+3x20',              // = 10+3×20（主时间 10 分钟 + 20 秒 × 3 段）
     sound: true,
     facing: true,
     keepAwake: true,
-    lang: I18N.detect(),              // 没存过设置时跟随浏览器语言
+    lang: 'en',                       // 首次打开：英文（按钮可随时切到华文，之后记住选择）
     theme: 'dark'                     // 深色（最初那套配色）为默认
   };
 
@@ -133,8 +170,7 @@
   /** 语言一变就要重画的那几处（模式提示、加秒标签、预设、摘要、棋钟页状态） */
   function renderLanguageDependentUI() {
     $('#modeHint').textContent = t('hint.' + cfg.mode);
-    updateDerivedUI();
-    renderPresetNames();
+    updateDerivedUI();          // 内含 buildPresets()：语言一变，预设的类别名也跟着换
     updateSoundButton();
     updateToggleButton();
     if (S) { render(); }
@@ -298,31 +334,34 @@
 
   /* ================= 设置界面 ================= */
 
+  /**
+   * 重建预设按钮。模式或语言变了都要重建（主记法与副标题都依赖这两者），
+   * 用一个 key 记住上次建的是哪一套，避免每次刷新都重建 DOM。
+   */
+  var builtPresetKey = null;
   function buildPresets() {
+    var key = cfg.mode + '|' + lang;
+    if (key === builtPresetKey) { return; }
+    builtPresetKey = key;
+
     var box = $('#presets');
     box.innerHTML = '';
-    PRESETS.forEach(function (p) {
+    presetsFor(cfg.mode).forEach(function (p) {
       var b = document.createElement('button');
       b.type = 'button';
       b.className = 'preset';
       b.dataset.id = p.id;
-      b.innerHTML = '<strong>' + p.baseMin + '+' + p.incSec + '</strong><span data-i18n-preset="' +
-        p.name + '">' + t(p.name) + '</span>';
+      b.innerHTML = '<strong>' + presetLabel(p) + '</strong><span>' +
+        (p.sub || t(p.name)) + '</span>';
       b.addEventListener('click', function () {
         cfg.baseMin = p.baseMin;
         cfg.incSec = p.incSec;
+        if (p.periods) { cfg.periods = p.periods; }
         cfg.presetId = p.id;
         syncSetupUI();
         saveSettings();
       });
       box.appendChild(b);
-    });
-  }
-
-  /** 语言切换后重写预设按钮里的类别名（数字部分不用动） */
-  function renderPresetNames() {
-    $$('#presets [data-i18n-preset]').forEach(function (el) {
-      el.textContent = t(el.getAttribute('data-i18n-preset'));
     });
   }
 
@@ -359,8 +398,10 @@
         : (cfg.mode === E.MODES.SUDDEN ? t('inc.sudden') : t('inc.fischer')));
 
     var match = null;
-    PRESETS.forEach(function (p) {
-      if (p.baseMin === cfg.baseMin && p.incSec === cfg.incSec) { match = p.id; }
+    buildPresets();                       // 模式/语言变了就换一套预设（内部按 key 去重）
+    presetsFor(cfg.mode).forEach(function (p) {
+      if (p.baseMin === cfg.baseMin && p.incSec === cfg.incSec &&
+          (!p.periods || p.periods === cfg.periods)) { match = p.id; }
     });
     if (match) { cfg.presetId = match; }
     $$('#presets .preset').forEach(function (b) {

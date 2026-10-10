@@ -79,10 +79,12 @@ server.on('error', (err) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
+  // 双语横幅：界面默认英文，命令行也照应一下（同一 Wi-Fi 下的手机直接访问）
   console.log('棋钟已启动（同一 Wi-Fi 下的手机可直接访问）：');
-  console.log('  本机：    http://localhost:' + PORT + '/');
+  console.log('Clock is running — open it on a phone on the same Wi-Fi:');
+  console.log('  本机 / local:  http://localhost:' + PORT + '/');
   lanAddresses().forEach((ip) => {
-    console.log('  手机：    http://' + ip + ':' + PORT + '/');
+    console.log('  手机 / phone:  http://' + ip + ':' + PORT + '/');
   });
-  console.log('按 Ctrl+C 停止。');
+  console.log('按 Ctrl+C 停止 / press Ctrl+C to stop.');
 });

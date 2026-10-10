@@ -5,6 +5,13 @@
  *
  *   node tests/visual/build.js          # 生成 out/*.html
  *   （随后用 tests/visual/shoot.ps1 调用 Chrome 截图）
+ *
+ * ⚠️ 生成出来的 _scene-*.html 是**一次性的测试页**：它们靠真实点击/输入来驱动界面，
+ * 因此会触发 app.js 的 saveSettings()。**用普通浏览器打开它们会覆盖你自己的设置**
+ * （曾出现过「打开过 byoyomi 场景后，应用默认变成 1+3×30」这种事）。
+ * 两个约定避免再踩：
+ *   1) 每个场景都显式调用 mode(...)，不依赖默认模式（默认值会变）；
+ *   2) 场景里的数值尽量用真实的预设值，万一被存进 localStorage 也还是个合法配置。
  */
 const fs = require('fs');
 const path = require('path');
@@ -16,6 +23,10 @@ const OUT = path.join(__dirname, 'out');
 function driver() {
   return [
     '(function () {',
+    '  // 这些场景页靠真实交互驱动界面，会触发 app.js 的 saveSettings()。',
+    '  // 把 setItem 打桩掉，这样即使有人用普通浏览器打开 _scene-*.html，',
+    '  // 也不会覆盖他自己保存的设置（曾经踩过：打开 byoyomi 场景后默认值被改成 1+3×30）。',
+    '  try { window.localStorage.setItem = function () {}; } catch (e) {}',
     '  function $(sel) { return document.querySelector(sel); }',
     '  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }',
     '  function setNum(id, value) {',
@@ -51,6 +62,7 @@ function driver() {
     '',
     '    if (scene === "measure") {',
     '      run = (function () {',
+    '        mode("fischer");',
     '        setNum("baseMin", 3); setNum("incSec", 2);',
     '        beginClock(); start();',
     '        return wait(500).then(function(){ press("w"); })',
@@ -83,6 +95,7 @@ function driver() {
     '',
     '    if (scene === "midgame") {',
     '      run = (function () {',
+    '        mode("fischer");',
     '        setNum("baseMin", 3); setNum("incSec", 2);',
     '        beginClock(); start();',
     '        return wait(1400).then(function(){ press("w"); })',
@@ -95,7 +108,9 @@ function driver() {
     '    if (scene === "byoyomi") {',
     '      run = (function () {',
     '        mode("byoyomi");',
-    '        setNum("baseMin", 1); setNum("incSec", 30); setNum("periods", 3);',
+    '        // 主时间缩到 1 分钟，只是为了在虚拟时间预算内跑到读秒阶段；',
+    '        // 读秒部分与默认档 10+3×20 一致（每手 20 秒 × 3 段）。',
+    '        setNum("baseMin", 1); setNum("incSec", 20); setNum("periods", 3);',
     '        beginClock(); start();',
     '        // 主时间 60 秒用尽后进入读秒，并已跨过 1 段（剩 2/3 段）',
     '        return wait(95000);',
@@ -117,6 +132,7 @@ function driver() {
     '',
     '    if (scene === "states") {',
     '      run = (function () {',
+    '        mode("fischer");',
     '        beginClock();',
     '        return wait(50).then(function () {',
     '          var w = document.querySelector(\'.pane[data-side="w"]\');',

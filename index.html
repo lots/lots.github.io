@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d12">
+<meta name="description" content="可在手机浏览器直接使用的国际象棋比赛用虚拟棋钟：Fischer 加秒 / Bronstein 延时 / Byoyomi 读秒 / 无加秒，纯本地运行，无需联网。">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="棋钟">
+<title>CoQ 棋钟</title>
+<!--
+  图标源是 assets/logo-source.png（当前为 TARUMT 校徽，447×447 带透明通道）。
+  换 logo：用新图覆盖它，再跑一次 `node tools/export-icons.js` 重出全部尺寸。
+  页面里每个位置只引用一个 PNG（不写 srcset —— 否则手机只会取 2x 那份，
+  手换 1x 就会出现「PC 正常、手机没图」），详见 assets/README.md。
+-->
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/icon-64.png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ 设置 ============ -->
+<main id="screen-setup" class="screen setup">
+  <header class="app-head">
+    <img class="brand-logo" src="assets/logo-brand.png" alt="CoQ 棋钟" width="96" height="96">
+    <div class="app-head-text">
+      <h1>CoQ 棋钟</h1>
+      <p class="sub">按实体棋钟的习惯设计 · 手机横竖屏通用 · 断网可用</p>
+    </div>
+  </header>
+
+  <div class="scroll">
+    <section class="card">
+      <h2>1. 计时模式</h2>
+      <div class="segmented" id="modeGroup" role="group" aria-label="计时模式">
+        <button type="button" class="seg" data-mode="fischer" aria-pressed="true">Fischer 加秒</button>
+        <button type="button" class="seg" data-mode="delay" aria-pressed="false">Bronstein 延时</button>
+        <button type="button" class="seg" data-mode="byoyomi" aria-pressed="false">Byoyomi 读秒</button>
+        <button type="button" class="seg" data-mode="sudden" aria-pressed="false">无加秒</button>
+      </div>
+      <p class="hint" id="modeHint"></p>
+    </section>
+
+    <section class="card">
+      <h2>2. 时间</h2>
+      <div class="presets" id="presets"></div>
+      <div class="fields">
+        <label class="field"><span>基础时间（分钟）</span>
+          <input id="baseMin" type="number" inputmode="numeric" min="1" max="180" step="1" value="10">
+        </label>
+        <label class="field"><span id="incLabel">每步加秒（秒）</span>
+          <input id="incSec" type="number" inputmode="numeric" min="0" max="180" step="1" value="5">
+        </label>
+        <label class="field" id="periodsField" hidden><span>读秒段数（段）</span>
+          <input id="periods" type="number" inputmode="numeric" min="1" max="20" step="1" value="1">
+        </label>
+      </div>
+      <p class="summary" id="summary"></p>
+    </section>
+
+    <section class="card">
+      <h2>3. 选项</h2>
+      <label class="switch"><input type="checkbox" id="optSound" checked><span>走子提示音与超时警报</span></label>
+      <label class="switch"><input type="checkbox" id="optFacing" checked><span>对坐模式：把对面那一侧的数字转正（竖屏）</span></label>
+      <label class="switch"><input type="checkbox" id="optWake" checked><span>对局中保持屏幕常亮</span></label>
+      <p class="hint">
+        电脑上可用键盘当棋钟：<kbd>A</kbd>/<kbd>←</kbd> 白方按键 ·
+        <kbd>L</kbd>/<kbd>→</kbd> 黑方按键 · <kbd>空格</kbd> 开始 / 暂停 ·
+        <kbd>F</kbd> 全屏
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>怎么用</h2>
+      <p class="hint">
+        <strong>竖屏平放在两位选手之间</strong>（推荐）：下半屏是白方，上半屏是黑方，并且黑方的数字已旋转 180°，
+        坐在对面的选手看到的就是正的。谁走完棋，就用手掌拍一下自己那一侧的整块面板，时间立刻交给对方。<br>
+        裁判先点「开始对局」，再点中间的「开始」，白方即开始计时。<br>
+        横屏时左右分屏（黑左白右），适合把手机立起来、或由裁判/观众查看。
+      </p>
+      <p class="hint">
+        <strong>读秒（Byoyomi）</strong>：主时间用完后，每一手重新给固定的秒数（用不完不累积），
+        超了就算输；「30 秒 × 5 段」表示允许你超时思考 4 次，第 5 次才判负。
+        读秒阶段数字转紫色，最后 10 秒每秒有提示音。围棋、将棋、中国象棋常用这种制式。
+      </p>
+    </section>
+  </div>
+
+  <footer class="app-foot">
+    <button type="button" class="btn primary big" id="btnStartGame">开始对局</button>
+  </footer>
+</main>
+
+<!-- ============ 棋钟 ============ -->
+<section id="screen-clock" class="screen clock" hidden>
+  <div class="panes">
+    <!-- 竖屏：黑方在上（对面选手），白方在下（离主控者近的一侧）；横屏：黑左白右 -->
+    <button type="button" class="pane pane-b" data-side="b" aria-label="黑方按键（走完棋按这里）">
+      <span class="pane-inner">
+        <span class="pane-head">
+          <span class="side-tag">黑方</span>
+          <span class="state-chip" data-side="b"></span>
+        </span>
+        <span class="time" data-side="b">10:00</span>
+        <span class="pane-foot"><span class="moves" data-side="b">第 0 步</span></span>
+      </span>
+    </button>
+
+    <div class="strip" role="toolbar" aria-label="棋钟操作">
+      <img class="strip-logo" src="assets/logo-strip.png" alt="" width="48" height="48">
+      <button type="button" class="icon-btn primary" id="btnToggle"><span id="btnToggleLabel">开始</span></button>
+      <button type="button" class="icon-btn" id="btnSound" title="声音开关" aria-pressed="true">🔊</button>
+      <button type="button" class="icon-btn" id="btnRotate" title="对坐模式开关">⇅</button>
+      <button type="button" class="icon-btn" id="btnFull" title="全屏">⛶</button>
+      <button type="button" class="icon-btn" id="btnSetup" title="返回设置">⚙</button>
+    </div>
+
+    <button type="button" class="pane pane-w" data-side="w" aria-label="白方按键（走完棋按这里）">
+      <span class="pane-inner">
+        <span class="pane-head">
+          <span class="side-tag">白方</span>
+          <span class="state-chip" data-side="w"></span>
+        </span>
+        <span class="time" data-side="w">10:00</span>
+        <span class="pane-foot"><span class="moves" data-side="w">第 0 步</span></span>
+      </span>
+    </button>
+  </div>
+</section>
+
+<!-- ============ 超时提示 ============ -->
+<div id="overlay" class="overlay" hidden>
+  <div class="overlay-card">
+    <div class="overlay-icon">⏱</div>
+    <h2 id="overlayTitle">超时</h2>
+    <p id="overlaySub" class="overlay-sub"></p>
+    <p id="overlayDetail" class="overlay-detail"></p>
+    <div class="overlay-actions">
+      <button type="button" class="btn primary" id="btnRematch">再来一局（交换先后手）</button>
+      <button type="button" class="btn" id="btnBackToSetup">返回设置</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<noscript>
+  <p style="padding:20px;color:#e9eef7">本棋钟需要启用 JavaScript 才能运行。</p>
+</noscript>
+
+<script src="engine.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "coq-chess-clock",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CoQ 棋钟：比赛用虚拟棋钟，纯 HTML5 + JavaScript，手机浏览器断网可用，支持 Fischer 加秒 / Bronstein 延时 / Byoyomi 读秒 / 无加秒。",
+  "scripts": {
+    "test": "node tests/run.js",
+    "start": "node serve.js",
+    "serve": "node serve.js",
+    "shots": "node tests/visual/build.js && powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

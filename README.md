@@ -22,6 +22,7 @@
 | 实体棋钟功能 | 本棋钟 | 说明 |
 | --- | --- | --- |
 | 适用棋类 | 国际象棋 + 围棋 | 读秒（Byoyomi）本就是围棋赛制；详见第四节的「围棋怎么用」 |
+| 界面主题 | 浅色 / 中性 / 深色 | 设置页下拉框随时切换，选择会记住；见第七节的「界面主题」 |
 | 双方独立倒计时、大字号显示 | ✅ | 数字按面板尺寸自动撑满，桌子对面也看得清 |
 | 跷跷板按键：按自己这侧，停自己、走对方 | ✅ | **整块半屏都是按键**，手掌拍下去即可，不用瞄准小按钮 |
 | 走子换手逻辑（未走棋时按自己一侧无效） | ✅ | 与实体钟一致：按在非活动方不产生任何效果 |
@@ -205,7 +206,7 @@ Byoyomi 模式：
 ```
 ChessClock/
 ├── index.html            页面结构（唯一的入口）
-├── styles.css            样式：竖屏上下分屏 / 横屏左右分屏 / 对坐旋转 / 读秒配色
+├── styles.css            样式：竖屏上下分屏 / 横屏左右分屏 / 对坐旋转 / 读秒配色 + 三套主题变量
 ├── engine.js             计时引擎：纯逻辑、无 DOM、时间由外部注入 → 可单元测试
 ├── i18n.js               ★ 双语词条表（zh / en）+ 语言解析，界面文案全在这里
 ├── app.js                界面与操作层：渲染、触摸/键盘、声音、常亮、本地存储、切语言
@@ -223,7 +224,7 @@ ChessClock/
 ├── serve.js              零依赖静态服务器（局域网给手机用）
 ├── tests/
 │   ├── engine.test.js    计时引擎测试（30 项）
-│   ├── project.test.js   项目完整性测试（13 项，含 3 项双语校验）
+│   ├── project.test.js   项目完整性测试（14 项，含 3 项双语 + 1 项主题校验）
 │   ├── run.js            单进程测试入口
 │   └── visual/           无头 Chrome 视觉验证台（截图）＋ out/*.png 截图产物
 ├── Defold/               Defold（Lua）移植版：原生应用 / HTML5 都能出，见 Defold/README.md
@@ -231,7 +232,7 @@ ChessClock/
 ```
 
 ```bash
-npm test        # 43 项测试：计时逻辑 + 页面/图标/双语完整性
+npm test        # 44 项测试：计时逻辑 + 页面/图标/双语/主题完整性
 npm start       # 启动局域网服务，手机即可访问
 npm run shots   # 用无头 Chrome 把各场景重新截图（需要本机有 Chrome/Edge）
 ```
@@ -242,6 +243,7 @@ npm run shots   # 用无头 Chrome 把各场景重新截图（需要本机有 Ch
 powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup,midgame-portrait'          # 只截这两张（手机 2×）
 powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Scale 1                  # PC 密度（1×）
 powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Lang en                 # 英文界面 → out/setup-en.png
+powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -Theme light            # 浅色主题 → out/setup-light.png
 ```
 
 测试覆盖了这些**容易出错**的地方：加秒从第一步就生效、延时只免 N 秒、读秒每步重新满格、
@@ -265,6 +267,29 @@ powershell -ExecutionPolicy Bypass -File tests/visual/shoot.ps1 -Only 'setup' -L
   测试会核对「中英 key 完全一致」「用到的 key 都存在」「占位符两边一致」「app.js 里没有写死的中文」；
 * 看两种语言的实际渲染：`shoot.ps1 -Only 'setup' -Lang en`（英文）与 `-Lang zh`（中文），
   产物分别叫 `out/setup-en.png`、`out/setup-zh.png`。
+
+### 界面主题（浅色 / 中性 / 深色）
+
+设置页「3. 选项」里有一个**界面主题**下拉框，三选一：浅色 / 中性（石板灰）/ 深色（默认）。
+选择同样存在 `localStorage`，也能用 `index.html?theme=light`（或 `medium` / `dark`）直接指定。
+
+实现方式：主题只是一组 CSS 变量。`styles.css` 顶部有三块
+
+```css
+:root, :root[data-theme="dark"] { --bg: …; --fg: …; --card: …; --accent: … }
+:root[data-theme="medium"] { … }
+:root[data-theme="light"]  { … }
+```
+
+切换时 `app.js` 只做一件事：给 `<html>` 打上 `data-theme="…"`（顺带把手机浏览器地址栏的
+`theme-color` 设成当前 `--bg`）。**两块对局面板始终是「黑方深、白方浅」**——那是棋局语义，不随主题变；
+浅色主题下白方面板会自动加一圈细边（`--pane-edge`），免得和页面底色糊在一起。
+
+* 想微调某个主题：只改对应的变量块即可（`--card`/`--sunken`/`--btn` 分别是卡片、凹陷槽、按钮底色）；
+* 想加第四套主题：`styles.css` 加一块变量 + `app.js` 的 `THEMES` 加一项 + `index.html` 加一个
+  `<option value="…">` + `i18n.js` 加词条（测试会核对这四处是否一一对应）；
+* 首屏不闪：`<head>` 里有一段内联脚本，在页面绘制前就把存档里的主题打到 `<html>` 上
+  （否则选了浅色的人每次打开都会先闪一下深色）。
 
 ### 换 logo / 图标
 

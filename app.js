@@ -38,7 +38,8 @@
     sound: true,
     facing: true,
     keepAwake: true,
-    lang: I18N.detect()               // 没存过设置时跟随浏览器语言
+    lang: I18N.detect(),              // 没存过设置时跟随浏览器语言
+    theme: 'dark'                     // 深色（最初那套配色）为默认
   };
 
   var cfg = loadSettings();
@@ -50,20 +51,50 @@
   var toastTimer = null;
   var lastTickKey = null;             // 读秒每秒提示音去重
 
+  /* ================= 界面主题 ================= */
+
+  /** 顺序与设置页下拉框一致：浅色 / 中性 / 深色 */
+  var THEMES = ['light', 'medium', 'dark'];
+  function normalizeTheme(v) { return THEMES.indexOf(v) >= 0 ? v : 'dark'; }
+
+  /**
+   * 主题只做一件事：给 <html> 打上 data-theme="…"，
+   * 三个主题的全部色值都写在 styles.css 的变量块里（:root[data-theme="…"]）。
+   * 想加主题：改 styles.css + 这里的 THEMES + index.html 的一个 <option> + i18n 词条。
+   */
+  function applyTheme(next) {
+    var theme = normalizeTheme(next);
+    cfg.theme = theme;
+    document.documentElement.dataset.theme = theme;
+    var sel = $('#themeSelect');
+    if (sel) { sel.value = theme; }
+    // 手机浏览器的地址栏/状态栏颜色跟着走；色值直接读 CSS 变量，避免两处各写一份
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      var bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      if (bg) { meta.setAttribute('content', bg); }
+    }
+  }
+
   /* ================= 语言 ================= */
 
   var lang = I18N.normalize(cfg.lang) || 'zh';
   var t = I18N.make(lang);            // 当前语言的翻译函数
 
   /** URL 上的 ?lang=en / ?lang=zh 优先（方便分享指定语言的链接，也供截图脚本用） */
-  function langFromQuery() {
+  function queryParam(name) {
     try {
-      var m = /[?&]lang=([\w-]+)/.exec(window.location.search);
-      return m ? I18N.normalize(m[1]) : null;
+      var m = new RegExp('[?&]' + name + '=([\\w-]+)').exec(window.location.search);
+      return m ? m[1] : null;
     } catch (e) { return null; }
   }
+  function langFromQuery() { return I18N.normalize(queryParam('lang')); }
   var queryLang = langFromQuery();
   if (queryLang) { lang = queryLang; cfg.lang = queryLang; t = I18N.make(lang); }
+
+  // 同理 ?theme=light / medium / dark（截图脚本三个主题各拍一张时用）
+  var queryTheme = queryParam('theme');
+  if (queryTheme && THEMES.indexOf(queryTheme) >= 0) { cfg.theme = queryTheme; }
 
   /** 把语言应用到整页：<html lang> / <title> / 描述 / 所有 data-i18n* 标记 / 动态文案 */
   function applyLanguage(next) {
@@ -690,6 +721,12 @@
       fitTime();          // 文案长度变了，时间数字的可用宽度也跟着变
     });
 
+    // 界面主题下拉框
+    $('#themeSelect').addEventListener('change', function () {
+      applyTheme(this.value);
+      saveSettings();
+    });
+
     // 面板按键：用 pointerdown（按下即响应，和实体钟一样），并阻止后续 click/长按菜单
     ['w', 'b'].forEach(function (side) {
       var pane = paneEls[side];
@@ -783,6 +820,7 @@
 
     buildPresets();
     syncSetupUI();
+    applyTheme(cfg.theme);    // 主题（head 里的内联脚本已先落一次，避免首屏闪深色）
     applyLanguage(lang);      // 应用 data-i18n 标记 + 所有动态文案（含按语言重画预设/摘要）
     bindEvents();
     applyFacing();

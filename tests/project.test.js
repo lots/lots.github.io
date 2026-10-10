@@ -20,6 +20,36 @@ const css = read('styles.css');
 const app = read('app.js');
 const engine = read('engine.js');
 
+/**
+ * 去掉 JS 里的注释（逐字符跟踪「字符串 / 行注释 / 块注释」三种状态）。
+ * 不能只用正则：行尾注释（`code(); // 中文注释`）会被误当成字符串内容，
+ * 于是「app.js 里不许有写死中文」这条检查会误报。
+ */
+function stripJsComments(src) {
+  let out = '';
+  let i = 0;
+  let state = null;          // "'" / '"' / '`' / 'line' / 'block'
+  while (i < src.length) {
+    const c = src[i];
+    const n = src[i + 1];
+    if (state === 'line') { if (c === '\n') { state = null; out += c; } i += 1; continue; }
+    if (state === 'block') { if (c === '*' && n === '/') { state = null; i += 2; } else { i += 1; } continue; }
+    if (state === "'" || state === '"' || state === '`') {
+      out += c;
+      if (c === '\\') { out += n === undefined ? '' : n; i += 2; continue; }
+      if (c === state) { state = null; }
+      i += 1;
+      continue;
+    }
+    if (c === '/' && n === '/') { state = 'line'; i += 2; continue; }
+    if (c === '/' && n === '*') { state = 'block'; i += 2; continue; }
+    if (c === "'" || c === '"' || c === '`') { state = c; }
+    out += c;
+    i += 1;
+  }
+  return out;
+}
+
 test('index.html 引用的本地资源都存在', () => {
   const refs = [];
   const re = /(?:src|href)\s*=\s*"([^"]+)"/g;
@@ -94,7 +124,7 @@ test('i18n：页面与 JS 里用到的 key 都存在，且占位符能对上', (
   while ((m = reAttr.exec(htmlCode)) !== null) { used.add(m[1]); }
 
   // 2) app.js 里的 t('key')（先去掉注释，免得注释里举例的 t('key') 被当成调用）
-  const appCode = app.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const appCode = stripJsComments(app);
   const reCall = /\bt\('([a-z][\w]*\.[a-z][\w.]*)'/g;
   while ((m = reCall.exec(appCode)) !== null) { used.add(m[1]); }
   ['fischer', 'delay', 'byoyomi', 'sudden'].forEach((mode) => { used.add('hint.' + mode); });
@@ -134,7 +164,7 @@ test('i18n：语言按钮、脚本顺序与「不许再写死文案」的防线'
   assert.ok(i18nAt > 0 && appAt > i18nAt, 'index.html 里 i18n.js 必须在 app.js 之前');
 
   // app.js 里除了「i18n 还没加载」时的双语告警，不该再有写死的中文
-  const stripped = app.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const stripped = stripJsComments(app);
   const hard = [];
   const reStr = /'([^'\\]*)'|"([^"\\]*)"/g;
   let m;
@@ -181,6 +211,48 @@ test('对坐模式只旋转竖屏下「对面」那块面板（几何正确性�
     '黑方面板应排在白方面板之前（竖屏置顶）'
   );
   assert.ok(!/rotate-black/.test(css + app), '已废弃的 rotate-black 类名不应残留');
+});
+
+/* ================= 界面主题 ================= */
+
+test('主题：下拉框三项与三套 CSS 变量一一对应（另含首屏防闪脚本）', () => {
+  const THEME_KEYS = ['light', 'medium', 'dark'];
+
+  assert.ok(/<select id="themeSelect"/.test(html), '设置页缺少主题下拉框 #themeSelect');
+  const opts = [];
+  const optRe = /<option value="(\w+)" data-i18n="theme\.(\w+)"/g;
+  let m;
+  while ((m = optRe.exec(html)) !== null) {
+    assert.equal(m[1], m[2], '选项值与词条名应一致：' + m[1] + ' / theme.' + m[2]);
+    opts.push(m[1]);
+  }
+  assert.deepEqual(opts, THEME_KEYS, '主题下拉框应有且仅有 light / medium / dark 三项');
+
+  const listMatch = /var THEMES = \[([^\]]+)\]/.exec(app);
+  assert.ok(listMatch, 'app.js 里应有 THEMES 列表');
+  const jsKeys = listMatch[1].split(',').map((s) => s.trim().replace(/['"]/g, ''));
+  assert.deepEqual(jsKeys, THEME_KEYS, 'app.js 的 THEMES 应与下拉框完全一致（含顺序）');
+
+  // 每套主题都要在 styles.css 里落地；浅色/中性必须显式覆盖 --bg，否则切了看不出变化
+  THEME_KEYS.forEach((k) => {
+    const block = new RegExp(':root\\[data-theme="' + k + '"\\][\\s\\S]*?\\}').exec(css);
+    assert.ok(block, 'styles.css 缺少 :root[data-theme="' + k + '"] 变量块');
+    if (k !== 'dark') {
+      assert.ok(/--bg:\s*#[0-9a-f]{3,8}/i.test(block[0]), '主题 ' + k + ' 必须显式覆盖 --bg');
+      assert.ok(/--fg:\s*#[0-9a-f]{3,8}/i.test(block[0]), '主题 ' + k + ' 必须显式覆盖 --fg');
+      assert.ok(/--card:\s*#[0-9a-f]{3,8}/i.test(block[0]), '主题 ' + k + ' 必须显式覆盖 --card');
+    }
+  });
+
+  // 首屏防闪：<head> 里要有「读存档 → 设 data-theme」的内联脚本（在样式表之后）
+  const head = html.slice(0, html.indexOf('</head>'));
+  assert.ok(/data-theme/.test(head) && /chessclock\.settings\.v1/.test(head),
+    '缺少首屏主题内联脚本（否则选了浅色的人每次打开都会先闪一下深色）');
+  assert.ok(head.indexOf('styles.css') < head.indexOf('data-theme'),
+    '主题脚本应放在样式表之后');
+
+  // ?theme= 覆盖（截图三个主题时用得上）
+  assert.ok(/queryParam\('theme'\)/.test(app), 'app.js 应支持 ?theme= 覆盖');
 });
 
 /* ================= 图标 / logo ================= */

@@ -19,7 +19,10 @@ param(
   [int]$Scale = 2,
   # 界面语言：'' = 跟随存档/浏览器语言，'zh' / 'en' = 用 ?lang= 强制指定。
   # 指定时输出文件名会带后缀，例如 setup-en.png，方便中英对照。
-  [string]$Lang = ''
+  [string]$Lang = '',
+  # 界面主题：'' = 默认（深色），'light' / 'medium' / 'dark' = 用 ?theme= 强制指定。
+  # 指定时输出文件名也会带后缀，例如 setup-light.png。
+  [string]$Theme = ''
 )
 
 $ErrorActionPreference = 'Continue'
@@ -41,13 +44,16 @@ $jobs = @(
 
 foreach ($j in $jobs) {
   if ($Only -ne '' -and (($Only -split ',') -notcontains $j.name)) { continue }
-  $suffix = $(if ($Scale -eq 2) { '' } else { "@${Scale}x" }) + $(if ($Lang) { '-' + $Lang } else { '' })
+  $suffix = $(if ($Scale -eq 2) { '' } else { "@${Scale}x" }) +
+            $(if ($Theme) { '-' + $Theme } else { '' }) +
+            $(if ($Lang) { '-' + $Lang } else { '' })
   $png = Join-Path $out ($j.name + $suffix + '.png')
   if (Test-Path $png) { Remove-Item $png -Force }
   $prof = Join-Path $root ('.chrome-profile-' + $j.name)
   if (Test-Path $prof) { Remove-Item $prof -Recurse -Force -ErrorAction SilentlyContinue }
   $url = 'file:///' + ($root -replace '\\', '/') + '/_scene-' + $j.scene + '.html?scene=' + $j.scene +
-         '&w=' + $j.w + '&h=' + $j.h + $(if ($Lang) { '&lang=' + $Lang } else { '' })
+         '&w=' + $j.w + '&h=' + $j.h + $(if ($Lang) { '&lang=' + $Lang } else { '' }) +
+         $(if ($Theme) { '&theme=' + $Theme } else { '' })
   & $chrome --headless=new --disable-gpu --hide-scrollbars --no-first-run --no-default-browser-check `
     "--user-data-dir=$prof" "--window-size=$($j.w),$($j.h)" "--force-device-scale-factor=$Scale" `
     "--virtual-time-budget=$($j.budget)" "--screenshot=$png" $url 2>$null | Out-Null

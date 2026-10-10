@@ -58,6 +58,10 @@
       'preset.classical': '慢棋',
 
       'setup.options.heading': '3. 选项',
+      'setup.theme.label': '界面主题',
+      'theme.light': '浅色',
+      'theme.medium': '中性',
+      'theme.dark': '深色',
       'opt.sound': '走子提示音与超时警报',
       'opt.facing': '对坐模式：把对面那一侧的数字转正（竖屏）',
       'opt.wake': '对局中保持屏幕常亮',
@@ -148,6 +152,10 @@
       'preset.classical': 'Classical',
 
       'setup.options.heading': '3. Options',
+      'setup.theme.label': 'Colour theme',
+      'theme.light': 'Light',
+      'theme.medium': 'Medium',
+      'theme.dark': 'Dark',
       'opt.sound': 'Move sound and time-up alarm',
       'opt.facing': 'Facing mode: turn the far side’s digits upright (portrait)',
       'opt.wake': 'Keep the screen awake during a game',

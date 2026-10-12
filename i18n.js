@@ -3,7 +3,8 @@
  * ==================================================================
  * 用法：
  *     var t = window.ChessClockI18N.make('en');   // 或 'zh'
- *     t('clock.pause')                 → "Pause"
+ *     t('clock.pause')                 → "P"（按钮上只写一个字，title / aria-label 用
+ *                                        clock.pause.title「Pause」把含义说全）
  *     t('moves.n', { n: 3 })           → "Move 3"
  *
  * 约定：
@@ -80,8 +81,11 @@
       'pane.w.aria': '白方按键（走完棋按这里）',
       'pane.b.aria': '黑方按键（走完棋按这里）',
       'strip.aria': '棋钟操作',
-      'clock.resume': '继续',
-      'clock.pause': '暂停',
+      // 按钮上只写一个字（停 / 续），完整含义放在 .title 里给悬停提示与读屏软件用
+      'clock.resume': '续',
+      'clock.pause': '停',
+      'clock.pause.title': '暂停',
+      'clock.resume.title': '继续',
       'clock.sound.on': '打开声音',
       'clock.sound.off': '关闭声音',
       'clock.facing.title': '对坐模式开关',
@@ -175,8 +179,11 @@
       'pane.w.aria': 'White button (tap here after your move)',
       'pane.b.aria': 'Black button (tap here after your move)',
       'strip.aria': 'Clock controls',
-      'clock.resume': 'Resume',
-      'clock.pause': 'Pause',
+      // the button shows one character (P / C); the .title keys spell it out
+      'clock.resume': 'C',
+      'clock.pause': 'P',
+      'clock.pause.title': 'Pause',
+      'clock.resume.title': 'Resume',
       'clock.sound.on': 'Turn sound on',
       'clock.sound.off': 'Turn sound off',
       'clock.facing.title': 'Facing mode',

@@ -149,8 +149,9 @@
 
     <div class="strip" role="toolbar" aria-label="Clock controls" data-i18n-aria-label="strip.aria">
       <img class="strip-logo" src="assets/logo-strip.png" alt="" width="48" height="48">
-      <!-- 暂停 / 继续：开局靠拍面板（拍对侧 → 自己的钟开始走），所以未开表时这颗按钮是隐藏的 -->
-      <button type="button" class="icon-btn" id="btnToggle" hidden><span id="btnToggleLabel" data-i18n="clock.pause">Pause</span></button>
+      <!-- 暂停 / 继续：开局靠拍面板（拍对侧 → 自己的钟开始走），所以未开表时这颗按钮是隐藏的；
+           按钮上只写一个字（停 / 续、P / C），完整含义交给 title / aria-label -->
+      <button type="button" class="icon-btn" id="btnToggle" hidden><span id="btnToggleLabel" data-i18n="clock.pause">P</span></button>
       <button type="button" class="icon-btn" id="btnSound" title="Turn sound off" aria-pressed="true" data-i18n-title="clock.sound.off">🔊</button>
       <!-- 180°：对坐模式开关，把「对面」那块面板整体转 180°（只影响数字朝向） -->
       <button type="button" class="icon-btn" id="btnRotate" title="Facing mode" data-i18n-title="clock.facing.title">180°</button>

@@ -117,14 +117,15 @@ The whole folder is static: drop it on any static host, **no backend, no databas
 4. When a side reaches zero: the clock stops at once, the alarm sounds, the phone vibrates and a result overlay
    appears (“… ran out of time / … wins”).
    → “Rematch (swap colours)” or “Back to setup”.
-5. To stop the clock temporarily (notation, settling a dispute): tap “Pause”, then “Resume”. That button only
+5. To stop the clock temporarily (notation, settling a dispute): tap “P”, then “C” (the button shows a single
+   letter — the tooltip spells out “Pause” / “Resume”, as does the screen reader). That button only
    appears once the clock is running.
 
 ### The middle toolbar
 
 | Button | What it does |
 | --- | --- |
-| Pause / Resume | Only shown while a game is running; **no Start button** — the clock is started by tapping a panel |
+| `P` / `C` | Pause / resume; labelled with a single letter, the tooltip (and the screen reader) says “Pause” / “Resume”. Only shown while a game is running; **no Start button** — the clock is started by tapping a panel |
 | 🔊 / 🔇 | Sound switch (move beep + time-up alarm) |
 | 180° | Facing mode: rotate the far panel 180° so the player sitting opposite reads it upright (see section 5) |
 | ⇵ | Swap sides: swap which screen position each colour occupies — Black top / White bottom ⇄ White top / Black bottom in portrait, Black left / White right ⇄ White left / Black right in landscape (see section 5) |
@@ -234,7 +235,7 @@ Lay the phone flat between the two players, screen up:
    ┌───────────────────────┐
    │    ███ Black 2:57     │  ← the top panel is rotated 180°, upright for the far side
    ├───────────────────────┤
-   │ ▣ 180° ⇵ Pause 🔊 ⛶ ⚙ │  ← toolbar: logo on the left, reachable from both sides
+   │ ▣ 180° ⇵ P 🔊 ⛶ ⚙     │  ← toolbar: logo on the left, reachable from both sides
    ├───────────────────────┤
    │    White 3:01 ███     │  ← the bottom panel is not rotated, upright for the near side
    └───────────────────────┘

@@ -672,6 +672,7 @@
   /**
    * 中间那颗按钮**只有「暂停 / 继续」**：开局靠拍面板（拍对侧 → 自己开始计时），
    * 所以未开表时整颗隐藏，一局结束（结果覆盖层已出来）时也隐藏。
+   * 可见文案只写一个字（停 / 续、P / C），完整含义由 title / aria-label 说全。
    */
   function updateToggleButton() {
     var btn = $('#btnToggle');
@@ -681,7 +682,10 @@
     if (!live) { return; }
     var paused = !!S.paused;
     btn.classList.toggle('primary', paused);
+    var spelled = paused ? t('clock.resume.title') : t('clock.pause.title');
     $('#btnToggleLabel').textContent = paused ? t('clock.resume') : t('clock.pause');
+    btn.setAttribute('title', spelled);
+    btn.setAttribute('aria-label', spelled);
   }
 
   /* ================= 计时循环 ================= */

@@ -15,9 +15,9 @@ switches it at any time and the choice is remembered (you can also force it with
 > semantics (the 8 constants and 30 test cases are cross-checked automatically), and it can be packaged as a
 > native Windows / macOS / Linux / Android / iOS / HTML5 app. (Its README is in Chinese for now.)
 
-<img src="tests/visual/out/midgame-portrait.png" alt="Facing mode, portrait (default dark theme)" width="390">
-<img src="tests/visual/out/byoyomi-portrait.png" alt="Byoyomi mode" width="390">
-<img src="tests/visual/out/midgame-landscape.png" alt="Landscape" width="390">
+<img src="screenshots/midgame-portrait.png" alt="Facing mode, portrait (default dark theme)" width="390">
+<img src="screenshots/byoyomi-portrait.png" alt="Byoyomi mode" width="390">
+<img src="screenshots/midgame-landscape.png" alt="Landscape" width="390">
 
 > These are produced automatically by `tests/visual/`. **The screenshot scenes shorten the main time to 1 minute**
 > so that the byoyomi phase shows up inside the virtual-time budget (the byoyomi part is still the default

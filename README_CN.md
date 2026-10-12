@@ -11,9 +11,9 @@
 > 另有一份 **Defold（Lua）移植版**：[`Defold/`](Defold/README.md) —— 同一个产品、同一套计时语义
 > （两边的 8 个常量与 30 个用例都有自动比对），可打包成 Windows / macOS / Linux / Android / iOS / HTML5 原生应用。
 
-<img src="tests/visual/out/midgame-portrait.png" alt="竖屏对坐（默认深色主题）" width="390">
-<img src="tests/visual/out/byoyomi-portrait.png" alt="读秒（Byoyomi）模式" width="390">
-<img src="tests/visual/out/midgame-landscape.png" alt="横屏" width="390">
+<img src="screenshots/midgame-portrait.png" alt="竖屏对坐（默认深色主题）" width="390">
+<img src="screenshots/byoyomi-portrait.png" alt="读秒（Byoyomi）模式" width="390">
+<img src="screenshots/midgame-landscape.png" alt="横屏" width="390">
 
 > 上面几张是 `tests/visual/` 的自动截图产物。**截图场景为了让读秒阶段在预算内出现，把主时间缩到了 1 分钟**
 > （读秒部分仍是默认档的 20 秒 × 3 段），所以图中数字与「首次打开」的 10+3×20 不同，属正常。

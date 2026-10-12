@@ -50,7 +50,7 @@ actually uses:
 | Pause / resume (for the arbiter taking notation or settling a dispute) | ✅ | Pausing banks the exact time (and byoyomi periods) used on the current move |
 | Reset / rematch (swapping colours) | ✅ | One tap starts the next game |
 | Sound switch | ✅ | Move beep + time-up alarm (synthesised live, no audio files) |
-| Two-sided facing layout (both players read their own side) | ✅ | “Facing mode”, see section 5 |
+| Two-sided facing layout (both players read their own side) | ✅ | “Facing mode” (`180°`) turns the far panel’s digits around; “Swap sides” (`⇵`) moves each colour to the other half — see section 5 |
 | Keep screen awake | ✅ | Wake Lock API, the screen stays on during a game |
 | Replaceable logo / favicon | ✅ | Overwrite `assets/logo-source.png`, run `node tools/export-icons.js`, see section 7 |
 | Battery indicator | ❌ | The phone has one; no need to duplicate it |
@@ -126,7 +126,8 @@ The whole folder is static: drop it on any static host, **no backend, no databas
 | --- | --- |
 | Pause / Resume | Only shown while a game is running; **no Start button** — the clock is started by tapping a panel |
 | 🔊 / 🔇 | Sound switch (move beep + time-up alarm) |
-| ⇅ | Facing mode (see section 5) |
+| 180° | Facing mode: rotate the far panel 180° so the player sitting opposite reads it upright (see section 5) |
+| ⇵ | Swap sides: swap which screen position each colour occupies — Black top / White bottom ⇄ White top / Black bottom in portrait, Black left / White right ⇄ White left / Black right in landscape (see section 5) |
 | ⛶ | Fullscreen (iOS Safari has no web fullscreen — use “Add to Home Screen” instead) |
 | ⚙ | Back to setup (asks for confirmation during a game) |
 
@@ -224,19 +225,19 @@ the table. The usual Go “30 seconds per move” byoyomi ticks audibly for the 
 
 ---
 
-## 5. Placement (facing mode)
+## 5. Placement (facing mode · swap sides)
 
 Lay the phone flat between the two players, screen up:
 
 ```
         Black player (opposite side)
-   ┌──────────────────┐
-   │   ███ Black 2:57  │  ← the top panel is rotated 180°, upright for the far side
-   ├──────────────────┤
-   │  ▣ Pause 🔊 ⇅ ⛶ ⚙ │  ← toolbar: logo on the left, reachable from both sides
-   ├──────────────────┤
-   │   White 3:01 ███  │  ← the bottom panel is not rotated, upright for the near side
-   └──────────────────┘
+   ┌───────────────────────┐
+   │    ███ Black 2:57     │  ← the top panel is rotated 180°, upright for the far side
+   ├───────────────────────┤
+   │ ▣ 180° ⇵ Pause 🔊 ⛶ ⚙ │  ← toolbar: logo on the left, reachable from both sides
+   ├───────────────────────┤
+   │    White 3:01 ███     │  ← the bottom panel is not rotated, upright for the near side
+   └───────────────────────┘
         White player (near side)
 ```
 
@@ -249,6 +250,24 @@ Lay the phone flat between the two players, screen up:
 
 The clock is started from the panels themselves: tap the far side's half (Black, when White is to move first) and
 the other side's clock begins. There is no Start button to press.
+
+### `180°` (facing mode) vs `⇵` (swap sides) — not the same thing
+
+| Button | What it changes | Portrait | Landscape |
+| --- | --- | --- | --- |
+| **`180°`** | *Which way the digits point*: the far panel is turned 180° so the player opposite reads it upright | Top panel is rotated | Rotation is disabled (both sides would have to be) |
+| **`⇵`** | *Which screen position each colour occupies*: the two sides trade halves, digits stay as they are | Black top / White bottom ⇄ White top / Black bottom | Black left / White right ⇄ White left / Black right |
+
+* Use **`180°`** when two players sit facing each other and the far half must be readable: it does not move
+  anybody, it only turns the far panel's digits around.
+* Use **`⇵`** when the colours ended up on the wrong halves — e.g. the White player is sitting on the side of the
+  table where Black is displayed. The panel contents, the tap areas and the keyboard keys all follow the side
+  (`A`/`←` is always White), only the position on screen changes. Nothing is reordered in the page: the halves are
+  placed with CSS `order`, which is what makes it work in portrait and landscape alike.
+* They are independent, and they combine: with facing mode on, **after a swap the *other* panel is the rotated
+  one** (portrait), because the rotated panel is always the one visually on top.
+* The choice is stored with your other settings (`localStorage`), so a **rematch**, a language switch or a theme
+  change does not undo it.
 
 ---
 
@@ -310,7 +329,7 @@ ChessClock/
 ├── serve.js              zero-dependency static server (for phones on the LAN)
 ├── tests/
 │   ├── engine.test.js    timing engine tests (30)
-│   ├── project.test.js   project-integrity tests (17: i18n / themes / defaults / presets / scenes / start-up / icons …)
+│   ├── project.test.js   project-integrity tests (19: i18n / themes / defaults / presets / scenes / start-up / facing geometry / icons …)
 │   ├── run.js            single-process test entry point
 │   └── visual/           headless-Chrome visual rig (screenshots) + out/*.png artefacts
 ├── Defold/               the Defold (Lua) port: native apps and HTML5, see Defold/README.md
@@ -318,7 +337,7 @@ ChessClock/
 ```
 
 ```bash
-npm test        # 47 tests: timing logic + page/icon/bilingual/theme/defaults/screenshot-scene integrity
+npm test        # 49 tests: timing logic + page/icon/bilingual/theme/defaults/screenshot-scene integrity
 npm start       # start the LAN server, open it on your phone
 npm run shots   # re-shoot every scene with headless Chrome (needs Chrome/Edge installed)
 ```
@@ -341,7 +360,9 @@ periods first, pressing the clock after a flag cannot “rescue” time, a page 
 the correct side, time formatting (hours / minutes / 0.1 s), the logo master and both PNG pixel sizes, identical
 key sets across both languages with every used key present, and no hard-coded copy left in `app.js`. It also pins
 the start-up rule: **there is no Start button**, the first panel tap starts the *other* side's clock
-(tap Black → White runs), and that tap does not count as a move.
+(tap Black → White runs), and that tap does not count as a move. It also pins the facing geometry: the rotated panel
+is always the one visually on top, so after a `⇵` swap it is the other colour — and the swap itself is pure CSS
+`order` (the DOM is never reordered, the toolbar stays between the two halves).
 
 ### Bilingual UI (English / 华文)
 

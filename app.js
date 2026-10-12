@@ -74,6 +74,7 @@
     presetId: '10+3x20',              // = 10+3×20（主时间 10 分钟 + 20 秒 × 3 段）
     sound: true,
     facing: true,
+    swapped: false,                   // 「交换两侧位置」：false = 默认（竖屏上黑下白 / 横屏左黑右白）
     keepAwake: true,
     lang: 'en',                       // 首次打开：英文（按钮可随时切到华文，之后记住选择）
     theme: 'dark'                     // 深色（最初那套配色）为默认
@@ -452,6 +453,7 @@
     lastTickKey = null;
 
     applyFacing();
+    applySwap();
     $('#screen-clock').classList.remove('is-paused');
     $('#overlay').hidden = true;
 
@@ -463,6 +465,28 @@
 
   function applyFacing() {
     $('#screen-clock').classList.toggle('facing', !!cfg.facing);
+  }
+
+  /**
+   * 「交换两侧位置」：只改 CSS 的 order（面板与操作条都写好了 order），**不动 DOM** ——
+   * 操作条在标记里夹在两块面板中间，挪节点会把布局弄坏。
+   * 竖屏 order 决定上下、横屏决定左右，同一套规则两边通用。
+   */
+  function applySwap() {
+    $('#screen-clock').classList.toggle('is-swapped', !!cfg.swapped);
+    applyFarPane();
+  }
+
+  /**
+   * 对坐模式要旋转的是**视觉上排在最前的那一块**（竖屏=上方、横屏=左侧）。
+   * 这跟 DOM 顺序无关（DOM 里永远是 黑 → 操作条 → 白，用的是 CSS order），
+   * 所以必须按「是否交换过」来算：交换过就是白方在前，否则黑方在前。
+   */
+  function applyFarPane() {
+    var farSide = cfg.swapped ? 'w' : 'b';
+    ['w', 'b'].forEach(function (side) {
+      paneEls[side].classList.toggle('is-far', side === farSide);
+    });
   }
 
   /**
@@ -817,6 +841,13 @@
       applyFacing();
       fitTime();
     });
+    // 交换两侧位置：和别的选项一样存进 localStorage，再来一局 / 切语言 / 换主题都保持
+    $('#btnSwap').addEventListener('click', function () {
+      cfg.swapped = !cfg.swapped;
+      saveSettings();
+      applySwap();
+      fitTime();
+    });
 
     $('#btnRematch').addEventListener('click', function () { rematch(); });
     $('#btnBackToSetup').addEventListener('click', function () { backToSetup(); });
@@ -883,6 +914,7 @@
     applyLanguage(lang);      // 应用 data-i18n 标记 + 所有动态文案（含按语言重画预设/摘要）
     bindEvents();
     applyFacing();
+    applySwap();
     timeEls.w.textContent = E.formatTime(engineConfig().baseMs);
     timeEls.b.textContent = E.formatTime(engineConfig().baseMs);
     showScreen('setup');

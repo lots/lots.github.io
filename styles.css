@@ -483,18 +483,34 @@ kbd {
   padding: 2vmin 2vmin calc(2vmin + env(safe-area-inset-bottom));
 }
 
+/*
+ * 视觉顺序（≠ DOM 顺序）：默认黑方在前（竖屏在上、横屏在左），白方在后；操作条永远夹在中间。
+ * 「交换两侧位置」（#screen-clock.is-swapped）只改 order，不动 DOM —— DOM 顺序是
+ * 黑方面板 → 操作条 → 白方面板，挪节点会让操作条落到某一块面板的同一侧去。
+ * 三者都要写 order：只改两块面板的 order，操作条会跑到它们外面。
+ * 竖屏的 order 决定上下、横屏决定左右，同一套规则两边通用。
+ */
+.pane-b { order: 1; }
+.strip { order: 2; }
+.pane-w { order: 3; }
+
+#screen-clock.is-swapped .pane-w { order: 1; }
+#screen-clock.is-swapped .pane-b { order: 3; }
+
 .pane-w { background: var(--w-face); color: var(--w-ink); box-shadow: inset 0 0 0 1px var(--pane-edge); }
 .pane-b { background: var(--b-face); color: var(--b-ink); box-shadow: inset 0 0 0 1px var(--pane-edge); }
 
 /*
  * 对坐模式（.facing）：手机平放在两人之间时，近侧玩家看到的正常方向就是屏幕默认方向，
  * 因此需要把「对面那一块」的数字旋转 180°，两边才都读得正。
- * 竖屏布局是上下分屏，对面 = 上方面板（DOM 里的第一块），所以只需旋转 .pane:first-child。
+ * 竖屏布局是上下分屏，对面 = 视觉上排在最前的那块（= 上方那块）。注意**不能用 DOM 顺序**判断：
+ * 两块面板的位置由上面的 order 决定，「交换两侧」之后排在前面的换成白方，
+ * 所以 app.js 会把 is-far 打在视觉上第一块面板上，这里只认这个类。
  * 横屏是左右分屏，此时对面在上/下长边之外，任何单面板旋转都无法让两边同时读正，
  * 所以横屏不做旋转（适合手机立起来、或裁判/观众查看），详见 README「摆放方式」。
  */
 @media (orientation: portrait) {
-  .facing .pane:first-child .pane-inner { transform: rotate(180deg); }
+  .facing .pane.is-far .pane-inner { transform: rotate(180deg); }
 }
 
 .pane:active { filter: brightness(0.94); }
@@ -612,6 +628,14 @@ kbd {
 .icon-btn.primary { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); }
 .icon-btn:disabled { opacity: 0.45; }
 .icon-btn:active { transform: translateY(1px); }
+
+/*
+ * 「180°」是四字符文本（其余按钮都是单字符图标或短单词），按 13px/12px 内距会明显偏宽：
+ * 只给这一颗收一点内距与字号（收完正好落在 .icon-btn 的 40px 最小宽度上），
+ * 六颗按钮 + logo 在窄屏上才不会把操作条撑出屏幕。
+ * 其它按钮一律不动（含横屏那条 .icon-btn 规则 —— id 选择器优先级更高，这里保持不变即可）。
+ */
+#btnRotate { padding: 0 6px; font-size: 12px; }
 
 /* 棋钟页 logo：48×48，与设置页 96×96 用的是同一个源文件 */
 .strip-logo {

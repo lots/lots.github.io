@@ -3,7 +3,7 @@
  * ==================================================================
  * 用法：
  *     var t = window.ChessClockI18N.make('en');   // 或 'zh'
- *     t('clock.start')                 → "Start"
+ *     t('clock.pause')                 → "Pause"
  *     t('moves.n', { n: 3 })           → "Move 3"
  *
  * 约定：
@@ -73,15 +73,15 @@
       'setup.start': '开始对局',
 
       // —— 棋钟页 ——
+      // 没有「开始」按钮：开局是拍面板（拍对侧那一半 → 自己的钟开始走），
+      // 所以这颗按钮只有「暂停 / 继续」两种状态，未开表时整颗隐藏。
       'side.w': '白方',
       'side.b': '黑方',
       'pane.w.aria': '白方按键（走完棋按这里）',
       'pane.b.aria': '黑方按键（走完棋按这里）',
       'strip.aria': '棋钟操作',
-      'clock.start': '开始',
       'clock.resume': '继续',
       'clock.pause': '暂停',
-      'clock.finished': '已结束',
       'clock.sound.on': '打开声音',
       'clock.sound.off': '关闭声音',
       'clock.facing.title': '对坐模式开关',
@@ -166,15 +166,16 @@
       'how.byoyomi': '<strong>Byoyomi</strong>: after the main time is gone, every move gets a fresh fixed number of seconds (unused time does not accumulate); overstepping loses. “30s × 5 periods” means you may overthink on four moves and lose on the fifth. During byoyomi the digits turn purple and the last 10 seconds tick audibly. Common in Weiqi (Go), Shogi and Xiangqi.',
       'setup.start': 'Start game',
 
+      // —— clock page ——
+      // No Start button: the game starts from a panel tap (tap the far side → your clock runs),
+      // so this button only ever says Pause / Resume and stays hidden until the clock is live.
       'side.w': 'White',
       'side.b': 'Black',
       'pane.w.aria': 'White button (tap here after your move)',
       'pane.b.aria': 'Black button (tap here after your move)',
       'strip.aria': 'Clock controls',
-      'clock.start': 'Start',
       'clock.resume': 'Resume',
       'clock.pause': 'Pause',
-      'clock.finished': 'Finished',
       'clock.sound.on': 'Turn sound on',
       'clock.sound.off': 'Turn sound off',
       'clock.facing.title': 'Facing mode',

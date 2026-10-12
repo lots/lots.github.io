@@ -465,14 +465,31 @@
     $('#screen-clock').classList.toggle('facing', !!cfg.facing);
   }
 
-  /** 按钟：整块面板就是那个跷跷板 */
+  /**
+   * 按钟：整块面板就是那个跷跷板。
+   *
+   * 未开表时拍某一侧 = 开表，**由对侧开始计时** —— 与实体钟一致：跷跷板压在自己这边，
+   * 走的是对方的钟。白先走，所以开局拍「黑方」那一侧 → 白方的钟开始倒数（反之亦然）。
+   * 这一下不算步数（开局谁都没走过棋）。
+   *
+   * 开表之后：拍自己那一侧 = 走完一手，时间交给对方；拍非走棋方不产生任何效果。
+   */
   function handlePress(side) {
     if (!S || S.finished) { return; }
     Sound.unlock();
-    // 尚未开表时，按任意一方都由白方开始（白先走），且不计步数
-    var target = S.started ? side : 'w';
-    var res = E.press(S, target, Date.now());
 
+    if (!S.started) {
+      var res0 = E.start(S, Date.now(), E.other(side));
+      if (res0.type === 'start') {
+        Sound.click();
+        requestWake();
+        ensureLoop();
+      }
+      render();
+      return;
+    }
+
+    var res = E.press(S, side, Date.now());
     if (res.type === 'move' || res.type === 'start') {
       Sound.click();
       requestWake();
@@ -484,10 +501,10 @@
     render();
   }
 
+  /** 暂停 / 继续；未开表时是空操作（开局靠拍面板，没有「开始」按钮） */
   function togglePause() {
-    if (!S || S.finished) { return; }
+    if (!S || S.finished || !S.started) { return; }
     Sound.unlock();
-    if (!S.started) { handlePress('w'); return; }
     if (S.paused) {
       E.resume(S, Date.now());
       requestWake();
@@ -628,18 +645,19 @@
     updateToggleButton();
   }
 
-  /** 中间那颗大按钮的文字（开始 / 继续 / 暂停 / 已结束）—— 语言与状态都会影响它 */
+  /**
+   * 中间那颗按钮**只有「暂停 / 继续」**：开局靠拍面板（拍对侧 → 自己开始计时），
+   * 所以未开表时整颗隐藏，一局结束（结果覆盖层已出来）时也隐藏。
+   */
   function updateToggleButton() {
     var btn = $('#btnToggle');
     if (!btn) { return; }
-    var finished = !!(S && S.finished);
-    var started = !!(S && S.started);
-    var paused = !!(S && S.paused);
-    btn.disabled = finished;
-    btn.classList.toggle('primary', !started || paused);
-    $('#btnToggleLabel').textContent = finished
-      ? t('clock.finished')
-      : (!started ? t('clock.start') : (paused ? t('clock.resume') : t('clock.pause')));
+    var live = !!(S && S.started && !S.finished);
+    btn.hidden = !live;
+    if (!live) { return; }
+    var paused = !!S.paused;
+    btn.classList.toggle('primary', paused);
+    $('#btnToggleLabel').textContent = paused ? t('clock.resume') : t('clock.pause');
   }
 
   /* ================= 计时循环 ================= */

@@ -37,7 +37,7 @@ actually uses:
 | Games supported | Chess + Weiqi (Go) | Byoyomi is the Go system; see “Using it for Weiqi” in section 4 |
 | Colour themes | Light / Medium / Dark | Dropdown on the setup page, remembered; see “Colour themes” in section 7 |
 | Independent countdown per side, huge digits | ✅ | Digits grow to fill the panel so the far side of the table can read them |
-| See-saw buttons: press your side, stop yourself and start the opponent | ✅ | **The whole half-screen is the button** — slap it with your palm, no aiming |
+| See-saw buttons: press one side, stop it and start the other | ✅ | **The whole half-screen is the button** — slap it with your palm, no aiming. This is also how the game starts: there is **no Start button** |
 | Move-order logic (pressing your own side before moving does nothing) | ✅ | Same as a real clock: pressing the inactive side has no effect |
 | Fischer increment (added after each move) | ✅ | Most common in tournaments; shares one preset list with Bronstein and sudden death |
 | Byoyomi (fresh X seconds per move once the main time is gone, multi-period) | ✅ | **The default mode on first launch**; the Go / Shogi / Xiangqi system, see section 4 |
@@ -109,19 +109,22 @@ The whole folder is static: drop it on any static host, **no backend, no databas
 ### Game flow
 
 1. On the setup page pick the **timing mode** and the **time control** (a preset is fine), then tap “Start game”.
-2. On the clock screen tap **Start** in the middle — White's clock begins. You can also just slap either panel to
-   begin (White moves first).
+2. On the clock screen **there is no Start button** — the panels *are* the see-saw. Tapping one side stops that
+   side's clock and starts the other side's, so to begin a game (White to move first) **tap Black's half**:
+   White's clock starts counting down at once. Tapping White's half instead starts Black's clock, in case Black
+   is to move first. That first tap is not counted as a move.
 3. Whoever has moved **slaps their own half of the screen**; the time immediately passes to the opponent.
 4. When a side reaches zero: the clock stops at once, the alarm sounds, the phone vibrates and a result overlay
    appears (“… ran out of time / … wins”).
    → “Rematch (swap colours)” or “Back to setup”.
-5. To stop the clock temporarily (notation, settling a dispute): tap “Pause”, then “Resume”.
+5. To stop the clock temporarily (notation, settling a dispute): tap “Pause”, then “Resume”. That button only
+   appears once the clock is running.
 
 ### The middle toolbar
 
 | Button | What it does |
 | --- | --- |
-| Start / Pause / Resume | The main control; before the clock starts it starts White |
+| Pause / Resume | Only shown while a game is running; **no Start button** — the clock is started by tapping a panel |
 | 🔊 / 🔇 | Sound switch (move beep + time-up alarm) |
 | ⇅ | Facing mode (see section 5) |
 | ⛶ | Fullscreen (iOS Safari has no web fullscreen — use “Add to Home Screen” instead) |
@@ -131,9 +134,9 @@ The whole folder is static: drop it on any static host, **no backend, no databas
 
 | Key | What it does |
 | --- | --- |
-| `A` / `←` | White's button |
-| `L` / `→` | Black's button |
-| `Space` | Start / pause / resume |
+| `A` / `←` | White's button (pressing it starts Black's clock before the game begins) |
+| `L` / `→` | Black's button (pressing it starts White's clock before the game begins) |
+| `Space` | Pause / resume (does nothing before the first panel press) |
 | `F` | Fullscreen |
 
 ---
@@ -215,8 +218,9 @@ The preset buttons use “main time + periods × seconds per move”: `30+5×30`
 the same thing written in the other order.
 
 During the game it works like chess: lay the phone flat between the two players, turn on **facing mode**, and
-whoever has just played slaps their own half of the screen. The digits fill the panel automatically so they are
-readable from across the table. The usual Go “30 seconds per move” byoyomi ticks audibly for the last 10 seconds.
+whoever has just played slaps their own half of the screen. To start, tap **Black's** half so White's clock runs
+first (see the game flow in section 3). The digits fill the panel automatically so they are readable from across
+the table. The usual Go “30 seconds per move” byoyomi ticks audibly for the last 10 seconds.
 
 ---
 
@@ -242,6 +246,9 @@ Lay the phone flat between the two players, screen up:
 * **Landscape**: split left/right (Black left, White right) and **never rotated**. In landscape both panels sit on
   the same line of sight, so no single-panel rotation can make both players read upright — landscape is better for
   propping the phone up or for the arbiter and spectators.
+
+The clock is started from the panels themselves: tap the far side's half (Black, when White is to move first) and
+the other side's clock begins. There is no Start button to press.
 
 ---
 
@@ -272,6 +279,9 @@ Lay the phone flat between the two players, screen up:
    line on the panel shows “Byoyomi 2/3”; watch out when only the last period is left. Pausing banks the periods
    already crossed, and on resume the current byoyomi window is refilled (so nobody loses byoyomi time to a
    pause).
+9. **Starting the game**: there is no Start button — tapping a panel *is* the start gesture (tap Black's half for
+   White to move first). Agree before the round on who taps, and note that the first tap does **not** count as a
+   move, so the move counters still read 0/0.
 
 ---
 
@@ -300,7 +310,7 @@ ChessClock/
 ├── serve.js              zero-dependency static server (for phones on the LAN)
 ├── tests/
 │   ├── engine.test.js    timing engine tests (30)
-│   ├── project.test.js   project-integrity tests (16: i18n / themes / defaults / presets / scenes / icons …)
+│   ├── project.test.js   project-integrity tests (17: i18n / themes / defaults / presets / scenes / start-up / icons …)
 │   ├── run.js            single-process test entry point
 │   └── visual/           headless-Chrome visual rig (screenshots) + out/*.png artefacts
 ├── Defold/               the Defold (Lua) port: native apps and HTML5, see Defold/README.md
@@ -308,7 +318,7 @@ ChessClock/
 ```
 
 ```bash
-npm test        # 46 tests: timing logic + page/icon/bilingual/theme/defaults/screenshot-scene integrity
+npm test        # 47 tests: timing logic + page/icon/bilingual/theme/defaults/screenshot-scene integrity
 npm start       # start the LAN server, open it on your phone
 npm run shots   # re-shoot every scene with headless Chrome (needs Chrome/Edge installed)
 ```
@@ -329,7 +339,9 @@ loses”), a move played during byoyomi consumes a period, the hand-off when the
 pressing the inactive side does nothing, duplicate delivery of one touch is debounced, pausing banks time and
 periods first, pressing the clock after a flag cannot “rescue” time, a page suspended for 30 minutes still flags
 the correct side, time formatting (hours / minutes / 0.1 s), the logo master and both PNG pixel sizes, identical
-key sets across both languages with every used key present, and no hard-coded copy left in `app.js`.
+key sets across both languages with every used key present, and no hard-coded copy left in `app.js`. It also pins
+the start-up rule: **there is no Start button**, the first panel tap starts the *other* side's clock
+(tap Black → White runs), and that tap does not count as a move.
 
 ### Bilingual UI (English / 华文)
 

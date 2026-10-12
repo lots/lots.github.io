@@ -149,7 +149,8 @@
 
     <div class="strip" role="toolbar" aria-label="Clock controls" data-i18n-aria-label="strip.aria">
       <img class="strip-logo" src="assets/logo-strip.png" alt="" width="48" height="48">
-      <button type="button" class="icon-btn primary" id="btnToggle"><span id="btnToggleLabel" data-i18n="clock.start">Start</span></button>
+      <!-- 暂停 / 继续：开局靠拍面板（拍对侧 → 自己的钟开始走），所以未开表时这颗按钮是隐藏的 -->
+      <button type="button" class="icon-btn" id="btnToggle" hidden><span id="btnToggleLabel" data-i18n="clock.pause">Pause</span></button>
       <button type="button" class="icon-btn" id="btnSound" title="Turn sound off" aria-pressed="true" data-i18n-title="clock.sound.off">🔊</button>
       <button type="button" class="icon-btn" id="btnRotate" title="Facing mode" data-i18n-title="clock.facing.title">⇅</button>
       <button type="button" class="icon-btn" id="btnFull" title="Fullscreen" data-i18n-title="clock.full.title">⛶</button>
@@ -214,7 +215,8 @@
   }
   function mode(m) { document.querySelector('#modeGroup .seg[data-mode="' + m + '"]').click(); }
   function beginClock() { document.getElementById("btnStartGame").click(); }
-  function start() { document.getElementById("btnToggle").click(); }
+  // 开局：没有「开始」按钮了，改为拍对侧那一半 —— 拍黑方 → 白方的钟开始走。
+  function startClock() { press("b"); }
 
   window.addEventListener("load", function () {
     var q = new URLSearchParams(location.search);
@@ -235,7 +237,7 @@
       run = (function () {
         mode("fischer");
         setNum("baseMin", 3); setNum("incSec", 2);
-        beginClock(); start();
+        beginClock(); startClock();
         return wait(500).then(function(){ press("w"); })
           .then(function(){ return wait(200); })
           .then(function(){
@@ -263,11 +265,21 @@
 
     if (scene === "setup") { return; }
 
+    // 刚进入棋钟页、还没拍过面板：用来核对「没有开始按钮」这件事
+    if (scene === "ready") {
+      run = (function () {
+        mode("fischer");
+        setNum("baseMin", 10); setNum("incSec", 5);
+        beginClock();
+        return wait(300);
+      })();
+    }
+
     if (scene === "midgame") {
       run = (function () {
         mode("fischer");
         setNum("baseMin", 3); setNum("incSec", 2);
-        beginClock(); start();
+        beginClock(); startClock();
         return wait(1400).then(function(){ press("w"); })
           .then(function(){ return wait(1100); }).then(function(){ press("b"); })
           .then(function(){ return wait(1600); }).then(function(){ press("w"); })
@@ -281,7 +293,7 @@
         // 主时间缩到 1 分钟，只是为了在虚拟时间预算内跑到读秒阶段；
         // 读秒部分与默认档 10+3×20 一致（每手 20 秒 × 3 段）。
         setNum("baseMin", 1); setNum("incSec", 20); setNum("periods", 3);
-        beginClock(); start();
+        beginClock(); startClock();
         // 主时间 60 秒用尽后进入读秒，并已跨过 1 段（剩 2/3 段）
         return wait(95000);
       })();
@@ -292,7 +304,7 @@
       run = (function () {
         mode("sudden");
         setNum("baseMin", 1); setNum("incSec", 0);
-        beginClock(); start();
+        beginClock(); startClock();
         return wait(budget).then(function(){
           if (scene === "critical") { press("w"); return wait(2000); }
           return wait(1000);
@@ -305,12 +317,15 @@
         mode("fischer");
         beginClock();
         return wait(50).then(function () {
+          // 状态标签走 i18n 表，别写死语言（曾在这里留下过中文，而界面默认英文）
+          var t = window.ChessClockI18N.make(
+            document.documentElement.lang.indexOf("zh") === 0 ? "zh" : "en");
           var w = document.querySelector('.pane[data-side="w"]');
           var b = document.querySelector('.pane[data-side="b"]');
           document.querySelector('.time[data-side="w"]').textContent = "0:47";
           document.querySelector('.time[data-side="b"]').textContent = "12.6";
-          document.querySelector('.state-chip[data-side="w"]').textContent = "计时中";
-          document.querySelector('.state-chip[data-side="b"]').textContent = "等待";
+          document.querySelector('.state-chip[data-side="w"]').textContent = t("chip.running");
+          document.querySelector('.state-chip[data-side="b"]').textContent = t("chip.waiting");
           w.classList.add("is-active", "is-low");
           b.classList.add("is-critical");
         });

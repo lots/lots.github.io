@@ -198,6 +198,9 @@ Built-in presets (you can always type your own: 1–180 minutes / 0–180 byoyom
 
 > The small line under each button (e.g. `20s × 3`) spells the order out: it is the same thing as the main
 > notation `3×20`.
+> `10+3×20` is **also applied automatically the first time you switch to Byoyomi** from another mode, so a
+> Fischer `5+3` does not turn into “5 min + 3 s × 3 periods” by accident. If the three numbers already match a
+> Byoyomi preset (you picked one yourself), the preset is left alone.
 > For community and school events I suggest **10+3×20** (the default) or **15+3×30**: beginners won't lose time
 > just because they couldn't find the button.
 
@@ -338,7 +341,7 @@ ChessClock/
 ```
 
 ```bash
-npm test        # 49 tests: timing logic + page/icon/bilingual/theme/defaults/screenshot-scene integrity
+npm test        # 50 tests: timing logic + page/icon/bilingual/theme/defaults/byoyomi-seed/screenshot-scene integrity
 npm start       # start the LAN server, open it on your phone
 npm run shots   # re-shoot every scene with headless Chrome (needs Chrome/Edge installed)
 ```

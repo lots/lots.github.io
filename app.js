@@ -439,6 +439,30 @@
     syncSetupUI();
   }
 
+  /**
+   * 从别的模式第一次切进 Byoyomi 时，给一组像样的默认值 10+3×20。
+   *
+   * 模式按钮只改 cfg.mode，三个数字会从上一个模式继承下来（比如 Fischer 的
+   * 5+3 到了读秒就变成 5 分钟 + 每手 3 秒 × 3 段，很怪）。所以这里兜一层：
+   *   - 当前数字**已经是** PRESETS_BYOYOMI 里的某一档 → 是用户自己挑的，原样保留；
+   *   - 不是 → 回落到 Byoyomi 默认 10+3×20（与 DEFAULTS 里的那组一致）。
+   * 只在「模式从非 Byoyomi 变成 Byoyomi」时由模式按钮调用；启动时恢复存档不走这里。
+   */
+  function seedByoyomiDefault() {
+    var isPreset = false;
+    PRESETS_BYOYOMI.forEach(function (p) {
+      if (p.baseMin === cfg.baseMin && p.incSec === cfg.incSec && p.periods === cfg.periods) {
+        isPreset = true;
+      }
+    });
+    if (isPreset) { return false; }
+    cfg.baseMin = 10;
+    cfg.incSec = 20;
+    cfg.periods = 3;
+    cfg.presetId = '10+3x20';
+    return true;
+  }
+
   /* ================= 对局 ================= */
 
   function newGame() {
@@ -751,7 +775,11 @@
     // 模式
     $$('#modeGroup .seg').forEach(function (b) {
       b.addEventListener('click', function () {
+        var prevMode = cfg.mode;
         cfg.mode = b.dataset.mode;
+        // 从别的模式第一次切进读秒：给 Byoyomi 默认 10+3×20
+        //（已经是读秒预设的话 seedByoyomiDefault 会保留用户挑的那档）
+        if (prevMode !== cfg.mode && cfg.mode === E.MODES.BYOYOMI) { seedByoyomiDefault(); }
         // 切到读秒时给个合理的默认额度（0 秒读秒没有意义）
         if (cfg.mode === E.MODES.BYOYOMI && !(cfg.incSec >= 1)) { cfg.incSec = 30; }
         syncSetupUI();

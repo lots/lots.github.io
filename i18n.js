@@ -69,7 +69,7 @@
       'setup.keys.hint': '电脑上可用键盘当棋钟：<kbd>A</kbd>/<kbd>←</kbd> 白方按键 · <kbd>L</kbd>/<kbd>→</kbd> 黑方按键 · <kbd>空格</kbd> 开始 / 暂停 · <kbd>F</kbd> 全屏',
 
       'setup.how.heading': '怎么用',
-      'how.facing': '<strong>竖屏平放在两位选手之间</strong>（推荐）：下半屏是白方，上半屏是黑方，并且黑方的数字已旋转 180°，坐在对面的选手看到的就是正的。谁走完棋，就用手掌拍一下自己那一侧的整块面板，时间立刻交给对方。<br>裁判先点「开始对局」，再点中间的「开始」，白方即开始计时。<br>横屏时左右分屏（黑左白右），适合把手机立起来、或由裁判/观众查看。',
+      'how.facing': '<strong>竖屏平放在两位选手之间</strong>（推荐）：下半屏是白方，上半屏是黑方，并且黑方的数字已旋转 180°，坐在对面的选手看到的就是正的。谁走完棋，就用手掌拍一下自己那一侧的整块面板，时间立刻交给对方。<br>点「开始对局」后<strong>没有第二次「开始」</strong>：白先走时由黑方拍自己那一侧 → <strong>白方的钟随即开始走</strong>；此后谁走完棋就拍自己那一侧，<strong>对方的钟立即开始计时</strong>。<br>横屏时左右分屏（黑左白右），适合把手机立起来、或由裁判/观众查看。',
       'how.byoyomi': '<strong>读秒（Byoyomi）</strong>：主时间用完后，每一手重新给固定的秒数（用不完不累积），超了就算输；「30 秒 × 5 段」表示允许你超时思考 4 次，第 5 次才判负。读秒阶段数字转紫色，最后 10 秒每秒有提示音。围棋、将棋、中国象棋常用这种制式。',
       'setup.start': '开始对局',
 
@@ -167,7 +167,7 @@
       'setup.keys.hint': 'On a computer you can use the keyboard: <kbd>A</kbd>/<kbd>←</kbd> White · <kbd>L</kbd>/<kbd>→</kbd> Black · <kbd>Space</kbd> start / pause · <kbd>F</kbd> fullscreen',
 
       'setup.how.heading': 'How to use',
-      'how.facing': '<strong>Lay the phone flat between the two players</strong> (recommended): the lower half is White, the upper half is Black, and Black’s digits are rotated 180° so the player sitting opposite reads them upright. After your move, tap your own half with your palm — the time passes to the opponent.<br>The arbiter taps “Start game”, then “Start” in the middle, and White’s clock begins.<br>In landscape the screen splits left/right (Black left, White right) — handy for propping the phone up or for the arbiter and spectators.',
+      'how.facing': '<strong>Lay the phone flat between the two players</strong> (recommended): the lower half is White, the upper half is Black, and Black’s digits are rotated 180° so the player sitting opposite reads them upright. After your move, tap your own half with your palm — the time passes to the opponent.<br><strong>There is no second "Start"</strong>: after "Start game", the side not to move first (Black, when White opens) taps its own half — and <strong>White’s clock starts</strong>. From then on, whoever has just moved taps their own half and <strong>the opponent’s clock starts running</strong>.<br>In landscape the screen splits left/right (Black left, White right) — handy for propping the phone up or for the arbiter and spectators.',
       'how.byoyomi': '<strong>Byoyomi</strong>: after the main time is gone, every move gets a fresh fixed number of seconds (unused time does not accumulate); overstepping loses. “30s × 5 periods” means you may overthink on four moves and lose on the fifth. During byoyomi the digits turn purple and the last 10 seconds tick audibly. Common in Weiqi (Go), Shogi and Xiangqi.',
       'setup.start': 'Start game',
 

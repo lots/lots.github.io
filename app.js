@@ -171,7 +171,7 @@
   /** 语言一变就要重画的那几处（模式提示、加秒标签、预设、摘要、棋钟页状态） */
   function renderLanguageDependentUI() {
     $('#modeHint').textContent = t('hint.' + cfg.mode);
-    updateDerivedUI();          // 内含 buildPresets()：语言一变，预设的类别名也跟着换
+    updateDerivedUI();          // 内含 buildPresetOptions()：语言一变，预设的类别名也跟着换
     updateSoundButton();
     updateToggleButton();
     if (S) { render(); }
@@ -319,6 +319,7 @@
 
   function showScreen(name) {
     $('#screen-setup').hidden = (name !== 'setup');
+    $('#screen-help').hidden = (name !== 'help');
     $('#screen-clock').hidden = (name !== 'clock');
     if (name === 'clock') {
       window.requestAnimationFrame(fitTime);
@@ -336,34 +337,42 @@
   /* ================= 设置界面 ================= */
 
   /**
-   * 重建预设按钮。模式或语言变了都要重建（主记法与副标题都依赖这两者），
+   * 重建时间预设下拉框：一档一行「10+3×20 · 20s × 3」，最后多一档「自定义」。
+   * 模式或语言变了都要重建（主记法与类别名都依赖这两者），
    * 用一个 key 记住上次建的是哪一套，避免每次刷新都重建 DOM。
    */
   var builtPresetKey = null;
-  function buildPresets() {
+  function buildPresetOptions() {
     var key = cfg.mode + '|' + lang;
     if (key === builtPresetKey) { return; }
     builtPresetKey = key;
 
-    var box = $('#presets');
-    box.innerHTML = '';
+    var sel = $('#presetSelect');
+    sel.innerHTML = '';
     presetsFor(cfg.mode).forEach(function (p) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'preset';
-      b.dataset.id = p.id;
-      b.innerHTML = '<strong>' + presetLabel(p) + '</strong><span>' +
-        (p.sub || t(p.name)) + '</span>';
-      b.addEventListener('click', function () {
-        cfg.baseMin = p.baseMin;
-        cfg.incSec = p.incSec;
-        if (p.periods) { cfg.periods = p.periods; }
-        cfg.presetId = p.id;
-        syncSetupUI();
-        saveSettings();
-      });
-      box.appendChild(b);
+      var o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = presetLabel(p) + '  ·  ' + (p.sub || t(p.name));
+      sel.appendChild(o);
     });
+    // 数字被手改过、对不上任何一档时，停在这一项上（value=""）
+    var custom = document.createElement('option');
+    custom.value = '';
+    custom.textContent = t('preset.custom');
+    sel.appendChild(custom);
+  }
+
+  /** 选中某一档预设（下拉框 change 时调用）；value="" 是「自定义」，不动数字 */
+  function applyPreset(id) {
+    var picked = null;
+    presetsFor(cfg.mode).forEach(function (p) { if (p.id === id) { picked = p; } });
+    if (!picked) { return; }
+    cfg.baseMin = picked.baseMin;
+    cfg.incSec = picked.incSec;
+    if (picked.periods) { cfg.periods = picked.periods; }
+    cfg.presetId = picked.id;
+    syncSetupUI();
+    saveSettings();
   }
 
   /**
@@ -398,16 +407,15 @@
         ? t('inc.byoyomi')
         : (cfg.mode === E.MODES.SUDDEN ? t('inc.sudden') : t('inc.fischer')));
 
-    var match = null;
-    buildPresets();                       // 模式/语言变了就换一套预设（内部按 key 去重）
+    var match = '';
+    buildPresetOptions();                 // 模式/语言变了就换一套预设（内部按 key 去重）
     presetsFor(cfg.mode).forEach(function (p) {
       if (p.baseMin === cfg.baseMin && p.incSec === cfg.incSec &&
           (!p.periods || p.periods === cfg.periods)) { match = p.id; }
     });
-    if (match) { cfg.presetId = match; }
-    $$('#presets .preset').forEach(function (b) {
-      b.classList.toggle('is-on', b.dataset.id === cfg.presetId);
-    });
+    cfg.presetId = match || null;
+    // 对不上任何一档 → 落到最后一档「自定义」（value=""）
+    $('#presetSelect').value = match;
   }
 
   /** 把 cfg 完整写回控件 */
@@ -829,6 +837,19 @@
       newGame();
     });
 
+    // 时间预设下拉框：选中某一档就套用它的三个数字；「自定义」不动数字
+    $('#presetSelect').addEventListener('change', function () {
+      applyPreset(this.value);
+    });
+
+    // 「怎么用」单独一页：设置页底部进、页头按钮回
+    $('#btnHelp').addEventListener('click', function () {
+      showScreen('help');
+      var back = $('#btnHelpBack');
+      if (back && back.focus) { back.focus(); }
+    });
+    $('#btnHelpBack').addEventListener('click', function () { showScreen('setup'); });
+
     // 右上角 ENG / 华文：切一次语言并记住
     $('#btnLang').addEventListener('click', function () {
       applyLanguage(lang === 'zh' ? 'en' : 'zh');
@@ -889,6 +910,14 @@
       var t = e.target;
       var tag = t && t.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON') { return; }
+      // 「怎么用」页：Esc / 退格 退回设置页
+      if (!$('#screen-help').hidden) {
+        if (e.key === 'Escape' || e.key === 'Backspace') {
+          e.preventDefault();
+          showScreen('setup');
+        }
+        return;
+      }
       if ($('#screen-clock').hidden) { return; }
       var k = e.key;
       if (k === ' ' || k === 'Spacebar' || k === 'Enter') {
@@ -940,7 +969,7 @@
       chipEls[side] = $('.state-chip[data-side="' + side + '"]', paneEls[side]);
     });
 
-    buildPresets();
+    buildPresetOptions();
     syncSetupUI();
     applyTheme(cfg.theme);    // 主题（head 里的内联脚本已先落一次，避免首屏闪深色）
     applyLanguage(lang);      // 应用 data-i18n 标记 + 所有动态文案（含按语言重画预设/摘要）

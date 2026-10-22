@@ -71,8 +71,11 @@
     </section>
 
     <section class="card">
-      <h2 data-i18n="setup.time.heading">2. Time control</h2>
-      <div class="presets" id="presets"></div>
+      <h2 id="timeHeading" data-i18n="setup.time.heading">2. Time control</h2>
+      <!-- 时间预设：下拉框（一档一行「10+3×20 · 20s × 3」），最后多一档「自定义」 -->
+      <div class="preset-row">
+        <select id="presetSelect" aria-labelledby="timeHeading"></select>
+      </div>
       <div class="fields">
         <label class="field"><span data-i18n="setup.base.label">Base time (minutes)</span>
           <input id="baseMin" type="number" inputmode="numeric" min="1" max="180" step="1" value="10">
@@ -107,8 +110,25 @@
       </p>
     </section>
 
+    <!-- 「怎么用」单独一页（#screen-help）：这里只留一个入口 -->
+    <button type="button" class="btn help-link" id="btnHelp">
+      <span data-i18n="setup.how.heading">How to use</span><span class="chev" aria-hidden="true">›</span>
+    </button>
+  </div>
+
+  <footer class="app-foot">
+    <button type="button" class="btn primary big" id="btnStartGame" data-i18n="setup.start">Start game</button>
+  </footer>
+</main>
+
+<!-- ============ 怎么用 ============ -->
+<section id="screen-help" class="screen help" hidden>
+  <header class="help-head">
+    <button type="button" class="btn back-btn" id="btnHelpBack" data-i18n="overlay.back">Back to setup</button>
+    <h1 data-i18n="setup.how.heading">How to use</h1>
+  </header>
+  <div class="scroll">
     <section class="card">
-      <h2 data-i18n="setup.how.heading">How to use</h2>
       <p class="hint" data-i18n-html="how.facing">
         <strong>Lay the phone flat between the two players</strong> (recommended): the lower half is White,
         the upper half is Black, and Black’s digits are rotated 180° so the player sitting opposite reads them
@@ -126,11 +146,7 @@
       </p>
     </section>
   </div>
-
-  <footer class="app-foot">
-    <button type="button" class="btn primary big" id="btnStartGame" data-i18n="setup.start">Start game</button>
-  </footer>
-</main>
+</section>
 
 <!-- ============ 棋钟 ============ -->
 <section id="screen-clock" class="screen clock" hidden>

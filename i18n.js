@@ -57,6 +57,7 @@
       'preset.blitz': '超快棋',
       'preset.rapid': '快棋',
       'preset.classical': '慢棋',
+      'preset.custom': '自定义',
 
       'setup.options.heading': '3. 选项',
       'setup.theme.label': '界面主题',
@@ -155,6 +156,7 @@
       'preset.blitz': 'Blitz',
       'preset.rapid': 'Rapid',
       'preset.classical': 'Classical',
+      'preset.custom': 'Custom',
 
       'setup.options.heading': '3. Options',
       'setup.theme.label': 'Colour theme',

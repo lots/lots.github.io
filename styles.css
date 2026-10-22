@@ -302,34 +302,33 @@ kbd {
   color: var(--accent-ink);
 }
 
-.presets {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
-  gap: 8px;
-}
+/* 时间预设：一个下拉框，占满整行（原来是一整片按钮宫格） */
+.preset-row { margin: 0 0 12px; }
 
-.preset {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 4px;
+.preset-row select {
+  width: 100%;
+  padding: 11px 12px;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--sunken);
+  border-radius: 10px;
+  background: var(--field-bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px; /* ≥16px 避免 iOS 聚焦时自动放大页面 */
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
 
-.preset strong { font-size: clamp(14px, 4vw, 17px); font-variant-numeric: tabular-nums; }
-.preset span { font-size: 11px; color: var(--muted); }
+.preset-row select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
 
-.preset.is-on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent);
+/* 设置页底部进入「怎么用」的那一行 */
+.help-link {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
 }
 
-.preset.is-on span { color: var(--accent-soft-fg); }
+.help-link .chev { opacity: 0.6; font-weight: 700; }
 
 .fields {
   display: grid;
@@ -410,6 +409,29 @@ kbd {
 }
 
 .select-row select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+
+/* ---------------- 怎么用（单独一页 #screen-help） ---------------- */
+
+.help { background: linear-gradient(180deg, var(--bg-grad-a) 0%, var(--bg-grad-b) 100%); }
+
+.help-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 8px;
+  flex: 0 0 auto;
+}
+
+.help-head h1 {
+  margin: 0;
+  font-size: clamp(17px, 4.4vw, 22px);
+  letter-spacing: 0.02em;
+}
+
+.back-btn { flex: 0 0 auto; }
+
+/* 两段说明现在在同一张卡片里，段间留点空（原来是两个 <p> 各在一张卡里） */
+.help .hint + .hint { margin-top: 16px; }
 
 .app-foot {
   flex: 0 0 auto;

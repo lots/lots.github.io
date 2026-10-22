@@ -14,6 +14,10 @@ switches it at any time and the choice is remembered (you can also force it with
 > There is also a **Defold (Lua) port**: [`Defold/`](Defold/README.md) — the same product with the same timing
 > semantics (the 8 constants and 30 test cases are cross-checked automatically), and it can be packaged as a
 > native Windows / macOS / Linux / Android / iOS / HTML5 app. (Its README is in Chinese for now.)
+>
+> And a **Godot 4 port**: [`Godot/`](Godot/README.md) — same product again, same 30 test cases plus 16 headless UI
+> tests, and every constant / string / preset / colour is diffed against this web version by
+> `Godot/tests/project_spec.js`. Run it with Godot 4.5+ (`godot --path Godot`). (README also in Chinese for now.)
 
 <img src="screenshots/midgame-portrait.png" alt="Facing mode, portrait (default dark theme)" width="390">
 <img src="screenshots/byoyomi-portrait.png" alt="Byoyomi mode" width="390">
@@ -108,7 +112,10 @@ The whole folder is static: drop it on any static host, **no backend, no databas
 
 ### Game flow
 
-1. On the setup page pick the **timing mode** and the **time control** (a preset is fine), then tap “Start game”.
+1. On the setup page pick the **timing mode**, then the **time control** from the dropdown at the top of card 2
+   (a preset is fine; the last entry, **Custom**, is picked automatically once you type your own numbers), then
+   tap “Start game”. The setup page ends with a **“How to use ›”** row: it opens a separate page with the
+   placement / `180°` explanation and the byoyomi primer (`Esc` or the “Back to setup” button returns).
 2. On the clock screen **there is no Start button** — the panels *are* the see-saw. Tapping one side stops that
    side's clock and starts the other side's, so to begin a game (White to move first) **tap Black's half**:
    White's clock starts counting down at once. Tapping White's half instead starts Black's clock, in case Black
@@ -166,8 +173,8 @@ The whole folder is static: drop it on any static host, **no backend, no databas
 > Byoyomi and Bronstein delay are the pair people mix up: Bronstein hands you N seconds on **every move from move
 > 1**; byoyomi is **the monthly salary that starts only after your savings are gone**.
 
-Built-in presets (you can always type your own: 1–180 minutes / 0–180 byoyomi seconds / 1–20 periods) —
-**the presets follow the mode**:
+Built-in presets live in a **dropdown** (you can always type your own: 1–180 minutes / 0–180 byoyomi seconds /
+1–20 periods — the dropdown then shows “Custom”) — **the presets follow the mode**:
 
 **Chess-style modes** (Fischer / Bronstein / sudden death):
 
@@ -218,9 +225,9 @@ which is exactly this clock's Byoyomi mode, and **that is what you get on first 
 | 40 min main time, then 30 s × 3 per move | There is no 40-minute preset: choose **Byoyomi** and change the three numbers to 40 / 30 / 3 |
 | Absolute time only (flag falls, you lose) | Choose **Sudden death**, or set the byoyomi periods to 1 |
 
-The preset buttons use “main time + periods × seconds per move”: `30+5×30` is 30 minutes of main time, then
-30 seconds per move for 5 periods (you may overthink 4 times and lose on the fifth); the small `30s × 5` line is
-the same thing written in the other order.
+The preset dropdown uses “main time + periods × seconds per move”: `30+5×30` is 30 minutes of main time, then
+30 seconds per move for 5 periods (you may overthink 4 times and lose on the fifth); the `30s × 5` after the dot
+is the same thing written in the other order.
 
 During the game it works like chess: lay the phone flat between the two players, turn on **facing mode**, and
 whoever has just played slaps their own half of the screen. To start, tap **Black's** half so White's clock runs
@@ -337,6 +344,7 @@ ChessClock/
 │   ├── run.js            single-process test entry point
 │   └── visual/           headless-Chrome visual rig (screenshots) + out/*.png artefacts
 ├── Defold/               the Defold (Lua) port: native apps and HTML5, see Defold/README.md
+├── Godot/                the Godot 4 port: native apps and Web, see Godot/README.md
 └── package.json          npm test / npm start / npm run shots
 ```
 

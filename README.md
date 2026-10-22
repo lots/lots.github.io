@@ -20,7 +20,7 @@ switches it at any time and the choice is remembered (you can also force it with
 > `Godot/tests/project_spec.js`. Run it with Godot 4.5+ (`godot --path Godot`). (README also in Chinese for now.)
 
 <img src="screenshots/midgame-portrait.png" alt="Facing mode, portrait (default dark theme)" width="390">
-<img src="screenshots/byoyomi-portrait.png" alt="Byoyomi mode" width="390">
+<img src="screenshots/byoyomi-portrait.png" alt="Byoyomi mode: the segmented bar under each panel is green for the periods you still have and red for the ones you have spent" width="390">
 <img src="screenshots/midgame-landscape.png" alt="Landscape" width="390">
 
 > These are produced automatically by `tests/visual/`. **The screenshot scenes shorten the main time to 1 minute**
@@ -49,7 +49,7 @@ actually uses:
 | Sudden death (no increment) | ✅ | The simplest mode, common in community events |
 | Flag fall (time-up handling) | ✅ | Red digits + alarm + vibration + result overlay |
 | Time warnings | ✅ | Amber at ≤1 minute, red with 0.1 s resolution at ≤20 seconds |
-| Byoyomi indicator | ✅ | Digits turn purple, remaining periods shown, ticks every second for the last 10 |
+| Byoyomi indicator | ✅ | Digits turn purple, remaining periods shown, **plus a segmented bar along the bottom of each panel** (one segment per period: **green = still available, red = already used**), ticks every second for the last 10 (main time ticks too — all four modes) |
 | Move counter | ✅ | Each panel shows how many moves that side has played |
 | Pause / resume (for the arbiter taking notation or settling a dispute) | ✅ | Pausing banks the exact time (and byoyomi periods) used on the current move |
 | Reset / rematch (swapping colours) | ✅ | One tap starts the next game |
@@ -203,8 +203,9 @@ Built-in presets live in a **dropdown** (you can always type your own: 1–180 m
 | 30+3×60 | 30 min + 60 s × 3 periods | Slow games |
 | 60+5×60 | 60 min + 60 s × 5 periods | Formal slow games |
 
-> The small line under each button (e.g. `20s × 3`) spells the order out: it is the same thing as the main
-> notation `3×20`.
+> Every entry is written once, in the Go notation: `30+5×30` already says main time (30 min), number of periods
+> (5) and seconds per move (30), so the dropdown does not repeat it in a second reading. (Chess entries do carry
+> a second half — `10+5 · Rapid` — because there it is the class name, not a restatement.)
 > `10+3×20` is **also applied automatically the first time you switch to Byoyomi** from another mode, so a
 > Fischer `5+3` does not turn into “5 min + 3 s × 3 periods” by accident. If the three numbers already match a
 > Byoyomi preset (you picked one yourself), the preset is left alone.
@@ -223,16 +224,27 @@ which is exactly this clock's Byoyomi mode, and **that is what you get on first 
 | 30 min main time, then 30 s × 5 per move | Pick the preset **30+5×30** |
 | 1 hour main time, then 60 s × 5 per move | Pick the preset **60+5×60** |
 | 40 min main time, then 30 s × 3 per move | There is no 40-minute preset: choose **Byoyomi** and change the three numbers to 40 / 30 / 3 |
-| Absolute time only (flag falls, you lose) | Choose **Sudden death**, or set the byoyomi periods to 1 |
+| Absolute time only (flag falls, you lose) | Choose **Sudden death**, or set the byoyomi seconds to 0 (see below) |
+| Pure byoyomi (no main time at all) | Set **Base time** to 0 and keep the byoyomi seconds |
+
+> **Either field may be 0 — never both.** In Byoyomi mode the two numbers are a pair and only one of them has to
+> be non-zero:
+> * **Base time = 0** → *pure byoyomi*: the clock shows one byoyomi window from the very first move, there is no
+>   main time to burn down;
+> * **Byoyomi = 0 s** → *main time only*: when the main time runs out the flag falls (same as sudden death), and
+>   the period bar in the panel stays hidden;
+> * **both 0** is meaningless, so the field you just edited snaps back to 1 (or a stored config falls back to
+>   1 minute of main time). Other modes (Fischer / Bronstein / sudden death) have no second number to fall back
+>   on, so their base time stays at 1–180 minutes.
 
 The preset dropdown uses “main time + periods × seconds per move”: `30+5×30` is 30 minutes of main time, then
-30 seconds per move for 5 periods (you may overthink 4 times and lose on the fifth); the `30s × 5` after the dot
-is the same thing written in the other order.
+30 seconds per move for 5 periods (you may overthink 4 times and lose on the fifth). Each number appears exactly
+once — main time, then periods, then seconds per move.
 
 During the game it works like chess: lay the phone flat between the two players, turn on **facing mode**, and
 whoever has just played slaps their own half of the screen. To start, tap **Black's** half so White's clock runs
 first (see the game flow in section 3). The digits fill the panel automatically so they are readable from across
-the table. The usual Go “30 seconds per move” byoyomi ticks audibly for the last 10 seconds.
+the table. Anything below 10 seconds ticks audibly once per second — the main time of **every** mode as well as each byoyomi window, so the usual Go “30 seconds per move” byoyomi ticks just like a 3+2 blitz finish.
 
 ---
 
@@ -306,7 +318,9 @@ the other side's clock begins. There is no Start button to press.
 7. **Privacy**: no network access, nothing uploaded; settings (mode/time/sound) live only in your own
    `localStorage`.
 8. **What loses in byoyomi mode**: **exhausting the byoyomi periods**, not the main time reaching zero. The move
-   line on the panel shows “Byoyomi 2/3”; watch out when only the last period is left. Pausing banks the periods
+   line on the panel shows “Byoyomi 2/3”, and the **segmented bar at the bottom of the panel** says the same thing
+   in one glance — 3 segments = 3 periods, a segment turns **red** the moment you spend that period; watch out when
+   only one is still **green**. Pausing banks the periods
    already crossed, and on resume the current byoyomi window is refilled (so nobody loses byoyomi time to a
    pause).
 9. **Starting the game**: there is no Start button — tapping a panel *is* the start gesture (tap Black's half for
@@ -349,7 +363,7 @@ ChessClock/
 ```
 
 ```bash
-npm test        # 50 tests: timing logic + page/icon/bilingual/theme/defaults/byoyomi-seed/screenshot-scene integrity
+npm test        # 53 tests: timing logic + page/icon/bilingual/theme/defaults/byoyomi-seed/screenshot-scene/byoyomi-bar integrity
 npm start       # start the LAN server, open it on your phone
 npm run shots   # re-shoot every scene with headless Chrome (needs Chrome/Edge installed)
 ```

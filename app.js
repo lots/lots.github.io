@@ -40,18 +40,20 @@
    * 例：10+3×20 = 主时间 10 分钟；主时间用完后每手 20 秒、共 3 段
    *（可超时思考 2 次，第 3 次超时判负）。段数=1 时可自定义为「超时即负」。
    *
-   * sub 是按钮下方那行小字：写成「20s × 3」把顺序讲明白，
-   * 免得与主记法「3×20」的读法混淆（两种写法意思相同）。
+   * 注意：这里**刻意没有** sub 字段。下拉框里只写主记法「10+3×20」——
+   * 它已经把主时间 / 段数 / 每手秒数都写全了，再补一句「20s × 3」只是把这同样的三个数
+   * 换个顺序，在单行的下拉框里反而像是还有别的含义。
+   *（棋类那组保留第二段，因为那是「档次」Bullet / Blitz / Rapid / Classical。）
    */
   var PRESETS_BYOYOMI = [
-    { id: '5+3x20',  baseMin: 5,  incSec: 20, periods: 3, sub: '20s × 3' },
-    { id: '10+3x20', baseMin: 10, incSec: 20, periods: 3, sub: '20s × 3' },
-    { id: '10+3x30', baseMin: 10, incSec: 30, periods: 3, sub: '30s × 3' },
-    { id: '15+3x30', baseMin: 15, incSec: 30, periods: 3, sub: '30s × 3' },
-    { id: '20+5x30', baseMin: 20, incSec: 30, periods: 5, sub: '30s × 5' },
-    { id: '30+5x30', baseMin: 30, incSec: 30, periods: 5, sub: '30s × 5' },
-    { id: '30+3x60', baseMin: 30, incSec: 60, periods: 3, sub: '60s × 3' },
-    { id: '60+5x60', baseMin: 60, incSec: 60, periods: 5, sub: '60s × 5' }
+    { id: '5+3x20',  baseMin: 5,  incSec: 20, periods: 3 },
+    { id: '10+3x20', baseMin: 10, incSec: 20, periods: 3 },
+    { id: '10+3x30', baseMin: 10, incSec: 30, periods: 3 },
+    { id: '15+3x30', baseMin: 15, incSec: 30, periods: 3 },
+    { id: '20+5x30', baseMin: 20, incSec: 30, periods: 5 },
+    { id: '30+5x30', baseMin: 30, incSec: 30, periods: 5 },
+    { id: '30+3x60', baseMin: 30, incSec: 60, periods: 3 },
+    { id: '60+5x60', baseMin: 60, incSec: 60, periods: 5 }
   ];
 
   /** 当前模式下该显示哪一组预设 */
@@ -177,7 +179,7 @@
     if (S) { render(); }
   }
 
-  var paneEls = {}, timeEls = {}, moveEls = {}, chipEls = {};
+  var paneEls = {}, timeEls = {}, moveEls = {}, chipEls = {}, byoBars = {};
 
   /* ================= 小工具 ================= */
 
@@ -227,7 +229,7 @@
     var addSec = clampInt(cfg.incSec, 0, 180, 0);
     return {
       mode: cfg.mode,
-      baseMs: clampInt(cfg.baseMin, 1, 180, DEFAULTS.baseMin) * 60000,
+      baseMs: clampInt(cfg.baseMin, 0, 180, DEFAULTS.baseMin) * 60000,
       incMs: addSec * 1000,
       delayMs: addSec * 1000,
       byoyomiMs: addSec * 1000,
@@ -352,7 +354,10 @@
     presetsFor(cfg.mode).forEach(function (p) {
       var o = document.createElement('option');
       o.value = p.id;
-      o.textContent = presetLabel(p) + '  ·  ' + (p.sub || t(p.name));
+      // 第二段只有棋类预设才有意义（档次：Bullet / Blitz / Rapid / Classical）；
+      // 围棋那组的主记法「30+5×30」已经写全了主时间 / 段数 / 每手秒数，不再重复一遍
+      var extra = p.sub || (p.name ? t(p.name) : '');
+      o.textContent = extra ? presetLabel(p) + '  ·  ' + extra : presetLabel(p);
       sel.appendChild(o);
     });
     // 数字被手改过、对不上任何一档时，停在这一项上（value=""）
@@ -380,13 +385,21 @@
    * 例：中文「10 分钟 + 每步 5 秒 · Fischer 加秒」／英文「10 min + 5s per move · Fischer」。
    */
   function describeConfig() {
-    var c = engineConfig();
+    // 用归一化后的配置：0 分钟 / 0 秒读秒都要是「合法值」而不是「被夹过的值」
+    var c = E.normalizeConfig(engineConfig());
     var base = Math.round(c.baseMs / 60000);
-    var add = Math.round(c.incMs / 1000);
+    // 每个模式的「每步秒数」字段不同：读秒用 byoyomiMs，延时用 delayMs，其它用 incMs
+    var addMs = c.incMs;
+    if (c.mode === E.MODES.BYOYOMI) { addMs = c.byoyomiMs; }
+    else if (c.mode === E.MODES.DELAY) { addMs = c.delayMs; }
+    var add = Math.round(addMs / 1000);
     if (c.mode === E.MODES.BYOYOMI) {
       var periods = c.byoyomiPeriods > 1
         ? t('summary.byoyomi.periods', { n: c.byoyomiPeriods })
         : '';
+      // 0 主时间 = 纯读秒；0 秒读秒 = 只有主时间
+      if (c.baseMs <= 0) { return t('summary.byoyomi.pure', { add: add, periods: periods }); }
+      if (c.byoyomiMs <= 0) { return t('summary.byoyomi.mainonly', { base: base }); }
       return t('summary.byoyomi', { base: base, add: add, periods: periods });
     }
     if (c.mode === E.MODES.DELAY) { return t('summary.delay', { base: base, add: add }); }
@@ -434,12 +447,35 @@
     updateDerivedUI();
   }
 
+  /**
+   * 夹取「基础时间 / 读秒秒数」，并守住「不能同时为 0」。
+   *
+   * 读秒模式下这两个数**各可以是 0**：
+   *   主时间 0 + 读秒 N 秒  → 纯读秒（每一手都从读秒那一格开始）
+   *   主时间 M 分 + 读秒 0 秒 → 只有主时间，用完即负（等价于包干制）
+   * 其它模式没有「另一个数」兜底，主时间仍然至少 1 分钟。
+   *
+   * edited 是刚被改动的那个字段：两个都填 0 时，把它弹回最小值，
+   * 而不是悄悄改另一个字段（用户改哪个，看到的就还是哪个）。
+   */
+  function clampTimes(edited) {
+    var byo = (cfg.mode === E.MODES.BYOYOMI);
+    var base = clampInt($('#baseMin').value, 0, 180, DEFAULTS.baseMin);
+    var inc = clampInt($('#incSec').value, 0, 180, DEFAULTS.incSec);
+    if (!byo) {
+      base = Math.max(1, base);
+    } else if (base === 0 && inc === 0) {
+      if (edited === 'incSec') { inc = 1; } else { base = 1; }
+    }
+    cfg.baseMin = base;
+    cfg.incSec = inc;
+    cfg.periods = clampInt($('#periods').value, 1, E.MAX_PERIODS, DEFAULTS.periods);
+    return cfg;
+  }
+
   /** 开始对局前读一遍控件，并夹到合法范围 */
   function readSetupUI() {
-    cfg.baseMin = clampInt($('#baseMin').value, 1, 180, DEFAULTS.baseMin);
-    // 读秒模式下 0 秒读秒没有意义（等于突然死亡），至少 1 秒
-    cfg.incSec = clampInt($('#incSec').value, cfg.mode === E.MODES.BYOYOMI ? 1 : 0, 180, DEFAULTS.incSec);
-    cfg.periods = clampInt($('#periods').value, 1, E.MAX_PERIODS, DEFAULTS.periods);
+    clampTimes();
     cfg.sound = !!$('#optSound').checked;
     cfg.facing = !!$('#optFacing').checked;
     cfg.keepAwake = !!$('#optWake').checked;
@@ -620,11 +656,24 @@
   }
 
   /** 读秒阶段最后 10 秒每秒提示一次（实体读秒钟就是这样滴答的） */
-  function byoyomiTick(side, info) {
-    if (!S || !S.running || S.paused || info.phase !== 'byoyomi') { return; }
-    var sec = Math.ceil(info.ms / 1000);
+  /**
+   * 最后 10 秒每秒「滴」一声。
+   *
+   * 不只是读秒阶段：**主时间（base time）的最后 10 秒同样要滴**，四种模式都适用 ——
+   * 那正是「这块表马上要没时间了」的听觉提示，读秒只是其中一种倒计时。
+   *
+   * key 里带上「第几手」（双方步数之和）：Fischer 加秒之后剩余时间可能又回到 10 秒以上，
+   * 下一手再次进入最后 10 秒时必须能重新滴满；读秒窗口用 windowIndex 区分。
+   */
+  var TICK_LAST_MS = 10000;
+  function lastTenTick(side, info) {
+    if (!S || !S.running || S.paused || S.finished) { return; }
+    var ms = info.ms;
+    if (!(ms > 0) || ms > TICK_LAST_MS) { return; }
+    var sec = Math.ceil(ms / 1000);
     if (sec < 1 || sec > 10) { return; }
-    var key = side + ':' + info.windowIndex + ':' + sec;
+    var turn = S.moves.w + S.moves.b;
+    var key = side + ':' + turn + ':' + info.phase + ':' + info.windowIndex + ':' + sec;
     if (key === lastTickKey) { return; }
     lastTickKey = key;
     Sound.tick();
@@ -655,6 +704,27 @@
     });
   }
 
+  /**
+   * 读秒段数条：Byoyomi 模式下在面板底部画 N 个格（N = 本局段数），
+   * 亮的格数 = 还剩几段，暗的 = 已经用掉几段。显隐由 .pane.has-byo-bar 那套 CSS 控制。
+   * 只在段数变化时重建 <i>，之后每帧只切 class。
+   */
+  var builtBarPeriods = { w: 0, b: 0 };
+  function updateByoBar(side, info) {
+    var bar = byoBars[side];
+    if (!bar || !S || S.cfg.mode !== E.MODES.BYOYOMI || !(S.cfg.byoyomiMs > 0)) { return; }
+    var total = S.cfg.byoyomiPeriods;
+    var left = (typeof info.periodsLeft === 'number') ? info.periodsLeft : total;
+    if (builtBarPeriods[side] !== total) {
+      builtBarPeriods[side] = total;
+      bar.textContent = '';
+      for (var i = 0; i < total; i++) { bar.appendChild(document.createElement('i')); }
+    }
+    for (var k = 0; k < total; k++) {
+      bar.children[k].classList.toggle('is-on', k < left);
+    }
+  }
+
   function render() {
     if (!S) { return; }
     var now = Date.now();
@@ -683,6 +753,11 @@
         !S.finished && !inByoyomi && ms > E.CRITICAL_TIME_MS && ms <= E.LOW_TIME_MS);
       pane.classList.toggle('is-critical', !S.finished && ms <= E.CRITICAL_TIME_MS);
       pane.classList.toggle('is-out', S.finished && S.flagged === side);
+      // 段数条按「模式」显隐（主时间阶段也显示：整条都亮 = 一段都还没用）
+      // 读秒 0 秒 = 没有读秒，段数条也就没有意义（hide）
+      pane.classList.toggle('has-byo-bar',
+        S.cfg.mode === E.MODES.BYOYOMI && S.cfg.byoyomiMs > 0);
+      updateByoBar(side, info);
 
       var foot = t('moves.n', { n: S.moves[side] });
       if (inByoyomi && !S.finished && S.cfg.byoyomiPeriods > 1) {
@@ -693,7 +768,7 @@
       moveEls[side].textContent = foot;
       chipEls[side].textContent = chipText(side, info);
 
-      if (running && S.active === side) { byoyomiTick(side, info); }
+      if (running && S.active === side) { lastTenTick(side, info); }
     });
 
     $('#screen-clock').classList.toggle('is-paused', !!S.paused);
@@ -788,8 +863,10 @@
         // 从别的模式第一次切进读秒：给 Byoyomi 默认 10+3×20
         //（已经是读秒预设的话 seedByoyomiDefault 会保留用户挑的那档）
         if (prevMode !== cfg.mode && cfg.mode === E.MODES.BYOYOMI) { seedByoyomiDefault(); }
-        // 切到读秒时给个合理的默认额度（0 秒读秒没有意义）
-        if (cfg.mode === E.MODES.BYOYOMI && !(cfg.incSec >= 1)) { cfg.incSec = 30; }
+        // 切到读秒时给个合理的默认额度：主时间 0（纯读秒）配 0 秒读秒等于什么都没配
+        if (cfg.mode === E.MODES.BYOYOMI && !(cfg.baseMin >= 1) && !(cfg.incSec >= 1)) { cfg.incSec = 30; }
+        // 切走读秒时主时间必须 ≥ 1 分钟（别的模式没有第二个数兜底）
+        if (cfg.mode !== E.MODES.BYOYOMI && !(cfg.baseMin >= 1)) { cfg.baseMin = 1; }
         syncSetupUI();
         saveSettings();
         b.blur();
@@ -806,9 +883,7 @@
         updateDerivedUI();
       });
       el.addEventListener('change', function () {
-        cfg.baseMin = clampInt($('#baseMin').value, 1, 180, DEFAULTS.baseMin);
-        cfg.incSec = clampInt($('#incSec').value, cfg.mode === E.MODES.BYOYOMI ? 1 : 0, 180, DEFAULTS.incSec);
-        cfg.periods = clampInt($('#periods').value, 1, E.MAX_PERIODS, DEFAULTS.periods);
+        clampTimes(key);
         syncSetupUI();
         saveSettings();
       });
@@ -967,6 +1042,7 @@
       timeEls[side] = $('.time[data-side="' + side + '"]', paneEls[side]);
       moveEls[side] = $('.moves[data-side="' + side + '"]', paneEls[side]);
       chipEls[side] = $('.state-chip[data-side="' + side + '"]', paneEls[side]);
+      byoBars[side] = $('.byo-bar[data-side="' + side + '"]', paneEls[side]);
     });
 
     buildPresetOptions();

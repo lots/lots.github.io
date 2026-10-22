@@ -78,7 +78,7 @@
       </div>
       <div class="fields">
         <label class="field"><span data-i18n="setup.base.label">Base time (minutes)</span>
-          <input id="baseMin" type="number" inputmode="numeric" min="1" max="180" step="1" value="10">
+          <input id="baseMin" type="number" inputmode="numeric" min="0" max="180" step="1" value="10">
         </label>
         <label class="field"><span id="incLabel">Byoyomi (seconds)</span>
           <input id="incSec" type="number" inputmode="numeric" min="0" max="180" step="1" value="20">
@@ -160,6 +160,7 @@
         </span>
         <span class="time" data-side="b">10:00</span>
         <span class="pane-foot"><span class="moves" data-side="b"></span></span>
+        <span class="byo-bar" data-side="b" aria-hidden="true"></span>
       </span>
     </button>
 
@@ -185,6 +186,7 @@
         </span>
         <span class="time" data-side="w">10:00</span>
         <span class="pane-foot"><span class="moves" data-side="w"></span></span>
+        <span class="byo-bar" data-side="w" aria-hidden="true"></span>
       </span>
     </button>
   </div>

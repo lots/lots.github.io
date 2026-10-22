@@ -109,6 +109,9 @@
       'summary.delay': '{base} 分钟 + 每步延时 {add} 秒 · Bronstein 延时',
       'summary.byoyomi': '{base} 分钟 + 读秒 {add} 秒{periods} · Byoyomi 读秒',
       'summary.byoyomi.periods': ' × {n} 段',
+      // 0 分钟 = 纯读秒；0 秒读秒 = 只有主时间（两个不能同时为 0）
+      'summary.byoyomi.pure': '纯读秒 {add} 秒{periods} · Byoyomi 读秒',
+      'summary.byoyomi.mainonly': '{base} 分钟（无读秒）· Byoyomi 读秒',
       'summary.sudden': '{base} 分钟 · 无加秒（突然死亡）',
       'detail.moves': '共 {n} 步',
       'detail.moveOne': '共 1 步',
@@ -208,6 +211,8 @@
       'summary.delay': '{base} min + {add}s delay per move · Bronstein',
       'summary.byoyomi': '{base} min + byoyomi {add}s{periods} · Byoyomi',
       'summary.byoyomi.periods': ' × {n}',
+      'summary.byoyomi.pure': 'Pure byoyomi {add}s{periods} · Byoyomi',
+      'summary.byoyomi.mainonly': '{base} min (no byoyomi) · Byoyomi',
       'summary.sudden': '{base} min · sudden death',
       'detail.moves': '{n} moves',
       'detail.moveOne': '1 move',

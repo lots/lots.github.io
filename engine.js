@@ -52,7 +52,9 @@
   var MIN_BASE_MS = 1000;
   var MAX_BASE_MS = 6 * 60 * 60 * 1000; // 6 小时上限
   var MAX_ADD_MS = 180 * 1000;          // 单步加/延时/读秒上限 180 秒
-  var MIN_BYOYOMI_MS = 1000;            // 读秒至少 1 秒（0 秒读秒等同于突然死亡）
+  // 读秒**不为 0** 时的最小粒度：0 是合法值，含义是「没有读秒」（只剩主时间，用完即负）。
+  // 所以这里的用法是「> 0 时不得小于 1 秒」，而不是「不得小于 1 秒」。
+  var MIN_BYOYOMI_MS = 1000;
   var MAX_PERIODS = 20;                 // 读秒段数上限
 
   function other(side) { return side === 'w' ? 'b' : 'w'; }
@@ -82,7 +84,9 @@
         config.mode === MODES.FISCHER || config.mode === MODES.BYOYOMI) {
       mode = config.mode;
     }
-    var baseMs = clampInt(config.baseMs, MIN_BASE_MS, MAX_BASE_MS, 5 * 60000);
+    // 主时间可以给 0（读秒模式下的「纯读秒」），但**非零时必须 ≥ 1 秒**
+    var baseMs = clampInt(config.baseMs, 0, MAX_BASE_MS, 5 * 60000);
+    if (baseMs > 0 && baseMs < MIN_BASE_MS) { baseMs = MIN_BASE_MS; }
 
     // 按模式优先取对应的字段：这样把「已归一化的配置」再传进来也是幂等的
     // （归一化后的 byoyomi 配置里 incMs 恒为 0，若先看 incMs 会把读秒读成 0）
@@ -99,12 +103,26 @@
     var rawPeriods = config.byoyomiPeriods != null ? config.byoyomiPeriods : config.periods;
     var periods = clampInt(rawPeriods, 1, MAX_PERIODS, 1);
 
+    var byoyomiMs = mode === MODES.BYOYOMI ? addMs : 0;
+
+    //[[ 读秒模式的两个数各可以是 0，但不能同时是 0：
+    //    主时间 0 + 读秒 N 秒 = 纯读秒（每一手都从读秒那一格开始）
+    //    主时间 M 分 + 读秒 0 秒 = 只有主时间（用完即负，等价于包干制）
+    //    两个都 0 = 什么都不剩，没有意义 → 回落到 1 分钟主时间。 ]]
+    if (mode === MODES.BYOYOMI) {
+      if (baseMs <= 0 && byoyomiMs <= 0) { baseMs = 60000; }
+      if (byoyomiMs > 0 && byoyomiMs < MIN_BYOYOMI_MS) { byoyomiMs = MIN_BYOYOMI_MS; }
+    } else if (baseMs < MIN_BASE_MS) {
+      // 其它模式没有「另一个数」可以兜底，主时间必须 ≥ 1 秒
+      baseMs = MIN_BASE_MS;
+    }
+
     return {
       mode: mode,
       baseMs: baseMs,
       incMs: mode === MODES.FISCHER ? addMs : 0,
       delayMs: mode === MODES.DELAY ? addMs : 0,
-      byoyomiMs: mode === MODES.BYOYOMI ? Math.max(MIN_BYOYOMI_MS, addMs) : 0,
+      byoyomiMs: byoyomiMs,
       byoyomiPeriods: mode === MODES.BYOYOMI ? periods : 1
     };
   }
@@ -166,6 +184,11 @@
     var x = cfg.byoyomiMs;
     var periods = state.periods[side];
 
+    // 读秒 0 秒 = 没有读秒：整局只算主时间，用完即负（与包干制一样）
+    if (x <= 0) {
+      return { phase: 'main', ms: remainingMs(state, side, now), periodsLeft: 0, windowIndex: 0 };
+    }
+
     if (state.finished && state.flagged === side) {
       return { phase: 'byoyomi', ms: 0, periodsLeft: 0, windowIndex: 0 };
     }
@@ -224,6 +247,8 @@
   /** 这一手是否已经用光时间（读秒模式看段数，其它模式看主时间） */
   function isOutOfTime(state, side, now) {
     if (state.cfg.mode === MODES.BYOYOMI) {
+      // 没有读秒（0 秒）时判负依据是主时间，和包干制一样
+      if (state.cfg.byoyomiMs <= 0) { return remainingMs(state, side, now) <= 0; }
       var info = byoyomiState(state, side, now);
       return info.phase === 'byoyomi' && info.periodsLeft <= 0;
     }
@@ -372,8 +397,13 @@
     var base = (mins % 1 === 0 ? String(mins) : mins.toFixed(1)) + ' 分钟';
 
     if (cfg.mode === MODES.BYOYOMI) {
-      var byo = ' + 读秒 ' + secs(cfg.byoyomiMs) + ' 秒';
-      if (cfg.byoyomiPeriods > 1) { byo += ' × ' + cfg.byoyomiPeriods + ' 段'; }
+      // 主时间 0 → 纯读秒（不再说「0 分钟 + …」）；读秒 0 → 只有主时间
+      var byo = cfg.byoyomiMs > 0 ? ' + 读秒 ' + secs(cfg.byoyomiMs) + ' 秒' : '';
+      if (cfg.byoyomiMs > 0 && cfg.byoyomiPeriods > 1) { byo += ' × ' + cfg.byoyomiPeriods + ' 段'; }
+      if (cfg.baseMs <= 0) {
+        return '纯读秒' + byo.replace(' + 读秒 ', ' ') + ' · ' + MODE_LABELS[cfg.mode];
+      }
+      if (cfg.byoyomiMs <= 0) { base = base + '（无读秒）'; }
       return base + byo + ' · ' + MODE_LABELS[cfg.mode];
     }
     var add = cfg.mode === MODES.FISCHER ? cfg.incMs : cfg.delayMs;

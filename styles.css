@@ -571,6 +571,35 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * 读秒段数条：贴在面板底部，一段一格 —— 亮的是还剩几段，暗的是已经用掉几段。
+ * 只在对局模式为 Byoyomi 时出现（.pane.is-byoyomi 由 render() 开关）。
+ * 它放在 .pane-inner 里，所以对坐模式下会跟着数字一起转 180°（对面选手看到的仍是「底部」）。
+ */
+.byo-bar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(3.2vmin + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  width: min(72%, 240px);
+  height: 7px;
+  pointer-events: none;
+  opacity: 0; /* 只在本模式显示；用硬切换而不是淡入，和 Godot / Defold 两版一致 */
+}
+
+.pane.has-byo-bar .byo-bar { opacity: 1; }
+
+/* 一格一段：绿 = 还剩几段，红 = 已经用掉（与 Godot / Defold 两版同一套语义） */
+.byo-bar i {
+  flex: 1 1 0;
+  border-radius: 999px;
+  background: var(--danger);
+}
+
+.byo-bar i.is-on { background: var(--ok); }
+
 .time {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   font-weight: 700;

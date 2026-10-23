@@ -14,23 +14,23 @@
 
 | 路径 | 大小 | 作用 |
 | --- | --- | --- |
-| `index.html` | 10.7 KB | 页面结构（唯一入口） |
-| `styles.css` | 17.3 KB | 样式 + 三套主题变量 |
-| `engine.js` | 15.8 KB | 计时引擎（纯逻辑） |
-| `i18n.js` | 13.9 KB | 中英词条表 |
-| `app.js` | 31.7 KB | 界面与操作层 |
+| `index.html` | 12.2 KB | 页面结构（唯一入口） |
+| `styles.css` | 20.2 KB | 样式 + 三套主题变量 |
+| `engine.js` | 17.6 KB | 计时引擎（纯逻辑） |
+| `i18n.js` | 15.3 KB | 中英词条表 |
+| `app.js` | 40.4 KB | 界面与操作层 |
 | `assets/icon-32.png` | 2.3 KB | favicon |
 | `assets/icon-64.png` | 7.6 KB | favicon（高分屏） |
 | `assets/icon-180.png` | 47.1 KB | iOS「添加到主屏幕」图标 |
 | `assets/logo-brand.png` | 104.8 KB | 设置页 logo（96×96 显示） |
 | `assets/logo-strip.png` | 32.1 KB | 操作条 logo（48×48 显示） |
-| `README.md` | 26.7 KB | 仓库首页说明（英文） |
-| `README_CN.md` | 24.6 KB | 仓库首页说明（华文） |
+| `README.md` | 32.0 KB | 仓库首页说明（英文） |
+| `README_CN.md` | 29.5 KB | 仓库首页说明（华文） |
 | `screenshots/midgame-portrait.png` | 149.5 KB | README 示意图 |
-| `screenshots/byoyomi-portrait.png` | 150.4 KB | README 示意图 |
-| `screenshots/midgame-landscape.png` | 157.7 KB | README 示意图 |
+| `screenshots/byoyomi-portrait.png` | 152.0 KB | README 示意图 |
+| `screenshots/midgame-landscape.png` | 159.1 KB | README 示意图 |
 
-合计约 **790 KB**。
+合计约 **822 KB**。
 
 > 表内大小取自源码仓库。站点仓库里同样的文件会略大约 2–5%，因为那边行尾是 CRLF
 > （内容一致，见第四节实测）。

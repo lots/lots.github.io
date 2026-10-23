@@ -572,24 +572,21 @@ kbd {
 }
 
 /*
- * 读秒段数条：贴在面板底部，一段一格 —— 亮的是还剩几段，暗的是已经用掉几段。
- * 只在对局模式为 Byoyomi 时出现（.pane.is-byoyomi 由 render() 开关）。
- * 它放在 .pane-inner 里，所以对坐模式下会跟着数字一起转 180°（对面选手看到的仍是「底部」）。
+ * 读秒段数条：夹在「数字」和「MOVE 那一行」之间（DOM 顺序就在 .time 与 .pane-foot 中间），
+ * 一段一格 —— 绿的是还剩几段，红的是已经用掉几段。
+ * 只在对局模式为 Byoyomi 时出现；不显示时 display:none，不占位。
+ * 它放在 .pane-inner 里，所以对坐模式下会跟着数字一起转 180°。
  */
 .byo-bar {
-  position: absolute;
-  left: 50%;
-  bottom: calc(3.2vmin + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-  display: flex;
+  display: none;
   gap: 6px;
   width: min(72%, 240px);
-  height: 7px;
+  height: 7.7px; /* 原本 7px，按需求加厚 10% */
+  margin: 0.2vmin 0;
   pointer-events: none;
-  opacity: 0; /* 只在本模式显示；用硬切换而不是淡入，和 Godot / Defold 两版一致 */
 }
 
-.pane.has-byo-bar .byo-bar { opacity: 1; }
+.pane.has-byo-bar .byo-bar { display: flex; }
 
 /* 一格一段：绿 = 还剩几段，红 = 已经用掉（与 Godot / Defold 两版同一套语义） */
 .byo-bar i {

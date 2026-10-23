@@ -49,7 +49,7 @@ actually uses:
 | Sudden death (no increment) | ✅ | The simplest mode, common in community events |
 | Flag fall (time-up handling) | ✅ | Red digits + alarm + vibration + result overlay |
 | Time warnings | ✅ | Amber at ≤1 minute, red with 0.1 s resolution at ≤20 seconds |
-| Byoyomi indicator | ✅ | Digits turn purple, remaining periods shown, **plus a segmented bar along the bottom of each panel** (one segment per period: **green = still available, red = already used**), ticks every second for the last 10 (main time ticks too — all four modes) |
+| Byoyomi indicator | ✅ | Digits turn purple, remaining periods shown, **plus a segmented bar between the digits and the move line** (one segment per period: **green = still available, red = already used**; the segment being counted down fills red from the right as its window drains, so at 5 s left of a 20 s window it is 75% red / 25% green), ticks every second for the last 10 (main time ticks too — all four modes) |
 | Move counter | ✅ | Each panel shows how many moves that side has played |
 | Pause / resume (for the arbiter taking notation or settling a dispute) | ✅ | Pausing banks the exact time (and byoyomi periods) used on the current move |
 | Reset / rematch (swapping colours) | ✅ | One tap starts the next game |
@@ -318,8 +318,9 @@ the other side's clock begins. There is no Start button to press.
 7. **Privacy**: no network access, nothing uploaded; settings (mode/time/sound) live only in your own
    `localStorage`.
 8. **What loses in byoyomi mode**: **exhausting the byoyomi periods**, not the main time reaching zero. The move
-   line on the panel shows “Byoyomi 2/3”, and the **segmented bar at the bottom of the panel** says the same thing
-   in one glance — 3 segments = 3 periods, a segment turns **red** the moment you spend that period; watch out when
+   line on the panel shows “Byoyomi 2/3”, and the **segmented bar just under the digits** says the same thing
+   in one glance — 3 segments = 3 periods, and the one currently counting down drains from green to red as its window
+   runs out (5 s left of a 20 s period = 75% red); watch out when
    only one is still **green**. Pausing banks the periods
    already crossed, and on resume the current byoyomi window is refilled (so nobody loses byoyomi time to a
    pause).
@@ -354,7 +355,7 @@ ChessClock/
 ├── serve.js              zero-dependency static server (for phones on the LAN)
 ├── tests/
 │   ├── engine.test.js    timing engine tests (30)
-│   ├── project.test.js   project-integrity tests (19: i18n / themes / defaults / presets / scenes / start-up / facing geometry / icons …)
+│   ├── project.test.js   project-integrity tests (22: i18n / themes / defaults / presets / scenes / start-up / facing geometry / icons …)
 │   ├── run.js            single-process test entry point
 │   └── visual/           headless-Chrome visual rig (screenshots) + out/*.png artefacts
 ├── Defold/               the Defold (Lua) port: native apps and HTML5, see Defold/README.md

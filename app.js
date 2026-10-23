@@ -710,6 +710,7 @@
    * 只在段数变化时重建 <i>，之后每帧只切 class。
    */
   var builtBarPeriods = { w: 0, b: 0 };
+  var barPainted = { w: '', b: '' };
   function updateByoBar(side, info) {
     var bar = byoBars[side];
     if (!bar || !S || S.cfg.mode !== E.MODES.BYOYOMI || !(S.cfg.byoyomiMs > 0)) { return; }
@@ -717,11 +718,28 @@
     var left = (typeof info.periodsLeft === 'number') ? info.periodsLeft : total;
     if (builtBarPeriods[side] !== total) {
       builtBarPeriods[side] = total;
+      barPainted[side] = '';
       bar.textContent = '';
       for (var i = 0; i < total; i++) { bar.appendChild(document.createElement('i')); }
     }
+    // 正在倒计时的那一段（最后一段绿）按「本窗口还剩多少」画成进度条：
+    // 20 秒的窗口剩 5 秒 → 这一段 25% 绿 + 75% 红（红贴着右边那些已用掉的段）
+    var active = -1;
+    var ratio = 1;
+    if (info.phase === 'byoyomi' && left > 0) {
+      active = left - 1;
+      ratio = Math.max(0, Math.min(1, info.ms / S.cfg.byoyomiMs));
+    }
+    var pct = (Math.round(ratio * 1000) / 10).toFixed(1);
+    var key = total + ':' + left + ':' + active + ':' + pct;
+    if (barPainted[side] === key) { return; }      // 帧间没变化就不碰 DOM
+    barPainted[side] = key;
     for (var k = 0; k < total; k++) {
-      bar.children[k].classList.toggle('is-on', k < left);
+      var seg = bar.children[k];
+      seg.classList.toggle('is-on', k < left);
+      seg.style.background = (k === active && ratio < 1)
+        ? 'linear-gradient(to right, var(--ok) 0 ' + pct + '%, var(--danger) ' + pct + '% 100%)'
+        : '';
     }
   }
 

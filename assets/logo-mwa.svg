@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  logo-mwa.svg —— MWA（Malaysia Weiqi Association / 马来西亚围棋协会）标志
+  ================================================================
+  官方会徽出处：https://weiqi.org.my/zh
+  会徽文件：https://weiqi.org.my/brand/mwa-emblem-stones.png（215×135，黄底 + 一黑一白两颗棋子）
+
+  本文件是官方会徽的「方形图标版」：把 215×135 的黄底会徽收进 64×64 圆角方块，
+  保留三件事——金黄底、左黑右白两颗棋子、每颗棋子上那道弧线反光；
+  其余（比例、叠压关系、反光角度）都按官方原图量出来：
+    · 官方：黑子直径 117、白子 116、圆心距 68（≈1.16r），黑子压在白子上；
+    · 反光：黑子上一道白弧（半径 ≈0.83r，约 255°→355°），
+            白子上一道灰弧（半径 ≈0.75r，约 270°→355°）。
+  为在方形里把画面填满，这里把圆心距收窄到 ≈0.98r，棋子因此更饱满。
+
+  重新导出 PNG：node tools/export-logos.js
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512"
+     role="img" aria-labelledby="mwaTitle mwaDesc">
+  <title id="mwaTitle">MWA · Malaysia Weiqi Association</title>
+  <desc id="mwaDesc">官方会徽的方形版：金黄底，一黑一白两颗棋子，各带一道弧形反光。</desc>
+
+  <defs>
+    <linearGradient id="mwaGold" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#ffd21c"/>
+      <stop offset="1" stop-color="#f3bf00"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 底：官方会徽的金黄底，收成圆角方块 -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#mwaGold)"/>
+  <rect x="2" y="2" width="60" height="60" rx="15"
+        fill="none" stroke="#a97c00" stroke-opacity="0.16" stroke-width="1"/>
+
+  <!-- 白子（右，压在下面） -->
+  <circle cx="41.75" cy="32" r="20" fill="#ffffff"/>
+  <!-- 黑子（左，压在白子上） -->
+  <circle cx="22.25" cy="32" r="20" fill="#050505"/>
+
+  <!-- 弧线反光：黑子上白弧、白子上灰弧，角度按官方原图 -->
+  <path d="M17.95 15.97A16.6 16.6 0 0 1 38.79 30.55"
+        fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M41.75 17A15 15 0 0 1 56.69 30.69"
+        fill="none" stroke="#a9a9ad" stroke-width="2" stroke-linecap="round"/>
+</svg>
+

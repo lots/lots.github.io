@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  logo-chess.svg —— 国际象棋（Chess）标志
+  ================================================================
+  设计说明
+  · 与 app 其它图标同一套几何：64×64 画布、圆角方块底（rx 15）;
+  · 浅象牙色底 + 深墨色「车 / Rook」棋子：车是纯几何造型（城垛 + 收腰 + 底座），
+    缩到 32px 的手机小图标也不会糊成一团;
+  · 底座下压一条 app 主蓝（#3ea6ff）细线，和棋钟界面同色系。
+
+  重新导出 PNG：node tools/export-logos.js
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512"
+     role="img" aria-labelledby="chessTitle chessDesc">
+  <title id="chessTitle">Chess</title>
+  <desc id="chessDesc">象牙色圆角方块，深墨色国际象棋「车」棋子，底座下有一条蓝色细线。</desc>
+
+  <defs>
+    <linearGradient id="chessTile" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#f0f5fc"/>
+      <stop offset="1" stop-color="#dbe5f2"/>
+    </linearGradient>
+    <linearGradient id="chessInk" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#242e3c"/>
+      <stop offset="0.5" stop-color="#0c1118"/>
+      <stop offset="1" stop-color="#05070a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 底：象牙白圆角方块 -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#chessTile)"/>
+  <rect x="2" y="2" width="60" height="60" rx="15"
+        fill="none" stroke="#0b0f15" stroke-opacity="0.1" stroke-width="1"/>
+
+  <!-- 棋子「车」：三个城垛 + 横带 + 收腰柱身 + 束腰 + 底座 -->
+  <g fill="url(#chessInk)">
+    <rect x="16.2" y="9.6" width="8.2" height="6.8" rx="1.2"/>
+    <rect x="27.9" y="9.6" width="8.2" height="6.8" rx="1.2"/>
+    <rect x="39.6" y="9.6" width="8.2" height="6.8" rx="1.2"/>
+    <rect x="15.8" y="15.7" width="32.4" height="4.9" rx="1"/>
+    <path d="M20.9 20.4h22.2c-.5 7-1.7 14.2-2.7 21H23.6c-1-6.8-2.2-14-2.7-21Z"/>
+    <rect x="21.2" y="41.4" width="21.6" height="3.9" rx="1"/>
+    <rect x="17.2" y="45.7" width="29.6" height="4.9" rx="1.5"/>
+  </g>
+
+  <!-- app 主蓝细线 -->
+  <rect x="18.4" y="52.7" width="27.2" height="1.7" rx="0.85" fill="#3ea6ff"/>
+</svg>

@@ -190,6 +190,32 @@ kbd {
   display: block;
 }
 
+/*
+ * 两处 logo 都是按钮（点一下换下一个标志）。按钮本身不画任何东西：
+ * 去掉边框/内距/底色，尺寸完全由里面的图决定，免得把操作条撑宽或把页头撑高。
+ */
+.logo-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  border-radius: 22px;          /* 与 96×96 的圆角比例一致（15/64 ≈ 23%） */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.logo-btn .brand-logo,
+.logo-btn .strip-logo { transition: transform 0.12s ease; }
+.logo-btn:active .brand-logo,
+.logo-btn:active .strip-logo { transform: scale(0.94); }
+.logo-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.logo-btn-strip { border-radius: 12px; }   /* 与 .strip-logo 的圆角一致 */
+
 .app-head-text { min-width: 0; }
 
 /* 语言切换：ENG / 华文，当前语言那半边点亮 */

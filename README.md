@@ -2,22 +2,42 @@
 
 **English** · [华文](README_CN.md)
 
-A web clock you can put on the table **at a community or school event right now**: plain HTML5 + vanilla
-JavaScript, zero dependencies, no backend, **works offline**. It is **for both chess and Weiqi (Go)** — it suits
-Go very well, since byoyomi *is* the standard Go time system, and the whole half-screen is a press button so
-either player can just slap their own side. Open it in a phone browser and it is a tournament clock; double-click
-`index.html` on a PC and it is an arbiter's desk clock.
+A chess / Weiqi (Go) clock made to **sit on the table between two players**: the whole half-screen is the press
+button, so either player just slaps their own side — no aiming at small buttons. Plain HTML5 + vanilla JavaScript,
+zero dependencies, no backend, **works offline**. It is **for both chess and Weiqi (Go)**, and it suits Go
+especially well: byoyomi *is* the standard Go time system.
+
+> ### 📱 Phone first — a PC is for developing and testing
+>
+> The product is a **phone lying flat between the two players**, and the two versions built for that are the
+> **web version** (this folder) and the **Godot version** ([`Godot/`](Godot/README.md), which becomes an Android
+> app). All three versions also run on a PC — double-click `index.html`, or use a desktop build — which is exactly
+> what the automated tests, the screenshot rig and day-to-day development use. Treat PC runs as
+> **developer testing**; judge the UI on a phone. (An arbiter's laptop is the one non-developer exception.)
+
+## Three versions of this clock
+
+The same clock, three implementations, kept behaviourally in sync — the other two are automatically diffed against
+this web version, so they cannot quietly diverge:
+
+| | Version | Tech | Getting it onto a phone | Automated coverage |
+| --- | --- | --- | --- | --- |
+| **1** | **Web** — this folder. **Use this one first on a phone.** | HTML5 + vanilla JS, no build step, 53 tests | open it in the phone browser → *Add to Home Screen* (nothing to install, no store, offline after the first load) | **the reference implementation**: every constant / string / preset / colour of the other two is compared against it |
+| **2** | **Godot 4** — [`Godot/`](Godot/README.md). **The native-app version for Android.** | GDScript, Godot 4.5 | build the Android APK once (see [`Godot/README.md`](Godot/README.md) — the output is not committed) | **well tested**: 31 engine cases (220 assertions) + 21 headless UI cases (126 assertions) + 431 cross-checks + 17 screenshots |
+| **3** | **Defold** — [`Defold/`](Defold/README.md) | Lua, Defold 1.13 | native build with Defold / `bob` (Linux, Windows, macOS, Android, HTML5) | **least tested of the three**: 31 engine + 13 settings cases and 20 static checks pass, but there is **no headless UI suite** — the interface was verified with screenshots plus one scripted real-mouse run |
+
+**Why the web version comes first**: nothing to install, nothing to sign, the same thing works on iPhone and
+Android, and updating means copying a folder. **When to take the Godot version**: you want a real installed
+Android app (native sound, keep-awake, hardware back button).
+
+**The Godot version has been tested more than the Defold version.** Godot has a headless UI suite that
+instantiates the real scene and clicks through it, a 431-item automated diff against this web version, and 17
+committed screenshots. Defold's engine and settings tests pass and its screenshots were reviewed, but its
+interface has only been exercised by a single scripted click run — so if you want a native build and have no
+reason to prefer Defold, choose Godot. (Both ports' READMEs are currently in Chinese.)
 
 The interface is **bilingual (English / Chinese)**: the `ENG / 华文` button at the top right of the setup page
 switches it at any time and the choice is remembered (you can also force it with `index.html?lang=zh`).
-
-> There is also a **Defold (Lua) port**: [`Defold/`](Defold/README.md) — the same product with the same timing
-> semantics (the 8 constants and 30 test cases are cross-checked automatically), and it can be packaged as a
-> native Windows / macOS / Linux / Android / iOS / HTML5 app. (Its README is in Chinese for now.)
->
-> And a **Godot 4 port**: [`Godot/`](Godot/README.md) — same product again, same 30 test cases plus 16 headless UI
-> tests, and every constant / string / preset / colour is diffed against this web version by
-> `Godot/tests/project_spec.js`. Run it with Godot 4.5+ (`godot --path Godot`). (README also in Chinese for now.)
 
 <img src="screenshots/midgame-portrait.png" alt="Facing mode, portrait (default dark theme)" width="390">
 <img src="screenshots/byoyomi-portrait.png" alt="Byoyomi mode: the segmented bar under each panel is green for the periods you still have and red for the ones you have spent" width="390">
@@ -56,6 +76,7 @@ actually uses:
 | Sound switch | ✅ | Move beep + time-up alarm (synthesised live, no audio files) |
 | Two-sided facing layout (both players read their own side) | ✅ | “Facing mode” (`180°`) turns the far panel’s digits around; “Swap sides” (`⇵`) moves each colour to the other half — see section 5 |
 | Keep screen awake | ✅ | Wake Lock API, the screen stays on during a game |
+| Clickable logo | ✅ | Tap the logo (setup header or toolbar) to cycle **TARUMT → CoQ → Chess → Weiqi → MWA**; the choice is remembered across restarts |
 | Replaceable logo / favicon | ✅ | Overwrite `assets/logo-source.png`, run `node tools/export-icons.js`, see section 7 |
 | Battery indicator | ❌ | The phone has one; no need to duplicate it |
 | Multiple time controls (e.g. 40 moves/90 min + 30 min) | ❌ | Single period only; byoyomi “periods” are a different thing. See section 8 |
@@ -63,11 +84,11 @@ actually uses:
 
 ---
 
-## 2. Running it
+## 2. Running it — phone first
 
-### Option 1 — phone as the clock (recommended, this is what you use at the event)
+### Option 1 — the web version on a phone (this is the product)
 
-On the PC:
+On the PC (only to serve the files):
 
 ```bash
 node serve.js            # port 8080 by default; or PORT=8081 node serve.js
@@ -87,12 +108,16 @@ Connect the phone to the same Wi-Fi and open that `192.168.x.x` address in its b
 (If the phone cannot open it, Windows Firewall is usually blocking Node — the first run pops up a dialog, choose
 “allow on private networks”.)
 
-### Option 2 — local use on a PC
+### Option 2 — the Godot version as an Android app
 
-Just double-click `index.html`. Everything works (including facing rotation, sound and fullscreen) with no server
-at all.
+**Fastest: download the pre-built** [`CoQChessClock-debug.apk`](https://github.com/lots/ChessClock/releases/tag/v1.0.0)
+(27.5 MB, debug-signed), copy it to the phone and tap it, or `adb install -r CoQChessClock-debug.apk`.
+To build it yourself, export with Godot 4.5 — the command is in [`Godot/README.md`](Godot/README.md) (the APK is a
+**build output and is not committed**, so the repo does not contain it). Same clock, but a real installed app:
+native sound, keep-awake, hardware back-button handling. Android is the only platform the APK has been built for
+so far.
 
-### Option 3 — host it online (players open it on their own phones)
+### Option 3 — host the web version online (players open it on their own phones)
 
 The whole folder is static: drop it on any static host, **no backend, no database**:
 
@@ -100,7 +125,13 @@ The whole folder is static: drop it on any static host, **no backend, no databas
 * Netlify Drop: drag the folder onto <https://app.netlify.com/drop>
 * Vercel / Cloudflare Pages: same idea
 
-### Two things worth doing (strongly recommended)
+### Option 4 — on a PC (development and testing)
+
+Double-click `index.html`: everything works (facing rotation, sound, fullscreen) with no server at all. This is
+how the screenshot rig, the tests and daily development run — and an arbiter can use a laptop in a pinch — but
+the device this clock is designed for is the phone on the table.
+
+### Two things worth doing on the phone (strongly recommended)
 
 1. **Add to home screen**: phone browser menu → “Add to Home Screen”. No address bar, nearly fullscreen, and it
    opens offline (the files are cached locally).
@@ -139,7 +170,7 @@ The whole folder is static: drop it on any static host, **no backend, no databas
 | ⛶ | Fullscreen (iOS Safari has no web fullscreen — use “Add to Home Screen” instead) |
 | ⚙ | Back to setup (asks for confirmation during a game) |
 
-### Keyboard, when a PC is the clock
+### Keyboard shortcuts (when you run it on a PC)
 
 | Key | What it does |
 | --- | --- |
@@ -354,12 +385,13 @@ ChessClock/
 │   └── export-icons.js   derives all those PNGs from logo-source.png
 ├── serve.js              zero-dependency static server (for phones on the LAN)
 ├── tests/
-│   ├── engine.test.js    timing engine tests (30)
+│   ├── engine.test.js    timing engine tests (31)
 │   ├── project.test.js   project-integrity tests (22: i18n / themes / defaults / presets / scenes / start-up / facing geometry / icons …)
 │   ├── run.js            single-process test entry point
 │   └── visual/           headless-Chrome visual rig (screenshots) + out/*.png artefacts
 ├── Defold/               the Defold (Lua) port: native apps and HTML5, see Defold/README.md
 ├── Godot/                the Godot 4 port: native apps and Web, see Godot/README.md
+├── .github/workflows/    ci.yml (all three test suites) + android.yml (builds the APK on a v* tag)
 └── package.json          npm test / npm start / npm run shots
 ```
 
@@ -368,6 +400,17 @@ npm test        # 53 tests: timing logic + page/icon/bilingual/theme/defaults/by
 npm start       # start the LAN server, open it on your phone
 npm run shots   # re-shoot every scene with headless Chrome (needs Chrome/Edge installed)
 ```
+
+### CI, and the released Android APK
+
+* **`.github/workflows/ci.yml`** runs all three suites on every push / pull request: `npm test` (53), the Defold
+  `node tests/run.js` (20) and the Godot headless suite on a downloaded Godot 4.5.1 (31 engine + 21 UI cases +
+  the 431-item cross-check). Same commands as above — a green CI means the same thing as a green local run.
+* **`.github/workflows/android.yml`** builds the debug APK on a runner and attaches it to the GitHub Release when
+  a `v*` tag is pushed (or on demand through *Run workflow*, where it lands in the run's artifacts).
+* **Already released: [v1.0.0](https://github.com/lots/ChessClock/releases/tag/v1.0.0)** carries
+  `CoQChessClock-debug.apk` (27.5 MB, arm64-v8a, debug-signed) — the fastest way to get the native Android app.
+  The APK itself is a build artifact and stays out of the repository.
 
 The screenshot script can also pick scenes, pixel density and language (handy after a styling or copy change, so
 you don't have to run every scene):
@@ -475,6 +518,25 @@ node tools/export-icons.js
 
 To change a displayed size, edit `width/height` for `.brand-logo` / `.strip-logo` in `styles.css`, the matching
 `width`/`height` in `index.html`, and the `JOBS` sizes in the script — the tests check all of them together.
+
+### Clicking the logo
+
+The logo in the setup header and the one at the left of the toolbar are buttons. Each tap advances
+**TARUMT → CoQ → Chess → Weiqi → MWA → TARUMT**; the choice is stored with the other settings in
+`localStorage` (`chessclock.settings.v1`) and restored on the next launch. Both logos always show the same
+one, and `?logo=chess` (any id) forces a particular one for a link or a screenshot without touching the
+saved choice.
+
+| Logo | Setup header (96×96) | Toolbar (48×48) |
+| --- | --- | --- |
+| TARUMT | `logo-brand.png` | `logo-strip.png` |
+| CoQ | `logo-coq-512.png` | `logo-coq-192.png` |
+| Chess | `logo-chess-512.png` | `logo-chess-192.png` |
+| Weiqi | `logo-weiqi-512.png` | `logo-weiqi-192.png` |
+| MWA | `logo-mwa-512.png` | `logo-mwa-192.png` |
+
+To add a sixth logo: drop its two PNGs in `assets/`, add the id to `LOGO_ORDER` and an entry to
+`LOGO_FILES` in `app.js`, and add a `logo.name.<id>` string to both languages in `i18n.js`.
 
 (`logo.svg` is the old CoQ vector art, kept only as a backup. Details in [assets/README.md](assets/README.md).)
 

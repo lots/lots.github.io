@@ -33,6 +33,13 @@
       'app.description': '可在手机浏览器直接使用的棋类比赛虚拟棋钟（国际象棋 / 围棋）：Fischer 加秒 / Bronstein 延时 / Byoyomi 读秒 / 无加秒，纯本地运行，无需联网。',
       'app.noscript': '本棋钟需要启用 JavaScript 才能运行。',
       'lang.button.aria': '切换界面语言：ENG / 华文',
+      // 标志（点 logo 循环切换）：名字用在 alt / aria-label 上
+      'logo.button.aria': '切换标志（当前：{name}）',
+      'logo.name.tarumt': 'TARUMT 校徽',
+      'logo.name.coq': 'CoQ 棋钟',
+      'logo.name.chess': '国际象棋',
+      'logo.name.weiqi': '围棋',
+      'logo.name.mwa': 'MWA 会徽',
 
       // —— 设置页 ——
       'setup.mode.heading': '1. 计时模式',
@@ -136,6 +143,13 @@
       'app.description': 'A board-game clock that runs in any phone browser — for chess and Weiqi (Go): Fischer increment / Bronstein delay / Byoyomi / sudden death. Fully local, no network needed.',
       'app.noscript': 'This clock needs JavaScript to be enabled.',
       'lang.button.aria': 'Switch interface language: ENG / 华文',
+      // Logo names: used for alt / aria-label
+      'logo.button.aria': 'Change logo (currently: {name})',
+      'logo.name.tarumt': 'TARUMT crest',
+      'logo.name.coq': 'CoQ Clock',
+      'logo.name.chess': 'Chess',
+      'logo.name.weiqi': 'Weiqi',
+      'logo.name.mwa': 'MWA emblem',
 
       'setup.mode.heading': '1. Time mode',
       'setup.mode.aria': 'Time mode',

@@ -79,10 +79,31 @@
     swapped: false,                   // 「交换两侧位置」：false = 默认（竖屏上黑下白 / 横屏左黑右白）
     keepAwake: true,
     lang: 'en',                       // 首次打开：英文（按钮可随时切到华文，之后记住选择）
-    theme: 'dark'                     // 深色（最初那套配色）为默认
+    theme: 'dark',                    // 深色（最初那套配色）为默认
+    logo: 'tarumt',                   // 首次打开：TARUMT 校徽（点 logo 会在五个之间循环，选择会记住）
   };
 
+  /**
+   * 标志循环：点一下 logo 换成下一个 ——
+   *     TARUMT → CoQ → Chess → 围棋 → MWA → 回到 TARUMT
+   *
+   * 每一项的 name 是 i18n 里的标志名 key；brand / strip 分别是
+   * 设置页 96×96 与操作条 48×48 用的位图（TARUMT 沿用原来那两张，其余用导出的 512 / 192 档）。
+   * 当前选的是哪一项存在 localStorage 的同一份设置里（cfg.logo），关掉再打开保持不变。
+   */
+  var LOGO_ORDER = ['tarumt', 'coq', 'chess', 'weiqi', 'mwa'];
+  var LOGO_FILES = {
+    tarumt: { name: 'logo.name.tarumt', brand: 'assets/logo-brand.png', strip: 'assets/logo-strip.png' },
+    coq: { name: 'logo.name.coq', brand: 'assets/logo-coq-512.png', strip: 'assets/logo-coq-192.png' },
+    chess: { name: 'logo.name.chess', brand: 'assets/logo-chess-512.png', strip: 'assets/logo-chess-192.png' },
+    weiqi: { name: 'logo.name.weiqi', brand: 'assets/logo-weiqi-512.png', strip: 'assets/logo-weiqi-192.png' },
+    mwa: { name: 'logo.name.mwa', brand: 'assets/logo-mwa-512.png', strip: 'assets/logo-mwa-192.png' }
+  };
+
+  function normalizeLogo(v) { return LOGO_ORDER.indexOf(v) >= 0 ? v : LOGO_ORDER[0]; }
+
   var cfg = loadSettings();
+  cfg.logo = normalizeLogo(cfg.logo);
   var S = null;                       // 当前对局（engine 状态）
   var lastText = { w: null, b: null };// 上次渲染的文本，避免无谓的 DOM 写入
   var rafId = null;
@@ -136,6 +157,10 @@
   var queryTheme = queryParam('theme');
   if (queryTheme && THEMES.indexOf(queryTheme) >= 0) { cfg.theme = queryTheme; }
 
+  // 同理 ?logo=tarumt / coq / chess / weiqi / mwa（分享指定标志、截图都用得上）
+  var queryLogo = queryParam('logo');
+  if (queryLogo && LOGO_ORDER.indexOf(queryLogo) >= 0) { cfg.logo = queryLogo; }
+
   /** 把语言应用到整页：<html lang> / <title> / 描述 / 所有 data-i18n* 标记 / 动态文案 */
   function applyLanguage(next) {
     lang = I18N.normalize(next) || 'zh';
@@ -168,6 +193,7 @@
     });
 
     renderLanguageDependentUI();
+    applyLogo();                // 标志名（alt / title / aria-label）跟着语言走
   }
 
   /** 语言一变就要重画的那几处（模式提示、加秒标签、预设、摘要、棋钟页状态） */
@@ -180,6 +206,38 @@
   }
 
   var paneEls = {}, timeEls = {}, moveEls = {}, chipEls = {}, byoBars = {};
+
+  /* ================= 标志（点击循环） ================= */
+
+  function logoName(id) { return t(LOGO_FILES[id].name); }
+
+  /**
+   * 把 cfg.logo 应用到两处 <img>，并把「当前是哪个标志」写进按钮的
+   * title / aria-label（读屏和长按悬停都能看到）。
+   */
+  function applyLogo() {
+    var id = normalizeLogo(cfg.logo);
+    var files = LOGO_FILES[id];
+    var brand = $('#brandLogo');
+    var strip = $('#stripLogo');
+    if (brand) { brand.src = files.brand; brand.alt = logoName(id); }
+    if (strip) { strip.src = files.strip; }
+    var label = t('logo.button.aria', { name: logoName(id) });
+    ['#btnLogoBrand', '#btnLogoStrip'].forEach(function (sel) {
+      var b = $(sel);
+      if (!b) { return; }
+      b.title = label;
+      b.setAttribute('aria-label', label);
+    });
+  }
+
+  /** 点一次：换成 LOGO_ORDER 里的下一个（到头回到第一个），存盘并重画 */
+  function cycleLogo() {
+    var i = LOGO_ORDER.indexOf(normalizeLogo(cfg.logo));
+    cfg.logo = LOGO_ORDER[(i + 1) % LOGO_ORDER.length];
+    saveSettings();
+    applyLogo();
+  }
 
   /* ================= 小工具 ================= */
 
@@ -950,6 +1008,16 @@
       fitTime();          // 文案长度变了，时间数字的可用宽度也跟着变
     });
 
+    // 点 logo 换标志：设置页那颗和操作条那颗是同一个状态，点哪颗都行
+    ['#btnLogoBrand', '#btnLogoStrip'].forEach(function (sel) {
+      var b = $(sel);
+      if (!b) { return; }
+      b.addEventListener('click', function () {
+        cycleLogo();
+        b.blur();
+      });
+    });
+
     // 界面主题下拉框
     $('#themeSelect').addEventListener('change', function () {
       applyTheme(this.value);
@@ -1055,6 +1123,8 @@
   /* ================= 启动 ================= */
 
   function init() {
+    applyLogo();              // 先把上次选的标志落上去（越早越好，避免先闪一下 TARUMT）
+
     ['w', 'b'].forEach(function (side) {
       paneEls[side] = $('.pane[data-side="' + side + '"]');
       timeEls[side] = $('.time[data-side="' + side + '"]', paneEls[side]);

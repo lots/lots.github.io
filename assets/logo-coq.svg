@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  logo-coq.svg —— CoQ 棋钟标志（矢量源）
+  ================================================================
+  与 logo-mwa / logo-chess / logo-weiqi 同一套几何：64×64 画布、圆角方块底（rx 15）。
+
+  · 底色与 logo-weiqi.svg 完全相同：同一块木色渐变（#f7dfb8 → #e8c288 → #d3a15c），
+    所以两个标志并排时像同一块棋盘上切下来的；
+  · 黑白两只表盘 = 黑方 / 白方；顶上那根跷跷板按键是棋钟的「拍钟」；
+  · 顶部 CoQ 字标用系统无衬线字体（不引用外部字体文件）；
+    导出 PNG 时由无头浏览器渲染，所见即所得。
+
+  重新导出 PNG（32 → 512 共九档）：
+      node tools/export-logos.js
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512"
+     role="img" aria-labelledby="logoTitle">
+  <title id="logoTitle">CoQ 棋钟</title>
+
+  <defs>
+    <!-- 与 logo-weiqi.svg 的 goWood 完全一致的木色 -->
+    <linearGradient id="coqWood" x1="0.05" y1="0" x2="0.95" y2="1">
+      <stop offset="0" stop-color="#f7dfb8"/>
+      <stop offset="0.5" stop-color="#e8c288"/>
+      <stop offset="1" stop-color="#d3a15c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 圆角方形底：木色（同围棋标志） -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#coqWood)"/>
+  <rect x="2" y="2" width="60" height="60" rx="15"
+        fill="none" stroke="#7a4a14" stroke-opacity="0.14" stroke-width="1"/>
+
+  <!-- 顶上那根跷跷板按键（木底上用暖褐色，避免看起来像一块污渍） -->
+  <rect x="18" y="14" width="28" height="6" rx="3" fill="#4a3212" opacity="0.3"/>
+
+  <!-- 两只表盘：左＝黑方（深色面），右＝白方（浅色面），中间留 3 单位缝隙 -->
+  <circle cx="20" cy="39" r="10.5" fill="#0a0f16"/>
+  <circle cx="44" cy="39" r="10.5" fill="#f2f7ff"/>
+
+  <!-- 指针（各画一短一长，像 3 点钟方向） -->
+  <path d="M20 39v-5.5M20 39h5" fill="none" stroke="#f2f7ff" stroke-width="2.8" stroke-linecap="round"/>
+  <path d="M44 39v-5.5M44 39h5" fill="none" stroke="#0a0f16" stroke-width="2.8" stroke-linecap="round"/>
+
+  <!-- 顶部字标 CoQ：顶部留白只有 12 单位高（y=2~14），所以字号压到 10、
+       基线放在 11.5，正好卡在跷跷板按键上方 -->
+  <text x="32" y="11.5" text-anchor="middle" fill="#0a0f16" fill-opacity="0.9"
+        font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"
+        font-size="10" font-weight="700" letter-spacing="0.2">CoQ</text>
+</svg>
+

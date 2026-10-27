@@ -2,18 +2,36 @@
 
 [English](README.md) · **华文**
 
-一个**给社区赛 / 校际赛当场就能用**的网页棋钟：纯 HTML5 + 原生 JavaScript，零依赖、零后端、**断网可用**。
-**国际象棋与围棋（Weiqi / Go）通用** —— 围棋用它也很合适：Byoyomi 读秒本来就是围棋赛制，整块半屏当按键
-对局双方各自拍钟同样顺手。手机浏览器打开就能当比赛棋钟用，电脑上双击 `index.html` 也能当裁判台用。
+一台**摆在两位棋手之间、平放着用**的棋钟：整块半屏就是按键，谁走完棋就拍自己那一侧，不用瞄准小按钮。
+纯 HTML5 + 原生 JavaScript，零依赖、零后端、**断网可用**；国际象棋与围棋通用 —— 围棋尤其合适，
+Byoyomi 读秒本来就是围棋赛制。
+
+> ### 📱 手机优先 —— 电脑是用来开发和测试的
+>
+> 这个产品就是**平放在两位棋手中间的一部手机**，为它准备的两个版本是**网页版**（本目录）和
+> **Godot 版**（[`Godot/`](Godot/README.md)，会打成安卓 APK）。三个版本在电脑上当然都能跑
+> （双击 `index.html`，或用对应的桌面版），自动化测试、截图流水线与日常开发也正是这么用的 ——
+> 但请把电脑上的运行当作**开发者测试**，界面效果以手机为准。（裁判拿笔记本当记谱台，是唯一的非开发者例外。）
+
+## 三个版本
+
+同一台棋钟、三份实现，行为上保持同步 —— 另两份都由自动化测试逐项与网页版比对，不会各改各的：
+
+| | 版本 | 技术 | 怎么装到手机上 | 自动化测试 |
+| --- | --- | --- | --- | --- |
+| **1** | **网页版** —— 本目录。**手机上先用这个。** | HTML5 + 原生 JS，无需构建，53 项测试 | 手机浏览器打开 →「添加到主屏幕」（不用安装、不过应用商店，首次加载后离线可用） | **基准实现**：另两版的常量 / 文案 / 预设 / 色值都以它为准逐项比对 |
+| **2** | **Godot 4 版** —— [`Godot/`](Godot/README.md)。**安卓原生应用版。** | GDScript，Godot 4.5 | 自己打一次安卓 APK（步骤见 [`Godot/README.md`](Godot/README.md)，产物不入库） | **测试较充分**：引擎 31 用例（220 断言）+ 无头界面 21 用例（126 断言）+ 431 项对照 + 17 张截图 |
+| **3** | **Defold 版** —— [`Defold/`](Defold/README.md) | Lua，Defold 1.13 | 用 Defold / `bob` 自行打包（Linux、Windows、macOS、Android、HTML5） | **三份里测试最少的**：引擎 31 + 设置 13 用例、20 项静态检查通过，但**没有无头界面测试套件** —— 界面靠截图 + 一次脚本化点击回归核对 |
+
+**为什么先用网页版**：不用安装、不用签名，iPhone 与安卓都一样，更新就是拷一个文件夹。
+**什么时候用 Godot 版**：你想要一个真正装在手机里的安卓 App（原生音效、屏幕常亮、返回键处理）。
+
+**Godot 版的测试比 Defold 版更充分。** Godot 版有一套无头界面测试（真的把场景实例化出来并点击），
+另有与网页版逐项比对的 431 项检查、17 张入库截图。Defold 版的引擎与设置测试都通过、截图也人工核对过，
+但界面只跑过一次脚本化点击 —— 所以如果你要原生构建、又没有特别理由选 Defold，请选 Godot。
+（两个移植版目前的 README 都是中文。）
 
 界面**中英双语**：设置页右上角的 `ENG / 华文` 按钮随时切换，选择会记住（也可用 `index.html?lang=en` 直接指定）。
-
-> 另有一份 **Defold（Lua）移植版**：[`Defold/`](Defold/README.md) —— 同一个产品、同一套计时语义
-> （两边的 8 个常量与 31 个用例都有自动比对），可打包成 Windows / macOS / Linux / Android / iOS / HTML5 原生应用。
->
-> 还有一份 **Godot 4 移植版**：[`Godot/`](Godot/README.md) —— 同样是同一个产品、同样那 31 个用例，
-> 另加 14 个无头界面测试；并且常量 / 文案 / 预设 / 色值都由 `Godot/tests/project_spec.js` 与网页版逐个比对。
-> 用 Godot 4.5+ 直接 `godot --path Godot` 就能跑。
 
 <img src="screenshots/midgame-portrait.png" alt="竖屏对坐（默认深色主题）" width="390">
 <img src="screenshots/byoyomi-portrait.png" alt="读秒（Byoyomi）模式：数字与步数行之间的分段条，绿色 = 还剩几段，红色 = 已经用掉" width="390">
@@ -50,6 +68,7 @@
 | 声音开关 | ✅ | 走子提示音 + 超时警报（现场合成，无音频文件） |
 | 双面朝向（两位选手对坐各看一面） | ✅ | 「对坐模式」（`180°`）把对面那块面板的数字转正；「交换两侧」（`⇵`）把双方换到另外半屏，见第五节 |
 | 屏幕常亮 | ✅ | Wake Lock API，对局中不熄屏 |
+| 可点击的 logo | ✅ | 设置页页头或操作条上的 logo 点一下换下一个：**TARUMT → CoQ → 国际象棋 → 围棋 → MWA** 循环，选择会记住 |
 | 可替换的图标 / favicon | ✅ | 覆盖 `assets/logo-source.png` 后跑 `node tools/export-icons.js` 重出各尺寸，见第七节 |
 | 电池电量指示 | ❌ | 手机自带，不必重复 |
 | 多时段（如 40 步/90 分钟 + 30 分钟） | ❌ | 单时段；读秒的「多段」是另一回事。见第八节 |
@@ -57,11 +76,11 @@
 
 ---
 
-## 二、怎么跑起来
+## 二、怎么跑起来 —— 手机优先
 
-### 方式 1：手机当棋钟（推荐，比赛现场用这个）
+### 方式 1：网页版放在手机上（这就是产品本身）
 
-在电脑上：
+在电脑上（只是起个静态服务）：
 
 ```bash
 node serve.js            # 默认 8080 端口；也可 PORT=8081 node serve.js
@@ -78,11 +97,15 @@ node serve.js            # 默认 8080 端口；也可 PORT=8081 node serve.js
 手机连同一个 Wi-Fi，浏览器输入那个 `192.168.x.x` 地址即可。
 （若手机打不开，多半是 Windows 防火墙拦了 Node —— 首次运行会弹窗，选"允许专用网络"。）
 
-### 方式 2：电脑本地用
+### 方式 2：Godot 版装成安卓应用
 
-直接双击 `index.html`。全部功能（含对坐旋转、声音、全屏）都可用，无需任何服务器。
+**最快：直接下已经打包好的** [`CoQChessClock-debug.apk`](https://github.com/lots/ChessClock/releases/tag/v1.0.0)
+（27.5 MB，调试签名），拷进手机点开装，或 `adb install -r CoQChessClock-debug.apk`。
+想自己打也行：用 Godot 4.5 导出，命令见 [`Godot/README.md`](Godot/README.md)（**APK 是构建产物、不入库**，
+所以仓库里没有这个文件）。同一台棋钟，但它是真正装在手机里的应用：原生音效、屏幕常亮、硬件返回键处理。
+目前只出过安卓的包。
 
-### 方式 3：托管到网上（选手自带手机扫码打开）
+### 方式 3：把网页版托管到网上（选手用各自的手机打开）
 
 整个目录都是静态文件，扔到任意静态托管即可，**不需要后端、不需要数据库**：
 
@@ -90,7 +113,12 @@ node serve.js            # 默认 8080 端口；也可 PORT=8081 node serve.js
 * Netlify Drop：把文件夹直接拖到 <https://app.netlify.com/drop>
 * Vercel / Cloudflare Pages：同上
 
-### 顺手做两件事（强烈建议）
+### 方式 4：在电脑上（开发与测试）
+
+直接双击 `index.html`，全部功能（含对坐旋转、声音、全屏）都可用，无需任何服务器。截图流水线、自动化
+测试与日常开发就是这么跑的；裁判临时用笔记本顶一下也行 —— 但这台钟设计的舞台是桌上的手机。
+
+### 手机上顺手做两件事（强烈建议）
 
 1. **加到主屏幕**：手机浏览器菜单 →「添加到主屏幕」。这样打开没有地址栏，接近全屏，且可离线打开（文件已在本地缓存）。
 2. **开飞行模式或免打扰**：比赛中来电会打断计时（见第六节）。
@@ -111,7 +139,7 @@ node serve.js            # 默认 8080 端口；也可 PORT=8081 node serve.js
    → 「再来一局（交换先后手）」或「返回设置」。
 5. 需要临时停表（记谱、处理争议）：点「停」，再点「续」（按钮上只写一个字，悬停提示与读屏软件念的是完整的「暂停 / 继续」）。这颗按钮只在开表之后才出现。
 
-### 中间的操做条
+### 中间的操作条
 
 | 按钮 | 作用 |
 | --- | --- |
@@ -122,7 +150,7 @@ node serve.js            # 默认 8080 端口；也可 PORT=8081 node serve.js
 | ⛶ | 全屏（iOS Safari 不支持网页全屏，用"添加到主屏幕"代替） |
 | ⚙ | 返回设置（对局中会二次确认） |
 
-### 电脑当棋钟时的键盘
+### 键盘快捷键（在电脑上跑的时候）
 
 | 键 | 作用 |
 | --- | --- |
@@ -289,12 +317,13 @@ ChessClock/
 │   └── export-icons.js   由 logo-source.png 导出上面那些 PNG
 ├── serve.js              零依赖静态服务器（局域网给手机用）
 ├── tests/
-│   ├── engine.test.js    计时引擎测试（30 项）
+│   ├── engine.test.js    计时引擎测试（31 项）
 │   ├── project.test.js   项目完整性测试（22 项：双语 / 主题 / 默认值 / 预设 / 场景 / 开局方式 / 对坐几何 / 读秒段数条 / 图标…）
 │   ├── run.js            单进程测试入口
 │   └── visual/           无头 Chrome 视觉验证台（截图）＋ out/*.png 截图产物
 ├── Defold/               Defold（Lua）移植版：原生应用 / HTML5 都能出，见 Defold/README.md
 ├── Godot/                Godot 4 移植版：原生应用 / Web 都能出，见 Godot/README.md
+├── .github/workflows/    ci.yml（三端测试）+ android.yml（打 v* 标签时产出 APK 并挂到 Release）
 └── package.json          npm test / npm start / npm run shots
 ```
 
@@ -303,6 +332,17 @@ npm test        # 53 项测试：计时逻辑 + 页面/图标/双语/主题/默�
 npm start       # 启动局域网服务，手机即可访问
 npm run shots   # 用无头 Chrome 把各场景重新截图（需要本机有 Chrome/Edge）
 ```
+
+### CI 与已发布的安卓 APK
+
+* **`.github/workflows/ci.yml`**：每次 push / PR 都在 GitHub runner 上跑三套测试 —— `npm test`（53 项）、
+  Defold 的 `node tests/run.js`（20 项）、以及下载 Godot 4.5.1 之后的无头套件（引擎 31 + 界面 21 用例 +
+  与网页版对照 431 项）。命令与上面本地跑的完全一致，**CI 绿就等于本地绿**。
+* **`.github/workflows/android.yml`**：在 runner 上打调试版 APK；推 `v*` 标签时自动挂到同名 Release，
+  也可以手动 *Run workflow*（产物在本次运行的 artifacts 里）。
+* **已经发布：[v1.0.0](https://github.com/lots/ChessClock/releases/tag/v1.0.0)** 带
+  `CoQChessClock-debug.apk`（27.5 MB，arm64-v8a，调试签名）—— 想装原生安卓应用，下这个最快。
+  APK 本身是构建产物，不入库。
 
 截图脚本还能挑场景 / 选像素密度 / 指定语言（改完样式或文案时很有用，不必跑满全部场景）：
 
@@ -399,6 +439,24 @@ node tools/export-icons.js
 
 想调显示尺寸：改 `styles.css` 里 `.brand-logo` / `.strip-logo` 的 `width/height`、
 `index.html` 上对应的 `width`/`height`，以及脚本里的 `JOBS` 尺寸，测试会一起核对。
+
+### 点 logo 换标志
+
+设置页页头的 logo 和操作条左边的 logo 都是按钮。点一下按
+**TARUMT → CoQ → 国际象棋 → 围棋 → MWA → TARUMT** 循环；选择和其它设置一起存进
+`localStorage`（`chessclock.settings.v1`），关掉再打开还是上次那个。两处 logo 永远同步；
+链接里加 `?logo=chess`（任意 id）可以临时指定一个，不写盘，方便分享和截图。
+
+| 标志 | 设置页页头（96×96） | 操作条（48×48） |
+| --- | --- | --- |
+| TARUMT | `logo-brand.png` | `logo-strip.png` |
+| CoQ | `logo-coq-512.png` | `logo-coq-192.png` |
+| 国际象棋 | `logo-chess-512.png` | `logo-chess-192.png` |
+| 围棋 | `logo-weiqi-512.png` | `logo-weiqi-192.png` |
+| MWA | `logo-mwa-512.png` | `logo-mwa-192.png` |
+
+想再加第六个：把两张 PNG 放进 `assets/`，在 `app.js` 的 `LOGO_ORDER` 加 id、`LOGO_FILES` 加一项，
+再到 `i18n.js` 两种语言各加一条 `logo.name.<id>`。
 
 （`logo.svg` 是旧版 CoQ 矢量图形，现在只作备用。细节见 [assets/README.md](assets/README.md)。）
 

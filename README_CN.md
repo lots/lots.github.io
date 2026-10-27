@@ -97,9 +97,13 @@ node serve.js            # 默认 8080 端口；也可 PORT=8081 node serve.js
 手机连同一个 Wi-Fi，浏览器输入那个 `192.168.x.x` 地址即可。
 （若手机打不开，多半是 Windows 防火墙拦了 Node —— 首次运行会弹窗，选"允许专用网络"。）
 
+> **只有第一次打开需要联网，之后就能离线用。** 手机第一次打开页面时要联网（把 `index.html`、`styles.css`、
+> 三个脚本和图标素材下载一次）；页面一旦加载完成，整个棋钟都在本地运行 —— 不发任何网络请求、不依赖 CDN
+> 或在线字体 —— 直接开飞行模式也能继续用。
+
 ### 方式 2：Godot 版装成安卓应用
 
-**最快：直接下已经打包好的** [`CoQChessClock-debug.apk`](https://github.com/lots/ChessClock/releases/tag/v1.0.0)
+**最快：直接下已经打包好的** [`CoQChessClock-debug.apk`](https://github.com/lots/ChessClock/releases/tag/v1.0.1)
 （27.5 MB，调试签名），拷进手机点开装，或 `adb install -r CoQChessClock-debug.apk`。
 想自己打也行：用 Godot 4.5 导出，命令见 [`Godot/README.md`](Godot/README.md)（**APK 是构建产物、不入库**，
 所以仓库里没有这个文件）。同一台棋钟，但它是真正装在手机里的应用：原生音效、屏幕常亮、硬件返回键处理。
@@ -306,7 +310,7 @@ ChessClock/
 ├── app.js                界面与操作层：渲染、触摸/键盘、声音、常亮、本地存储、切语言
 ├── assets/
 │   ├── logo-source.png   ★ 图标原图（当前为 TARUMT 校徽，447×447 带透明通道）
-│   ├── logo-brand.png    设置页 logo，288×288（页面按 96×96 显示）
+│   ├── logo-brand.png    设置页 logo，288×288（页面按 96×96 显示，手机 ≤560px 时 56×56）
 │   ├── logo-strip.png    棋钟操作条 logo，144×144（页面按 48×48 显示）
 │   ├── icon-32.png       favicon
 │   ├── icon-64.png       favicon（高分屏）
@@ -340,7 +344,7 @@ npm run shots   # 用无头 Chrome 把各场景重新截图（需要本机有 Ch
   与网页版对照 431 项）。命令与上面本地跑的完全一致，**CI 绿就等于本地绿**。
 * **`.github/workflows/android.yml`**：在 runner 上打调试版 APK；推 `v*` 标签时自动挂到同名 Release，
   也可以手动 *Run workflow*（产物在本次运行的 artifacts 里）。
-* **已经发布：[v1.0.0](https://github.com/lots/ChessClock/releases/tag/v1.0.0)** 带
+* **已经发布：[v1.0.1](https://github.com/lots/ChessClock/releases/tag/v1.0.1)** 带
   `CoQChessClock-debug.apk`（27.5 MB，arm64-v8a，调试签名）—— 想装原生安卓应用，下这个最快。
   APK 本身是构建产物，不入库。
 
@@ -421,7 +425,7 @@ localStorage.removeItem('chessclock.settings.v1'); location.reload();
 
 | PNG | 用在哪 | 文件像素 | 页面显示 |
 | --- | --- | --- | --- |
-| `logo-brand.png` | 设置页 logo | 288×288 | 96×96 |
+| `logo-brand.png` | 设置页 logo | 288×288 | 96×96（手机 ≤560px 时 56×56） |
 | `logo-strip.png` | 棋钟操作条 logo | 144×144 | 48×48 |
 | `icon-32/64/180.png` | favicon / iOS 主屏 | 32 / 64 / 180 | — |
 

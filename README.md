@@ -108,9 +108,14 @@ Connect the phone to the same Wi-Fi and open that `192.168.x.x` address in its b
 (If the phone cannot open it, Windows Firewall is usually blocking Node — the first run pops up a dialog, choose
 “allow on private networks”.)
 
+> **Online for the first launch only, then it runs offline.** The phone needs a connection the first time it
+> opens the page (it fetches `index.html`, `styles.css`, the three scripts and the logo assets once). Once the
+> page has loaded, the whole clock runs locally — no API calls, no CDN, no web fonts — so you can switch the
+> phone to airplane mode and keep using it.
+
 ### Option 2 — the Godot version as an Android app
 
-**Fastest: download the pre-built** [`CoQChessClock-debug.apk`](https://github.com/lots/ChessClock/releases/tag/v1.0.0)
+**Fastest: download the pre-built** [`CoQChessClock-debug.apk`](https://github.com/lots/ChessClock/releases/tag/v1.0.1)
 (27.5 MB, debug-signed), copy it to the phone and tap it, or `adb install -r CoQChessClock-debug.apk`.
 To build it yourself, export with Godot 4.5 — the command is in [`Godot/README.md`](Godot/README.md) (the APK is a
 **build output and is not committed**, so the repo does not contain it). Same clock, but a real installed app:
@@ -374,7 +379,7 @@ ChessClock/
 ├── app.js                UI and input layer: rendering, touch/keyboard, sound, wake lock, local storage, language switch
 ├── assets/
 │   ├── logo-source.png   ★ the master logo (currently the TARUMT shield, 447×447 with alpha)
-│   ├── logo-brand.png    setup-page logo, 288×288 (displayed at 96×96)
+│   ├── logo-brand.png    setup-page logo, 288×288 (displayed at 96×96, 56×56 on phones)
 │   ├── logo-strip.png    toolbar logo, 144×144 (displayed at 48×48)
 │   ├── icon-32.png       favicon
 │   ├── icon-64.png       favicon (high DPI)
@@ -408,7 +413,7 @@ npm run shots   # re-shoot every scene with headless Chrome (needs Chrome/Edge i
   the 431-item cross-check). Same commands as above — a green CI means the same thing as a green local run.
 * **`.github/workflows/android.yml`** builds the debug APK on a runner and attaches it to the GitHub Release when
   a `v*` tag is pushed (or on demand through *Run workflow*, where it lands in the run's artifacts).
-* **Already released: [v1.0.0](https://github.com/lots/ChessClock/releases/tag/v1.0.0)** carries
+* **Already released: [v1.0.1](https://github.com/lots/ChessClock/releases/tag/v1.0.1)** carries
   `CoQChessClock-debug.apk` (27.5 MB, arm64-v8a, debug-signed) — the fastest way to get the native Android app.
   The APK itself is a build artifact and stays out of the repository.
 
@@ -499,7 +504,7 @@ The page references derived files, and **each use has exactly one file**:
 
 | PNG | Used for | File pixels | Displayed at |
 | --- | --- | --- | --- |
-| `logo-brand.png` | setup-page logo | 288×288 | 96×96 |
+| `logo-brand.png` | setup-page logo | 288×288 | 96×96 (56×56 on phones, ≤560 px) |
 | `logo-strip.png` | toolbar logo | 144×144 | 48×48 |
 | `icon-32/64/180.png` | favicon / iOS home screen | 32 / 64 / 180 | — |
 

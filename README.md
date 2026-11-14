@@ -71,6 +71,20 @@ One entry may set `"featured": true`. It then gets the large card and needs an e
 
 `updated` also feeds `sitemap.xml` (last `<lastmod>` wins for the homepage).
 
+### Where the published copies come from
+
+Each app folder is a copy of a build produced in the app's own repository — never edit it
+here, or the next sync will overwrite the change.
+
+| Folder | Built from | Refresh |
+| --- | --- | --- |
+| `apps/chessclock/` | `lots/ChessClock` (the published file whitelist) | copy the runtime files; its README lists the set |
+| `apps/multigo-neo/` | `lots/my-MultiGoNeo` → `npm run dist:web` → `web-portable/` | copy `index.html`, `*.js`, `styles.css`, `themes/`, `embed.*`, `license.html` |
+
+The portable-only extras (`README.txt`, `Open MultiGo Neo.cmd`, `LICENSE`, the `sgf/` study
+folder) are left out: they only make sense on a USB stick. `license.html` stays because the
+app's Help menu links to it.
+
 ## Local preview
 
 ```bash
@@ -106,6 +120,9 @@ Rolling back is `git revert` + push, or re-running the workflow on an earlier co
   `<base href="/apps/<slug>/">` / Vite `base`. History-routing SPAs need a 404 fallback —
   GitHub Pages serves one site-wide `404.html` and cannot rewrite per app.
 - **No Jekyll.** `.nojekyll` is published, so files beginning with `_` are served.
+- **Shared origin.** Every app is served from `lots.github.io`, so they share one
+  `localStorage`. Namespace keys per app — the clock uses `chessclock.*`, MultiGo Neo uses
+  `figdesk.*` — otherwise two apps will fight over the same setting.
 - **Cache.** Pages serves with a ~10 minute cache; version changed assets (`?v=<sha>`)
   rather than assuming an instant update.
 - **The catalogue is generated.** Don't hand-edit between the `FEATURED`/`GRID`/`TOOLBAR`

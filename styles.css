@@ -226,8 +226,7 @@ html[data-lang="zh"] .feature-copy p{line-height:1.78}
 html[data-theme="light"] .feature-shot img{box-shadow:0 30px 70px -25px rgba(15,23,42,.4);border-color:rgba(15,23,42,.14)}
 
 /* grid */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
-.grid:first-of-type{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:16px}
 .card{
   position:relative;display:flex;flex-direction:column;gap:16px;padding:22px;min-height:196px;
   border:1px solid var(--line);border-radius:var(--radius);background:var(--card-bg);
@@ -246,6 +245,13 @@ html[data-lang="zh"] .card p{line-height:1.7}
 .tags li{font-size:10.5px;letter-spacing:.03em;color:var(--muted-2);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
 .go{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);color:var(--muted);transition:.18s}
 .card:hover .go{color:var(--btn-fg);background:var(--accent);border-color:var(--accent);transform:rotate(-45deg)}
+
+/* a lone card in the grid gets a row layout instead of a lonely third */
+.card--wide{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:22px;min-height:0;padding:20px 24px}
+.card--wide .icon{width:54px;height:54px;border-radius:14px}
+.card--wide .card-text h3{margin:0}
+.card--wide .card-text p{margin-top:4px;max-width:62ch}
+.card--wide .card-side{display:flex;align-items:center;gap:18px}
 
 .empty{margin:28px 0 0;color:var(--muted-2);font-size:14px}
 
@@ -278,7 +284,6 @@ html[data-lang="zh"] .about-cols p{line-height:1.75}
 @media (max-width:900px){
   .feature-card{grid-template-columns:1fr;padding:32px 28px 34px;gap:30px}
   .feature-shot img{height:340px}
-  .grid{grid-template-columns:repeat(2,1fr)}
   .about-cols{grid-template-columns:1fr;gap:22px}
 }
 @media (max-width:640px){
@@ -291,7 +296,8 @@ html[data-lang="zh"] .about-cols p{line-height:1.75}
   .facts li{padding:0;border-left:0}
   .feature-card{padding:26px 22px 30px}
   .feature-shot img{height:300px}
-  .grid{grid-template-columns:1fr}
+  .card--wide{grid-template-columns:auto 1fr;row-gap:14px}
+  .card--wide .card-side{grid-column:1 / -1;justify-content:space-between}
   .apps-head{align-items:flex-start}
   .search{flex:1}
   .search input{width:100%}

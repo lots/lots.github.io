@@ -1,0 +1,143 @@
+/* MultiGo Neo embeddable viewer.
+   Themes come from src/themes/*.css; the canvas is transparent so the board
+   surface and grain are pure CSS. */
+
+.multigo-widget {
+  display: block;
+  width: 100%;
+  max-width: 620px;
+  color: var(--board-label);
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+.multigo-stage {
+  position: relative;
+  border-radius: 4px;
+  background-color: var(--board-surface);
+  background-image: var(--board-surface-image);
+  background-size: cover;
+  border: 1px solid var(--board-edge);
+  box-shadow: var(--board-shadow);
+  overflow: hidden;
+}
+
+.multigo-stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  outline: none;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.multigo-stage canvas:focus-visible {
+  outline: 2px solid var(--overlay-last);
+  outline-offset: -2px;
+}
+
+.multigo-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 2px 4px;
+  border: 1px solid var(--board-edge);
+  border-radius: 4px;
+  background: var(--board-surface);
+  color: var(--board-label);
+  font-size: 11px;
+}
+
+.multigo-bar button {
+  border: 0;
+  border-radius: 3px;
+  padding: 3px 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.multigo-bar button:hover:not(:disabled) {
+  background: rgb(0 0 0 / 8%);
+}
+
+.multigo-bar button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.multigo-spacer {
+  flex: 1 1 auto;
+}
+
+.multigo-status {
+  padding-right: 4px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.multigo-embed-page {
+  margin: 0;
+  padding: 28px 18px 48px;
+  background: #f4f1ea;
+  color: #232323;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+.multigo-embed-page main {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.multigo-embed-page h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.multigo-embed-page p.lede {
+  margin: 0 0 26px;
+  color: #6d6a63;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.multigo-embed-page section {
+  margin: 0 0 30px;
+}
+
+.multigo-embed-page h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7b776e;
+}
+
+.multigo-embed-page .card {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  border: 1px solid #e2ddd2;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.multigo-embed-page .narrow {
+  max-width: 340px;
+}
+
+.multigo-embed-page code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: #ece8df;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 11.5px;
+}
+
+.multigo-quiet {
+  color: #7b776e;
+  font-size: 11.5px;
+}

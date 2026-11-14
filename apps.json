@@ -30,6 +30,23 @@
       "featured": true,
       "repo": "https://github.com/lots/ChessClock",
       "updated": "2026-11-15"
+    },
+    {
+      "slug": "multigo-neo",
+      "title": {
+        "en": "MultiGo Neo",
+        "zh": "MultiGo Neo 围棋打谱"
+      },
+      "tagline": {
+        "en": "A tree-based SGF editor and player for the desktop — study a Go game move by move.",
+        "zh": "以分支树整理变化的 SGF 打谱器，在桌面上一手一手复盘。"
+      },
+      "url": "/apps/multigo-neo/",
+      "icon": "/assets/apps/multigo-neo.png",
+      "tags": ["games", "study"],
+      "badges": ["offline", "desktop"],
+      "repo": "https://github.com/lots/my-MultiGoNeo",
+      "updated": "2026-11-15"
     }
   ]
 }

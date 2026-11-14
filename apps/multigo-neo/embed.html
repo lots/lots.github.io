@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+<title>MultiGo Neo — embeddable boards</title>
+<link rel="stylesheet" href="embed.css">
+<link rel="stylesheet" href="themes/classic.css">
+<link rel="stylesheet" href="themes/flat.css">
+<link rel="stylesheet" href="themes/dark.css">
+<link rel="stylesheet" href="themes/paper.css">
+</head>
+<body class="multigo-embed-page">
+<main>
+  <h1>MultiGo Neo — zero-JS embeds</h1>
+  <p class="lede">
+    Three boards, no per-widget JavaScript. Every <code>&lt;div data-multigo&gt;</code>
+    is discovered and initialised by <code>embed.js</code>; appearance comes from the
+    theme stylesheets and the options are plain <code>data-*</code> attributes.
+  </p>
+
+  <section>
+    <h2>Diagram · 9×9, coordinates, no controls</h2>
+    <div class="card narrow">
+      <div data-multigo data-controls="false" data-coords data-width="340"
+           data-sgf="(;FF[4]GM[1]SZ[9]AB[bb:dd]AW[ee][ff][gg]C[A static diagram: black wall at the upper left, white stones running down the diagonal.])"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Viewer · 9×9 record, path=19, variation badges</h2>
+    <div class="card">
+      <div data-multigo data-coords data-variations data-width="440" data-path="19"
+           data-sgf="(;FF[4]GM[1]SZ[9]KM[6.5]RU[Japanese]DT[2026-10-28]PB[Black]PW[White]BR[5k]WR[4k]RE[W+2.5]C[Position 19 of the demo record. The red letters mark the two continuations; the blue plus is the last move.]
+;B[ee];W[cc];B[gc];W[cg];B[gg];W[ge];B[ce];W[ec];B[fc];W[fb];B[gb];W[eb];B[db];W[dc];B[cb];W[bb];B[bc];W[ac];B[bd](;W[ad];B[cc])(;W[aa]))"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Dark theme · 13×13 branch point</h2>
+    <div class="card">
+      <div data-multigo data-theme="dark" data-coords data-variations data-width="460" data-path="B1B1B1"
+           data-sgf="(;FF[4]GM[1]SZ[13]PB[Black]PW[White]KM[7.5]
+;B[dd];W[jj];B[dj]
+(;W[jd];B[df])
+(;W[cf];B[fc]))"></div>
+    </div>
+    <p class="multigo-quiet">
+      Both continuations are drawn as translucent stones labelled A and B at the branch point.
+      Use the arrows, the mouse wheel or the keyboard when the board has focus.
+    </p>
+  </section>
+
+  <section>
+    <h2>Markup used above</h2>
+    <p class="multigo-quiet">
+      <code>data-sgf</code> inline SGF · <code>data-path</code> position path ·
+      <code>data-coords</code> (optionally <code>1-1</code>) · <code>data-theme</code> ·
+      <code>data-variations</code> · <code>data-controls="false"</code> · <code>data-width</code>.
+    </p>
+  </section>
+</main>
+
+<script src="sabaki-bundle.js"></script>
+<script src="path-spec.js"></script>
+<script src="embed.js"></script>
+</body>
+</html>

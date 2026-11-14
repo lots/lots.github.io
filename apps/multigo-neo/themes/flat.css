@@ -1,0 +1,27 @@
+﻿/* Flat board: solid colour, no wood grain. */
+.theme-flat {
+  --board-surface: #dcb56e;
+  --board-surface-image: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.16), transparent 62%);
+  --board-edge: rgba(92, 67, 30, 0.45);
+  --board-shadow: 0 2px 12px rgba(58, 36, 10, 0.2);
+  --board-line: rgba(35, 30, 20, 0.84);
+  --board-line-width: 1;
+  --board-star: rgba(30, 24, 14, 0.82);
+  --board-label: rgba(52, 42, 24, 0.82);
+  --stone-black-hi: #6a6a6a;
+  --stone-black-mid: #252525;
+  --stone-black-low: #000;
+  --stone-white-hi: #fff;
+  --stone-white-mid: #f1f1f1;
+  --stone-white-low: #c8c8c8;
+  --stone-white-edge: rgba(0, 0, 0, 0.26);
+  --overlay-variant: #be0119;
+  --overlay-last: #0165fc;
+  --overlay-both: #9a0eea;
+  --overlay-backer: rgba(255, 250, 240, 0.85);
+  --overlay-halo: rgba(255,255,255,.88);
+}
+
+
+
+

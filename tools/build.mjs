@@ -102,11 +102,25 @@ ${badges}
     </article>`;
 }
 
-function renderCard(app) {
+function renderCard(app, wide = false) {
   const tags = (app.tags || []).map((t) => `<li>${both(esc(TAGS[t].en), esc(TAGS[t].zh))}</li>`).join('');
+  const icon = `<span class="icon"><img src="${esc(app.icon)}" alt="" width="46" height="46" loading="lazy" decoding="async"></span>`;
+  if (wide) {
+    return `<a class="card card--wide js-app" href="${esc(app.url)}" data-tags="${esc((app.tags || []).join(' '))}">
+      ${icon}
+      <div class="card-text">
+        <h3>${both(esc(app.title.en), esc(app.title.zh))}</h3>
+        <p>${both(esc(app.tagline.en), esc(app.tagline.zh))}</p>
+      </div>
+      <div class="card-side">
+        <ul class="tags">${tags}</ul>
+        <span class="go" aria-hidden="true">${arrow}</span>
+      </div>
+    </a>`;
+  }
   return `<a class="card js-app" href="${esc(app.url)}" data-tags="${esc((app.tags || []).join(' '))}">
       <div class="card-top">
-        <span class="icon"><img src="${esc(app.icon)}" alt="" width="46" height="46" loading="lazy" decoding="async"></span>
+        ${icon}
       </div>
       <div>
         <h3>${both(esc(app.title.en), esc(app.title.zh))}</h3>
@@ -141,7 +155,7 @@ ${buttons}
 const BLOCKS = {
   TOOLBAR: renderToolbar(),
   FEATURED: featured ? renderFeatured(featured) : '',
-  GRID: rest.length ? `<div class="grid">\n${rest.map(renderCard).join('\n')}\n    </div>` : '',
+  GRID: rest.length ? `<div class="grid">\n${rest.map((app) => renderCard(app, rest.length === 1)).join('\n')}\n    </div>` : '',
 };
 
 function fillBlocks(html) {

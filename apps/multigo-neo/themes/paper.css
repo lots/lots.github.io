@@ -1,0 +1,29 @@
+﻿/* Paper board: light, quiet, thin lines for diagrams and print-like reviews. */
+.theme-paper {
+  --board-surface: #efe7d7;
+  --board-surface-image:
+    radial-gradient(ellipse at 24% 16%, rgba(255, 255, 255, 0.55), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(107, 97, 82, 0.035) 0 1px, transparent 1px 14px);
+  --board-edge: rgba(107, 97, 82, 0.4);
+  --board-shadow: 0 2px 10px rgba(70, 60, 45, 0.16);
+  --board-line: rgba(83, 74, 60, 0.78);
+  --board-line-width: 0.85;
+  --board-star: rgba(83, 74, 60, 0.75);
+  --board-label: rgba(83, 74, 60, 0.78);
+  --stone-black-hi: #666;
+  --stone-black-mid: #232323;
+  --stone-black-low: #000;
+  --stone-white-hi: #fff;
+  --stone-white-mid: #faf8f3;
+  --stone-white-low: #d6d0c4;
+  --stone-white-edge: rgba(60, 50, 35, 0.3);
+  --overlay-variant: #a80016;
+  --overlay-last: #0050c8;
+  --overlay-both: #7a0bb8;
+  --overlay-backer: rgba(255, 252, 246, 0.9);
+  --overlay-halo: rgba(255,255,255,.88);
+}
+
+
+
+

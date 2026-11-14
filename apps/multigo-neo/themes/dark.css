@@ -1,0 +1,72 @@
+/* Dark board: warm old-rosewood surface with golden grid and labels, matching
+   the old-board reference photographs rather than a slate/blue-grey board. */
+.theme-dark {
+  --board-surface: #3a251b;
+  --board-surface-image:
+    radial-gradient(ellipse at 30% 18%, rgba(255, 221, 172, 0.13), transparent 60%),
+    repeating-linear-gradient(93deg, rgba(0, 0, 0, 0.10) 0 1px, transparent 1px 15px),
+    repeating-linear-gradient(7deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 31px),
+    linear-gradient(135deg, #4a2d1f, #38231a 55%, #25140e);
+  --board-edge: rgba(0, 0, 0, 0.62);
+  --board-shadow: 0 2px 16px rgba(0, 0, 0, 0.44);
+  --board-line: rgba(235, 181, 103, 0.76);
+  --board-line-width: 1;
+  --board-star: rgba(238, 190, 116, 0.85);
+  --board-label: rgba(238, 205, 160, 0.78);
+  --stone-black-hi: #b7aea3;
+  --stone-black-mid: #2f2722;
+  --stone-black-low: #080606;
+  --stone-white-hi: #fff;
+  --stone-white-mid: #f2ebe2;
+  --stone-white-low: #c7b9a9;
+  --stone-white-edge: rgba(0, 0, 0, 0.42);
+  --overlay-variant: #ff6b70;
+  --overlay-last: #63a4ff;
+  --overlay-both: #c58cff;
+  --overlay-backer: rgba(28, 17, 12, 0.82);
+  --overlay-halo: rgba(20, 12, 8, 0.86);
+}
+
+/* The captured-stone bowls use the same old-rosewood family as the dark goban
+   instead of the light kaya bowls. */
+.theme-dark #bowl-wood-black stop:nth-child(1),
+.theme-dark #bowl-wood-white stop:nth-child(1) {
+  stop-color: #4a2d1f;
+}
+
+.theme-dark #bowl-wood-black stop:nth-child(2),
+.theme-dark #bowl-wood-white stop:nth-child(2) {
+  stop-color: #38231a;
+}
+
+.theme-dark #bowl-wood-black stop:nth-child(3),
+.theme-dark #bowl-wood-white stop:nth-child(3) {
+  stop-color: #25140e;
+}
+
+.theme-dark #bowl-cavity-black stop:nth-child(1),
+.theme-dark #bowl-cavity-white stop:nth-child(1) {
+  stop-color: #2f1c13;
+}
+
+.theme-dark #bowl-cavity-black stop:nth-child(2),
+.theme-dark #bowl-cavity-white stop:nth-child(2) {
+  stop-color: #26150e;
+}
+
+.theme-dark #bowl-cavity-black stop:nth-child(3),
+.theme-dark #bowl-cavity-white stop:nth-child(3) {
+  stop-color: #1b0e08;
+}
+
+.theme-dark .bowl-art > circle {
+  stroke: rgba(235, 181, 103, 0.42);
+}
+
+.theme-dark .bowl-art > circle:nth-of-type(2) {
+  stroke: rgba(238, 205, 160, 0.25);
+}
+
+.theme-dark .bowl-label {
+  color: rgba(238, 205, 160, 0.82);
+}

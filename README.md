@@ -32,44 +32,58 @@ Live at **https://lots.github.io/**.
 ```json
 {
   "slug": "web-a",
-  "title":    { "en": "web-A", "zh": "web-A" },
-  "tagline":  { "en": "One line for the card.", "zh": "卡片上的一句话。" },
+  "title":       { "en": "web-A", "zh": "web-A" },
+  "description": { "en": "Two or three lines: what it does, why it is nice.", "zh": "两三句话：它做什么、好在哪。" },
   "url": "/apps/web-a/",
   "icon": "/apps/web-a/assets/icon.png",
   "tags": ["tools"],
-  "badges": ["offline"]
+  "badges": ["offline"],
+  "image": "/assets/apps/web-a-shot.png",
+  "imageShape": "landscape",
+  "imageAlt": { "en": "…", "zh": "…" }
 }
 ```
 
 3. Run `npm run build`, commit, push.
 
 `slug` must be lowercase letters, digits and dashes; `url` must end in `/`. The build fails
-if an icon is missing, a tag or badge is unknown, a slug is duplicated, or the folder has no
-`index.html`.
+if an icon is missing, a tag or badge is unknown, a slug is duplicated, an image has no
+`imageAlt` in both languages, or the folder has no `index.html`.
 
 Available `tags`: `games`, `study`, `tools` (used by the filter bar).
-Available `badges` (featured app only): `offline`, `installable`, `android`, `bilingual`, `desktop`.
+Available `badges`: `offline`, `installable`, `android`, `bilingual`, `desktop`.
 
 The first four apps turn on the filter + search toolbar automatically.
 
+### Every app gets the same card
+
+All apps render as the same showcase card: screenshot, title, description, badges, an
+`Open …` button and a source link. There is no second tier, so nothing has to be "promoted"
+to look finished.
+
+- **`image`** is optional but strongly recommended — cards without one fall back to a
+  text-only layout. `imageShape` is `portrait` for phone captures (shown tall, no crop) or
+  `landscape` for window captures (shown at 8:5, cropped from the top-left).
+- Screenshots live in `assets/apps/`, never in the app folder — a refresh of the app build
+  then cannot delete them.
+- **`cta`** defaults to `Open <title>`; set it when the app needs a better verb.
+- **`featured: true`** (one app at most) only controls ordering and the `Featured` badge.
+
+`updated` also feeds `sitemap.xml` (last `<lastmod>` wins for the homepage).
+
 ### Featured app
 
-One entry may set `"featured": true`. It then gets the large card and needs an extra
-`description`, a `cta` and (optionally) an `image` + `imageAlt`:
+One entry may set `"featured": true`. It is rendered first and carries the `Featured` badge;
+everything else about its card is identical.
 
 ```json
 {
   "featured": true,
-  "description": { "en": "…", "zh": "…" },
   "cta": { "en": "Open the clock", "zh": "打开棋钟" },
-  "image": "/assets/apps/web-a-shot.png",
-  "imageAlt": { "en": "…", "zh": "…" },
-  "repo": "https://github.com/lots/web-a",
+  "repo": "https://github.com/lots/ChessClock",
   "updated": "2026-11-15"
 }
 ```
-
-`updated` also feeds `sitemap.xml` (last `<lastmod>` wins for the homepage).
 
 ### Where the published copies come from
 

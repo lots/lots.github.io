@@ -56,81 +56,54 @@ for (const app of apps) {
   if (!/^[a-z0-9][a-z0-9-]*$/.test(app.slug || '')) fail(`${where}: slug must be lowercase letters, digits and dashes`);
   if (seen.has(app.slug)) fail(`${where}: duplicate slug`);
   seen.add(app.slug);
-  for (const key of ['title', 'tagline']) {
+  for (const key of ['title', 'description']) {
     if (!app[key] || !app[key].en || !app[key].zh) fail(`${where}: ${key} needs both "en" and "zh"`);
   }
   if (!app.url || !app.url.startsWith('/') || !app.url.endsWith('/')) fail(`${where}: url must be a site path like "/apps/${app.slug}/"`);
   if (!app.icon || !existsSync(p(app.icon.replace(/^\//, '')))) fail(`${where}: icon not found — ${app.icon}`);
   if (app.image && !existsSync(p(app.image.replace(/^\//, '')))) fail(`${where}: image not found — ${app.image}`);
+  if (app.image && (!app.imageAlt || !app.imageAlt.en || !app.imageAlt.zh)) fail(`${where}: an image needs imageAlt in both languages`);
+  if (app.imageShape && !['portrait', 'landscape'].includes(app.imageShape)) fail(`${where}: imageShape must be "portrait" or "landscape"`);
   (app.tags || []).forEach((t) => { if (!TAGS[t]) fail(`${where}: unknown tag "${t}"`); });
   (app.badges || []).forEach((b) => { if (!BADGES[b]) fail(`${where}: unknown badge "${b}"`); });
-  if (app.featured && !app.description) fail(`${where}: a featured app needs a "description"`);
   if (app.url !== '/' && !existsSync(p(app.url.replace(/^\//, ''), 'index.html'))) {
     fail(`${where}: no index.html under ${app.url}`);
   }
 }
 if (apps.filter((a) => a.featured).length > 1) fail('apps.json: only one app can be featured');
 
-const featured = apps.find((a) => a.featured) || null;
-const rest = apps.filter((a) => !a.featured);
+const ordered = apps.slice().sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
 
 /* ---------------- markup ---------------- */
 const arrow = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
 
-function renderFeatured(app) {
-  const size = app.image ? imageSize(app.image) : null;
+function renderApp(app) {
+  const shape = app.imageShape === 'portrait' ? 'is-portrait' : 'is-landscape';
+  const size = app.image && app.image.toLowerCase().endsWith('.png') ? imageSize(app.image) : null;
   const dims = size ? ` width="${size.width}" height="${size.height}"` : '';
+  const cta = app.cta && app.cta.en && app.cta.zh
+    ? app.cta
+    : { en: `Open ${app.title.en}`, zh: `打开 ${app.title.zh}` };
+  const badge = app.featured ? `        <span class="badge">${both('Featured', '精选')}</span>\n` : '';
   const badges = (app.badges || []).map((b) => `          <li>${both(esc(BADGES[b].en), esc(BADGES[b].zh))}</li>`).join('\n');
+  const chips = badges ? `        <ul class="chips">\n${badges}\n        </ul>\n` : '';
   const source = app.repo
-    ? `\n        <a class="link" href="${esc(app.repo)}">${both('Source on GitHub &rarr;', 'GitHub 源码 &rarr;')}</a>`
+    ? `\n          <a class="link" href="${esc(app.repo)}">${both('Source on GitHub &rarr;', 'GitHub 源码 &rarr;')}</a>`
     : '';
-  return `<article class="feature-card js-app" data-tags="${esc((app.tags || []).join(' '))}">
-      <div class="feature-copy">
-        <span class="badge">${both('Featured', '精选')}</span>
-        <h3>${both(esc(app.title.en), esc(app.title.zh))}</h3>
+  const shot = app.image
+    ? `\n      <a class="app-shot ${shape}" href="${esc(app.url)}" tabindex="-1" aria-hidden="true">
+        <img src="${esc(app.image)}" alt=""${dims} loading="lazy" decoding="async">
+      </a>`
+    : '';
+  return `<article class="app-card js-app${app.image ? '' : ' no-shot'}" data-tags="${esc((app.tags || []).join(' '))}">
+      <div class="app-copy">
+${badge}        <h3>${both(esc(app.title.en), esc(app.title.zh))}</h3>
         <p>${both(esc(app.description.en), esc(app.description.zh))}</p>
-        <ul class="chips">
-${badges}
-        </ul>
-        <div class="feature-actions">
-          <a class="btn btn-primary" href="${esc(app.url)}">${both(esc(app.cta?.en || 'Open'), esc(app.cta?.zh || '打开'))}${arrow}</a>${source}
+${chips}        <div class="app-actions">
+          <a class="btn btn-primary" href="${esc(app.url)}"><img class="btn-app" src="${esc(app.icon)}" alt="" width="20" height="20">${both(esc(cta.en), esc(cta.zh))}${arrow}</a>${source}
         </div>
-      </div>
-      <div class="feature-shot">
-        ${app.image ? `<img src="${esc(app.image)}" alt="${esc(app.imageAlt?.en || '')}"${dims} loading="eager" decoding="async">` : ''}
-      </div>
+      </div>${shot}
     </article>`;
-}
-
-function renderCard(app, wide = false) {
-  const tags = (app.tags || []).map((t) => `<li>${both(esc(TAGS[t].en), esc(TAGS[t].zh))}</li>`).join('');
-  const icon = `<span class="icon"><img src="${esc(app.icon)}" alt="" width="46" height="46" loading="lazy" decoding="async"></span>`;
-  if (wide) {
-    return `<a class="card card--wide js-app" href="${esc(app.url)}" data-tags="${esc((app.tags || []).join(' '))}">
-      ${icon}
-      <div class="card-text">
-        <h3>${both(esc(app.title.en), esc(app.title.zh))}</h3>
-        <p>${both(esc(app.tagline.en), esc(app.tagline.zh))}</p>
-      </div>
-      <div class="card-side">
-        <ul class="tags">${tags}</ul>
-        <span class="go" aria-hidden="true">${arrow}</span>
-      </div>
-    </a>`;
-  }
-  return `<a class="card js-app" href="${esc(app.url)}" data-tags="${esc((app.tags || []).join(' '))}">
-      <div class="card-top">
-        ${icon}
-      </div>
-      <div>
-        <h3>${both(esc(app.title.en), esc(app.title.zh))}</h3>
-        <p>${both(esc(app.tagline.en), esc(app.tagline.zh))}</p>
-      </div>
-      <div class="foot">
-        <ul class="tags">${tags}</ul>
-        <span class="go" aria-hidden="true">${arrow}</span>
-      </div>
-    </a>`;
 }
 
 function renderToolbar() {
@@ -154,8 +127,7 @@ ${buttons}
 /* ---------------- index.html blocks ---------------- */
 const BLOCKS = {
   TOOLBAR: renderToolbar(),
-  FEATURED: featured ? renderFeatured(featured) : '',
-  GRID: rest.length ? `<div class="grid">\n${rest.map((app) => renderCard(app, rest.length === 1)).join('\n')}\n    </div>` : '',
+  APPS: ordered.map(renderApp).join('\n'),
 };
 
 function fillBlocks(html) {

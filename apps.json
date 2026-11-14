@@ -6,10 +6,6 @@
         "en": "CoQ Chess & Weiqi Clock",
         "zh": "CoQ 国际象棋·围棋棋钟"
       },
-      "tagline": {
-        "en": "A chess and Go clock built for a phone lying flat between two players.",
-        "zh": "为「手机平放在两位棋手之间」设计的国际象棋与围棋棋钟。"
-      },
       "description": {
         "en": "The whole half-screen is the button. Fischer increment, Bronstein delay, byoyomi and sudden death — built for a phone lying flat between two players, and it keeps running offline.",
         "zh": "整块半屏就是按钮：Fischer 加秒、Bronstein 延时、读秒与包干四种模式。手机平放在两位棋手之间就能开一局，断网也照常走。"
@@ -21,6 +17,7 @@
       "url": "/apps/chessclock/",
       "icon": "/apps/chessclock/assets/logo-brand.png",
       "image": "/assets/apps/chessclock-shot.png",
+      "imageShape": "portrait",
       "imageAlt": {
         "en": "The clock mid-game in facing mode",
         "zh": "对局中的棋钟（对坐模式）"
@@ -37,12 +34,22 @@
         "en": "MultiGo Neo",
         "zh": "MultiGo Neo 围棋打谱"
       },
-      "tagline": {
-        "en": "A tree-based SGF editor and player for the desktop — study a Go game move by move.",
-        "zh": "以分支树整理变化的 SGF 打谱器，在桌面上一手一手复盘。"
+      "description": {
+        "en": "Load any SGF and walk its variations on a 13×13 board, annotate as you go, and keep the game tree, comments and score in one window. The browser build runs offline; the desktop app adds GTP engines and native file dialogs.",
+        "zh": "读入任意 SGF，在 13×13 棋盘上逐手浏览变化、随手写批注，棋谱分支、注释与形势判断都在同一个窗口里。浏览器版可离线使用，桌面版另有 GTP 引擎与原生文件对话框。"
+      },
+      "cta": {
+        "en": "Open MultiGo Neo",
+        "zh": "打开 MultiGo Neo"
       },
       "url": "/apps/multigo-neo/",
       "icon": "/assets/apps/multigo-neo.png",
+      "image": "/assets/apps/multigo-neo-shot.jpg",
+      "imageShape": "landscape",
+      "imageAlt": {
+        "en": "MultiGo Neo showing a 13×13 game with the move tree",
+        "zh": "MultiGo Neo 正在复盘一局 13 路棋，右侧是分支树"
+      },
       "tags": ["games", "study"],
       "badges": ["offline", "desktop"],
       "repo": "https://github.com/lots/my-MultiGoNeo",

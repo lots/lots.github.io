@@ -1,227 +1,195 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" data-lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0a0d12">
-<meta name="description" content="A board-game clock that runs in any phone browser — for chess and Weiqi (Go): Fischer increment / Bronstein delay / Byoyomi / sudden death. Fully local, no network needed.">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="CoQ Clock">
-<title>CoQ Chess &amp; Weiqi Clock</title>
-<!--
-  双语界面：所有文案都在 i18n.js 的 DICT 里（zh / en 两份，key 必须一一对应）。
-  页面静态文字用 data-i18n="key" 标记，JS 里的动态文字走 t('key', {vars})；
-  右上角的 ENG / 华文 按钮切换语言，选择存在 localStorage。
-  想加第三种语言：在 i18n.js 的 DICT 与 LANGS 里各加一份，其它代码不用动。
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>lots — small apps that just work</title>
+<meta name="description" content="Offline-first web apps for the classroom, the board and the desk. Plain HTML and CSS — no accounts, no tracking, no server to keep alive.">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#07090d">
+<link rel="canonical" href="https://lots.github.io/">
+<link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/styles.css">
 
-  图标源是 assets/logo-source.png（当前为 TARUMT 校徽，447×447 带透明通道）。
-  换 logo：用新图覆盖它，再跑一次 `node tools/export-icons.js` 重出全部尺寸。
-  页面里每个位置只引用一个 PNG（不写 srcset —— 否则手机只会取 2x 那份，
-  手换 1x 就会出现「PC 正常、手机没图」），详见 assets/README.md。
--->
-<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
-<link rel="icon" type="image/png" sizes="64x64" href="assets/icon-64.png">
-<link rel="apple-touch-icon" href="assets/icon-180.png">
-<link rel="stylesheet" href="styles.css">
-<!--
-  主题要在样式表之后、页面渲染之前就落地，否则选了浅色主题的人每次打开都会先闪一下深色。
-  主题与语言都存在 localStorage 的同一份设置里；这里只做主题（纯 CSS 变量，不需要 i18n.js）。
--->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="lots">
+<meta property="og:title" content="lots — small apps that just work">
+<meta property="og:description" content="Offline-first web apps for the classroom, the board and the desk. No accounts, no tracking, no server.">
+<meta property="og:url" content="https://lots.github.io/">
+<meta property="og:image" content="https://lots.github.io/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+
 <script>
+  /* Set theme + language before the first paint, so neither flashes. */
   (function () {
+    var d = document.documentElement;
     try {
-      var raw = window.localStorage.getItem('chessclock.settings.v1');
-      var t = raw ? JSON.parse(raw).theme : null;
-      if (t === 'light' || t === 'medium' || t === 'dark') {
-        document.documentElement.setAttribute('data-theme', t);
+      var q = new URLSearchParams(location.search);
+      var t = q.get('theme');
+      if (t !== 'light' && t !== 'dark') { t = localStorage.getItem('lots.theme'); }
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
       }
-    } catch (e) { /* 隐私模式 / 存档损坏：用默认主题即可 */ }
+      d.setAttribute('data-theme', t);
+
+      var l = q.get('lang');
+      if (l !== 'en' && l !== 'zh') { l = localStorage.getItem('lots.lang'); }
+      if (l !== 'en' && l !== 'zh') { l = 'en'; }
+      d.setAttribute('data-lang', l);
+      d.setAttribute('lang', l === 'zh' ? 'zh-Hans' : 'en');
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) { meta.setAttribute('content', t === 'light' ? '#f6f7f9' : '#07090d'); }
+    } catch (e) { /* private mode: the defaults in <html> still apply */ }
   })();
 </script>
 </head>
 <body>
+<a class="skip-link" href="#main"><span class="i18n-en">Skip to content</span><span class="i18n-zh">跳到正文</span></a>
+<div class="bg" aria-hidden="true"></div>
 
-<!-- ============ 设置 ============ -->
-<main id="screen-setup" class="screen setup">
-  <header class="app-head">
-    <!-- 点一下换下一个标志（TARUMT → CoQ → Chess → 围棋 → MWA → 回到 TARUMT），
-         选择存在 localStorage，关掉再开还是上次那个；两处 logo 是同一个状态 -->
-    <button type="button" class="logo-btn logo-btn-brand" id="btnLogoBrand"
-            title="Change logo" aria-label="Change logo">
-      <img class="brand-logo" id="brandLogo" src="assets/logo-brand.png" alt="CoQ Chess &amp; Weiqi Clock" width="96" height="96" data-i18n-alt="app.title" draggable="false">
-    </button>
-    <div class="app-head-text">
-      <h1 data-i18n="app.title">CoQ Chess &amp; Weiqi Clock</h1>
-      <p class="sub" data-i18n="app.subtitle">For chess and Weiqi (Go) · modelled on real clocks · portrait &amp; landscape · works offline</p>
-    </div>
-    <button type="button" class="lang-btn" id="btnLang"
-            aria-label="Switch interface language: ENG / 华文" data-i18n-aria-label="lang.button.aria"
-            title="切换界面语言 / Switch language">
-      <span class="lang-opt" data-lang-name="en">ENG</span><span class="lang-sep">/</span><span class="lang-opt" data-lang-name="zh">华文</span>
-    </button>
-  </header>
-
-  <div class="scroll">
-    <section class="card">
-      <h2 data-i18n="setup.mode.heading">1. Time mode</h2>
-      <div class="segmented" id="modeGroup" role="group" aria-label="Time mode" data-i18n-aria-label="setup.mode.aria">
-        <button type="button" class="seg" data-mode="fischer" aria-pressed="false" data-i18n="mode.fischer">Fischer (increment)</button>
-        <button type="button" class="seg" data-mode="delay" aria-pressed="false" data-i18n="mode.delay">Bronstein (delay)</button>
-        <button type="button" class="seg is-on" data-mode="byoyomi" aria-pressed="true" data-i18n="mode.byoyomi">Byoyomi</button>
-        <button type="button" class="seg" data-mode="sudden" aria-pressed="false" data-i18n="mode.sudden">Sudden death</button>
-      </div>
-      <p class="hint" id="modeHint"></p>
-    </section>
-
-    <section class="card">
-      <h2 id="timeHeading" data-i18n="setup.time.heading">2. Time control</h2>
-      <!-- 时间预设：下拉框（一档一行「10+3×20 · 20s × 3」），最后多一档「自定义」 -->
-      <div class="preset-row">
-        <select id="presetSelect" aria-labelledby="timeHeading"></select>
-      </div>
-      <div class="fields">
-        <label class="field"><span data-i18n="setup.base.label">Base time (minutes)</span>
-          <input id="baseMin" type="number" inputmode="numeric" min="0" max="180" step="1" value="10">
-        </label>
-        <label class="field"><span id="incLabel">Byoyomi (seconds)</span>
-          <input id="incSec" type="number" inputmode="numeric" min="0" max="180" step="1" value="20">
-        </label>
-        <label class="field" id="periodsField"><span data-i18n="setup.periods.label">Byoyomi periods</span>
-          <input id="periods" type="number" inputmode="numeric" min="1" max="20" step="1" value="3">
-        </label>
-      </div>
-      <p class="summary" id="summary"></p>
-    </section>
-
-    <section class="card">
-      <h2 data-i18n="setup.options.heading">3. Options</h2>
-      <label class="switch"><input type="checkbox" id="optSound" checked><span data-i18n="opt.sound">Move sound and time-up alarm</span></label>
-      <label class="switch"><input type="checkbox" id="optFacing" checked><span data-i18n="opt.facing">Facing mode: turn the far side’s digits upright (portrait)</span></label>
-      <label class="switch"><input type="checkbox" id="optWake" checked><span data-i18n="opt.wake">Keep the screen awake during a game</span></label>
-      <div class="select-row">
-        <label for="themeSelect" data-i18n="setup.theme.label">Colour theme</label>
-        <select id="themeSelect">
-          <option value="light" data-i18n="theme.light">Light</option>
-          <option value="medium" data-i18n="theme.medium">Medium</option>
-          <option value="dark" data-i18n="theme.dark">Dark</option>
-        </select>
-      </div>
-      <p class="hint" data-i18n-html="setup.keys.hint">
-        On a computer you can use the keyboard: <kbd>A</kbd>/<kbd>←</kbd> White ·
-        <kbd>L</kbd>/<kbd>→</kbd> Black · <kbd>Space</kbd> start / pause ·
-        <kbd>F</kbd> fullscreen
-      </p>
-    </section>
-
-    <!-- 「怎么用」单独一页（#screen-help）：这里只留一个入口 -->
-    <button type="button" class="btn help-link" id="btnHelp">
-      <span data-i18n="setup.how.heading">How to use</span><span class="chev" aria-hidden="true">›</span>
-    </button>
+<header class="site-head">
+  <div class="wrap head-inner">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <rect width="32" height="32" rx="9" fill="#101720"/>
+        <circle cx="12" cy="16" r="6.5" fill="#e9eef5"/>
+        <circle cx="21" cy="16" r="6.5" fill="#0b0f14" stroke="#e9eef5" stroke-width="1.6"/>
+      </svg>
+      <span class="brand-name">lots<span class="fade">.github.io</span></span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#apps"><span class="i18n-en">Apps</span><span class="i18n-zh">应用</span></a>
+      <a href="#about"><span class="i18n-en">About</span><span class="i18n-zh">关于</span></a>
+      <a class="icon-btn" href="https://github.com/lots" aria-label="GitHub" title="GitHub">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+      </a>
+      <button class="lang" id="btnLang" type="button" aria-label="Switch language" title="Switch language / 切换语言">
+        <span class="lang-opt" data-lang-opt="en">EN</span><span class="lang-sep">/</span><span class="lang-opt" data-lang-opt="zh">华文</span>
+      </button>
+      <button class="icon-btn" id="btnTheme" type="button" aria-label="Switch theme" title="Light / dark">
+        <svg class="icon-moon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.7 6.7 0 0 0 9.8 9.8Z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </nav>
   </div>
+</header>
 
-  <footer class="app-foot">
-    <button type="button" class="btn primary big" id="btnStartGame" data-i18n="setup.start">Start game</button>
-  </footer>
+<main id="main">
+  <section class="hero wrap">
+    <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span class="i18n-en">Apps by lots</span><span class="i18n-zh">lots 的应用</span></p>
+    <h1>
+      <span class="i18n-en">Small apps that <em>just work</em>.</span>
+      <span class="i18n-zh">小而可靠，<em>打开就能用</em>。</span>
+    </h1>
+    <p class="lede">
+      <span class="i18n-en">Offline-first tools for the classroom, the board and the desk. Plain HTML and CSS — no accounts, no tracking, no server to keep alive.</span>
+      <span class="i18n-zh">为课堂、棋盘和书桌准备的离线小工具。纯 HTML 与 CSS——不需要账号，不做追踪，也没有要一直开着的服务器。</span>
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#apps">
+        <span class="i18n-en">Browse apps</span><span class="i18n-zh">浏览应用</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/lots">
+        <span class="i18n-en">Source on GitHub</span><span class="i18n-zh">GitHub 源码</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+      </a>
+    </div>
+    <ul class="facts">
+      <li><b><span class="i18n-en">Works offline</span><span class="i18n-zh">离线可用</span></b></li>
+      <li><b><span class="i18n-en">No accounts</span><span class="i18n-zh">无需账号</span></b></li>
+      <li><b><span class="i18n-en">MIT licence</span><span class="i18n-zh">MIT 许可</span></b></li>
+    </ul>
+  </section>
+
+  <section id="apps" class="apps wrap" aria-labelledby="appsHeading">
+    <div class="apps-head">
+      <div>
+        <h2 id="appsHeading"><span class="i18n-en">All apps</span><span class="i18n-zh">全部应用</span></h2>
+        <p class="sub">
+          <span class="i18n-en">A short list, on purpose. Each one opens instantly and works without a network.</span>
+          <span class="i18n-zh">清单很短，是故意的。每一个打开都快，断网也能用。</span>
+        </p>
+      </div>
+      <!-- TOOLBAR:START -->
+    <!-- TOOLBAR:END -->
+    </div>
+
+    <!-- FEATURED:START -->
+<article class="feature-card js-app" data-tags="games">
+      <div class="feature-copy">
+        <span class="badge"><span class="i18n-en">Featured</span><span class="i18n-zh">精选</span></span>
+        <h3><span class="i18n-en">CoQ Chess &amp; Weiqi Clock</span><span class="i18n-zh">CoQ 国际象棋·围棋棋钟</span></h3>
+        <p><span class="i18n-en">The whole half-screen is the button. Fischer increment, Bronstein delay, byoyomi and sudden death — built for a phone lying flat between two players, and it keeps running offline.</span><span class="i18n-zh">整块半屏就是按钮：Fischer 加秒、Bronstein 延时、读秒与包干四种模式。手机平放在两位棋手之间就能开一局，断网也照常走。</span></p>
+        <ul class="chips">
+          <li><span class="i18n-en">Works offline</span><span class="i18n-zh">离线可用</span></li>
+          <li><span class="i18n-en">Installable</span><span class="i18n-zh">可安装</span></li>
+          <li><span class="i18n-en">Android build</span><span class="i18n-zh">安卓版</span></li>
+          <li><span class="i18n-en">Bilingual</span><span class="i18n-zh">中英双语</span></li>
+        </ul>
+        <div class="feature-actions">
+          <a class="btn btn-primary" href="/apps/chessclock/"><span class="i18n-en">Open the clock</span><span class="i18n-zh">打开棋钟</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="link" href="https://github.com/lots/ChessClock"><span class="i18n-en">Source on GitHub &rarr;</span><span class="i18n-zh">GitHub 源码 &rarr;</span></a>
+        </div>
+      </div>
+      <div class="feature-shot">
+        <img src="/assets/apps/chessclock-shot.png" alt="The clock mid-game in facing mode" width="780" height="1688" loading="eager" decoding="async">
+      </div>
+    </article>
+    <!-- FEATURED:END -->
+
+    <!-- GRID:START -->
+    <!-- GRID:END -->
+
+    <p class="empty" id="empty" hidden>
+      <span class="i18n-en">Nothing matches that yet.</span>
+      <span class="i18n-zh">暂时没有匹配的应用。</span>
+    </p>
+  </section>
+
+  <section id="about" class="about wrap">
+    <div class="about-card">
+      <h2><span class="i18n-en">Built to be boring — in the good way.</span><span class="i18n-zh">把「无聊」做好，其实是件好事。</span></h2>
+      <div class="about-cols">
+        <div>
+          <h3><span class="i18n-en">Nothing to maintain</span><span class="i18n-zh">没有东西要维护</span></h3>
+          <p>
+            <span class="i18n-en">Every app is static files on GitHub Pages. No database, no API keys, no bill at the end of the month.</span>
+            <span class="i18n-zh">每个应用都是 GitHub Pages 上的静态文件。没有数据库，没有 API 密钥，月底也没有账单。</span>
+          </p>
+        </div>
+        <div>
+          <h3><span class="i18n-en">Yours to keep</span><span class="i18n-zh">数据留在你手里</span></h3>
+          <p>
+            <span class="i18n-en">Data lives in the browser. Leave the tab open on a plane, come back, nothing has moved.</span>
+            <span class="i18n-zh">数据存在浏览器里。在飞机上开着标签页，回来时一切照旧。</span>
+          </p>
+        </div>
+        <div>
+          <h3><span class="i18n-en">Made for phones</span><span class="i18n-zh">为手机而做</span></h3>
+          <p>
+            <span class="i18n-en">Add to home screen, open full-screen, use it offline — no app store and no install step.</span>
+            <span class="i18n-zh">添加到主屏幕，全屏打开，离线可用——不用应用商店，也不用安装。</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
-<!-- ============ 怎么用 ============ -->
-<section id="screen-help" class="screen help" hidden>
-  <header class="help-head">
-    <button type="button" class="btn back-btn" id="btnHelpBack" data-i18n="overlay.back">Back to setup</button>
-    <h1 data-i18n="setup.how.heading">How to use</h1>
-  </header>
-  <div class="scroll">
-    <section class="card">
-      <p class="hint" data-i18n-html="how.facing">
-        <strong>Lay the phone flat between the two players</strong> (recommended): the lower half is White,
-        the upper half is Black, and Black’s digits are rotated 180° so the player sitting opposite reads them
-        upright. After your move, tap your own half with your palm — the time passes to the opponent.<br>
-        <strong>There is no second "Start"</strong>: after "Start game", the side not to move first (Black, when White opens) taps its own half — and <strong>White’s clock starts</strong>. From then on, whoever has just moved taps their own half and <strong>the opponent’s clock starts running</strong>.<br>
-        In landscape the screen splits left/right (Black left, White right) — handy for propping the phone up
-        or for the arbiter and spectators.
-      </p>
-      <p class="hint" data-i18n-html="how.byoyomi">
-        <strong>Byoyomi</strong>: after the main time is gone, every move gets a fresh fixed number of seconds
-        (unused time does not accumulate); overstepping loses. A setting such as 10+3×20 means 10 minutes of main
-        time plus 20 seconds per move for 3 periods — you may overthink on two moves and lose on the third.
-        During byoyomi the digits turn purple and the last 10 seconds tick audibly.
-        Common in Weiqi (Go), Shogi and Xiangqi.
-      </p>
-    </section>
-  </div>
-</section>
+<footer class="site-foot wrap">
+  <span>© <span id="year">2026</span> lots · <span class="i18n-en">Plain HTML, CSS and JavaScript</span><span class="i18n-zh">纯 HTML、CSS 与 JavaScript</span></span>
+  <nav aria-label="Footer">
+    <a href="#apps"><span class="i18n-en">Apps</span><span class="i18n-zh">应用</span></a>
+    <a href="#about"><span class="i18n-en">About</span><span class="i18n-zh">关于</span></a>
+    <a href="https://github.com/lots">GitHub</a>
+  </nav>
+</footer>
 
-<!-- ============ 棋钟 ============ -->
-<section id="screen-clock" class="screen clock" hidden>
-  <div class="panes">
-    <!-- 竖屏：黑方在上（对面选手），白方在下（离主控者近的一侧）；横屏：黑左白右 -->
-    <button type="button" class="pane pane-b" data-side="b" aria-label="Black button (tap here after your move)" data-i18n-aria-label="pane.b.aria">
-      <span class="pane-inner">
-        <span class="pane-head">
-          <span class="side-tag" data-i18n="side.b">Black</span>
-          <span class="state-chip" data-side="b"></span>
-        </span>
-        <span class="time" data-side="b">10:00</span>
-        <span class="byo-bar" data-side="b" aria-hidden="true"></span>
-        <span class="pane-foot"><span class="moves" data-side="b"></span></span>
-      </span>
-    </button>
-
-    <div class="strip" role="toolbar" aria-label="Clock controls" data-i18n-aria-label="strip.aria">
-      <button type="button" class="logo-btn logo-btn-strip" id="btnLogoStrip"
-              title="Change logo" aria-label="Change logo">
-        <img class="strip-logo" id="stripLogo" src="assets/logo-strip.png" alt="" width="48" height="48" draggable="false">
-      </button>
-      <!-- 暂停 / 继续：开局靠拍面板（拍对侧 → 自己的钟开始走），所以未开表时这颗按钮是隐藏的；
-           按钮上只写一个字（停 / 续、P / C），完整含义交给 title / aria-label -->
-      <button type="button" class="icon-btn" id="btnToggle" hidden><span id="btnToggleLabel" data-i18n="clock.pause">P</span></button>
-      <button type="button" class="icon-btn" id="btnSound" title="Turn sound off" aria-pressed="true" data-i18n-title="clock.sound.off">🔊</button>
-      <!-- 180°：对坐模式开关，把「对面」那块面板整体转 180°（只影响数字朝向） -->
-      <button type="button" class="icon-btn" id="btnRotate" title="Facing mode" data-i18n-title="clock.facing.title">180°</button>
-      <!-- ⇵：交换两侧在屏幕上的位置（不改朝向，只改上下/左右谁在哪一边） -->
-      <button type="button" class="icon-btn" id="btnSwap" title="Swap sides" data-i18n-title="clock.swap.title">⇵</button>
-      <button type="button" class="icon-btn" id="btnFull" title="Fullscreen" data-i18n-title="clock.full.title">⛶</button>
-      <button type="button" class="icon-btn" id="btnSetup" title="Back to setup" data-i18n-title="clock.setup.title">⚙</button>
-    </div>
-
-    <button type="button" class="pane pane-w" data-side="w" aria-label="White button (tap here after your move)" data-i18n-aria-label="pane.w.aria">
-      <span class="pane-inner">
-        <span class="pane-head">
-          <span class="side-tag" data-i18n="side.w">White</span>
-          <span class="state-chip" data-side="w"></span>
-        </span>
-        <span class="time" data-side="w">10:00</span>
-        <span class="byo-bar" data-side="w" aria-hidden="true"></span>
-        <span class="pane-foot"><span class="moves" data-side="w"></span></span>
-      </span>
-    </button>
-  </div>
-</section>
-
-<!-- ============ 超时提示 ============ -->
-<div id="overlay" class="overlay" hidden>
-  <div class="overlay-card">
-    <div class="overlay-icon">⏱</div>
-    <h2 id="overlayTitle"></h2>
-    <p id="overlaySub" class="overlay-sub"></p>
-    <p id="overlayDetail" class="overlay-detail"></p>
-    <div class="overlay-actions">
-      <button type="button" class="btn primary" id="btnRematch" data-i18n="overlay.rematch">Rematch (swap colours)</button>
-      <button type="button" class="btn" id="btnBackToSetup" data-i18n="overlay.back">Back to setup</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-<noscript>
-  <p style="padding:20px;color:#e9eef7">This clock needs JavaScript to be enabled.<br>本棋钟需要启用 JavaScript 才能运行。</p>
-</noscript>
-
-<script src="engine.js" defer></script>
-<script src="i18n.js" defer></script>
-<script src="app.js" defer></script>
+<script src="/app.js" defer></script>
 </body>
 </html>

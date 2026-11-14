@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>lots — social card</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;width:1200px;height:630px;overflow:hidden}
+  body{
+    position:relative;background:#07090d;color:#eef2f8;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding:64px 0 0 72px;
+  }
+  .glow{position:absolute;left:-180px;top:-240px;width:900px;height:720px;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(139,224,189,.18),rgba(139,224,189,.04) 55%,transparent 72%);filter:blur(8px)}
+  .glow.right{left:auto;right:-120px;top:120px;width:620px;height:620px;
+    background:radial-gradient(closest-side,rgba(139,224,189,.20),transparent 70%)}
+  .brand{position:relative;display:flex;align-items:center;gap:12px;font-weight:650;font-size:19px;letter-spacing:-.02em}
+  .brand svg{width:38px;height:38px;border-radius:11px;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+  .brand .fade{color:#7c8796;font-weight:450}
+  .copy{position:relative;width:640px;margin-top:76px}
+  h1{margin:0;font-size:76px;line-height:1.04;letter-spacing:-.04em;font-weight:660}
+  h1 em{font-family:ui-serif,"Iowan Old Style",Palatino,Georgia,serif;font-style:italic;font-weight:500;
+    background:linear-gradient(150deg,#d8fbec 5%,#8be0bd 48%,#4fb991 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  p{margin:26px 0 0;color:#98a2b3;font-size:20px;line-height:1.55;max-width:30em}
+  .chips{display:flex;gap:9px;margin-top:32px}
+  .chips span{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:#8be0bd;
+    border:1px solid rgba(139,224,189,.26);background:rgba(139,224,189,.08);border-radius:999px;padding:7px 13px}
+  .shot{position:absolute;right:52px;top:104px;width:330px;border-radius:26px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.16);
+    box-shadow:0 50px 100px -25px rgba(0,0,0,.95),0 0 0 1px rgba(0,0,0,.35);
+    rotate:3deg}
+  .shot img{width:100%;display:block}
+  .shot::after{content:"";position:absolute;inset:0;border-radius:inherit;
+    background:linear-gradient(200deg,rgba(7,9,13,0) 60%,rgba(7,9,13,.45));}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="glow right"></div>
+<div class="brand">
+  <svg viewBox="0 0 32 32" aria-hidden="true">
+    <rect width="32" height="32" rx="9" fill="#101720"/>
+    <circle cx="12" cy="16" r="6.5" fill="#e9eef5"/>
+    <circle cx="21" cy="16" r="6.5" fill="#0b0f14" stroke="#e9eef5" stroke-width="1.6"/>
+  </svg>
+  <span>lots<span class="fade">.github.io</span></span>
+</div>
+
+<div class="copy">
+  <h1>Small apps that<br><em>just work</em>.</h1>
+  <p>Offline-first tools for the classroom, the board and the desk. No accounts, no tracking, no server.</p>
+  <div class="chips"><span>Offline</span><span>Bilingual</span><span>MIT</span></div>
+</div>
+
+<div class="shot"><img src="../assets/apps/chessclock-shot.png" alt=""></div>
+</body>
+</html>

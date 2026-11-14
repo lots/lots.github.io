@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" data-lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found — lots</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#07090d">
+<link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/styles.css">
+<script>
+  (function () {
+    var d = document.documentElement;
+    try {
+      var t = localStorage.getItem('lots.theme');
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+      d.setAttribute('data-theme', t);
+      var l = localStorage.getItem('lots.lang');
+      if (l === 'zh') { d.setAttribute('data-lang', 'zh'); d.setAttribute('lang', 'zh-Hans'); }
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', t === 'light' ? '#f6f7f9' : '#07090d');
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<header class="site-head">
+  <div class="wrap head-inner">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <rect width="32" height="32" rx="9" fill="#101720"/>
+        <circle cx="12" cy="16" r="6.5" fill="#e9eef5"/>
+        <circle cx="21" cy="16" r="6.5" fill="#0b0f14" stroke="#e9eef5" stroke-width="1.6"/>
+      </svg>
+      <span class="brand-name">lots<span class="fade">.github.io</span></span>
+    </a>
+  </div>
+</header>
+
+<main class="wrap nf">
+  <div>
+    <p class="code" aria-hidden="true">404</p>
+    <h1>
+      <span class="i18n-en">This page isn’t here.</span>
+      <span class="i18n-zh">这个页面不在这儿。</span>
+    </h1>
+    <p>
+      <span class="i18n-en">It may have moved when the site became a portal — apps now live under /apps/.</span>
+      <span class="i18n-zh">站点改成应用入口后，地址可能变了——应用现在都在 /apps/ 下面。</span>
+    </p>
+    <div class="actions">
+      <a class="btn btn-primary" href="/">
+        <span class="i18n-en">Back home</span><span class="i18n-zh">回到首页</span>
+      </a>
+      <a class="btn btn-ghost" href="/#apps">
+        <span class="i18n-en">Browse apps</span><span class="i18n-zh">浏览应用</span>
+      </a>
+    </div>
+  </div>
+</main>
+</body>
+</html>

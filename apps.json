@@ -1,0 +1,35 @@
+{
+  "apps": [
+    {
+      "slug": "chessclock",
+      "title": {
+        "en": "CoQ Chess & Weiqi Clock",
+        "zh": "CoQ 国际象棋·围棋棋钟"
+      },
+      "tagline": {
+        "en": "A chess and Go clock built for a phone lying flat between two players.",
+        "zh": "为「手机平放在两位棋手之间」设计的国际象棋与围棋棋钟。"
+      },
+      "description": {
+        "en": "The whole half-screen is the button. Fischer increment, Bronstein delay, byoyomi and sudden death — built for a phone lying flat between two players, and it keeps running offline.",
+        "zh": "整块半屏就是按钮：Fischer 加秒、Bronstein 延时、读秒与包干四种模式。手机平放在两位棋手之间就能开一局，断网也照常走。"
+      },
+      "cta": {
+        "en": "Open the clock",
+        "zh": "打开棋钟"
+      },
+      "url": "/apps/chessclock/",
+      "icon": "/apps/chessclock/assets/logo-brand.png",
+      "image": "/assets/apps/chessclock-shot.png",
+      "imageAlt": {
+        "en": "The clock mid-game in facing mode",
+        "zh": "对局中的棋钟（对坐模式）"
+      },
+      "tags": ["games"],
+      "badges": ["offline", "installable", "android", "bilingual"],
+      "featured": true,
+      "repo": "https://github.com/lots/ChessClock",
+      "updated": "2026-11-15"
+    }
+  ]
+}

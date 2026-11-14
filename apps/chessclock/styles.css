@@ -1,0 +1,880 @@
+/*!
+ * styles.css — CoQ 棋钟
+ * 设计目标：像实体棋钟一样「一眼看清、一掌拍中」。
+ *  - 时间数字尽量占满半屏，比赛时从桌对面也能看清；
+ *  - 整块面板就是按键（点哪半边，就替哪一方按钟）；
+ *  - 竖屏：上黑下白（黑方数字旋转 180°，两人坐对面）；横屏：左白右黑。
+ *
+ * 主题（设置页「界面主题」下拉框，值写在 <html data-theme="…">）：
+ *   dark   深色（默认，就是最初那套配色）
+ *   medium 中性（石板灰，亮一点的深色，户外/强光下更清楚）
+ *   light  浅色（白底深字，适合打印店式的明亮环境或省电的 LCD 屏）
+ * 三个主题只是换下面这组变量；两块对局面板保持「黑方深、白方浅」的语义配色不随主题变。
+ */
+
+:root,
+:root[data-theme="dark"] {
+  --bg: #0a0d12;
+  --bg-grad-a: #0b1018;
+  --bg-grad-b: #080b11;
+  --fg: #e9eef7;
+  --fg-soft: #cfe0f5;
+  --muted: #8d9aae;
+  --line: #242c39;
+  --card: #121924;
+  --sunken: #0c121b;
+  --btn: #101722;
+  --kbd-bg: #0d1420;
+  --field-bg: #0c121b;
+  --accent: #3ea6ff;
+  --accent-ink: #04121f;
+  --accent-soft: #12283d;
+  --accent-soft-fg: #a9d4ff;
+  --ok: #2fbf71;
+  --ok-ink: #04120a;
+  --warn: #ffb020;
+  --danger: #ff4d4f;
+
+  /* 两块对局面板：黑方深、白方浅（游戏语义，不随主题变） */
+  --w-face: #edf0f5;
+  --w-ink: #0b0f15;
+  --w-low: #a95c00;
+  --w-crit: #c81e1e;
+
+  --b-face: #0b0e13;
+  --b-ink: #edf0f5;
+  --b-low: #ffc046;
+  --b-crit: #ff5b5b;
+
+  --pane-edge: transparent;
+  --strip-bg: #05070a;
+  --clock-bg: #000;
+  --byo-w: #6b3fd4;
+  --byo-b: #b49bff;
+
+  --strip: 54px;
+  --radius: 16px;
+  color-scheme: dark;
+}
+
+:root[data-theme="medium"] {
+  --bg: #3a4250;
+  --bg-grad-a: #434c5c;
+  --bg-grad-b: #343b48;
+  --fg: #f3f6fa;
+  --fg-soft: #dde6f2;
+  --muted: #b9c3d2;
+  --line: #5b6676;
+  --card: #48525f;
+  --sunken: #3f4956;
+  --btn: #525d6c;
+  --kbd-bg: #3c4553;
+  --field-bg: #3c4553;
+  --accent: #7cc4ff;
+  --accent-ink: #062033;
+  --accent-soft: #6d8fb5;
+  --accent-soft-fg: #f0f7ff;
+  --ok: #43cf87;
+  --ok-ink: #04170d;
+  --warn: #ffc352;
+  --danger: #ff6b6d;
+
+  --pane-edge: rgba(255, 255, 255, 0.14);
+  --strip-bg: #2c333e;
+  --clock-bg: #2c333e;
+  --byo-w: #8a6bf5;
+  --byo-b: #d3c2ff;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #eef1f6;
+  --bg-grad-a: #f8fafc;
+  --bg-grad-b: #e5eaf2;
+  --fg: #16202e;
+  --fg-soft: #2b3a4d;
+  --muted: #5d6b7e;
+  --line: #ccd5e0;
+  --card: #ffffff;
+  --sunken: #f1f4f9;
+  --btn: #ffffff;
+  --kbd-bg: #eef2f7;
+  --field-bg: #ffffff;
+  --accent: #1f7fe0;
+  --accent-ink: #ffffff;
+  --accent-soft: #d7e9ff;
+  --accent-soft-fg: #0f5aa8;
+  --ok: #1f9d5a;
+  --ok-ink: #ffffff;
+  --warn: #b26a00;
+  --danger: #d32f2f;
+
+  /* 浅色主题下白方面板用纯白 + 一圈浅边，才不会和页面底色糊在一起 */
+  --w-face: #ffffff;
+  --pane-edge: rgba(15, 32, 56, 0.14);
+  --strip-bg: #e3e8f1;
+  --clock-bg: #dfe5ee;
+  --byo-w: #5b2fc4;
+  --byo-b: #6f4ae0;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button { font: inherit; color: inherit; }
+
+kbd {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--kbd-bg);
+}
+
+/* ---------------- 屏幕容器 ---------------- */
+
+.screen {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.screen[hidden] { display: none !important; }
+
+/* ---------------- 设置界面 ---------------- */
+
+.setup { background: linear-gradient(180deg, var(--bg-grad-a) 0%, var(--bg-grad-b) 100%); }
+
+.app-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px 6px;
+  flex: 0 0 auto;
+}
+
+/* 设置页 logo：96×96（≤560px 手机收成 56×56，见下方窄屏页头）。
+   图形来自 assets/logo-source.png —— 换图标只改原图再跑导出脚本 */
+.brand-logo {
+  width: 96px;
+  height: 96px;
+  flex: 0 0 auto;
+  display: block;
+}
+
+/*
+ * 两处 logo 都是按钮（点一下换下一个标志）。按钮本身不画任何东西：
+ * 去掉边框/内距/底色，尺寸完全由里面的图决定，免得把操作条撑宽或把页头撑高。
+ */
+.logo-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  border-radius: 22px;          /* 与 96×96 的圆角比例一致（15/64 ≈ 23%） */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.logo-btn .brand-logo,
+.logo-btn .strip-logo { transition: transform 0.12s ease; }
+.logo-btn:active .brand-logo,
+.logo-btn:active .strip-logo { transform: scale(0.94); }
+.logo-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.logo-btn-strip { border-radius: 12px; }   /* 与 .strip-logo 的圆角一致 */
+
+.app-head-text { min-width: 0; }
+
+/* 语言切换：ENG / 华文，当前语言那半边点亮 */
+.lang-btn {
+  margin-left: auto;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--btn);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lang-btn .lang-sep { opacity: 0.5; }
+.lang-btn .lang-opt { opacity: 0.55; }
+
+.lang-btn .lang-opt.is-on {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.lang-btn:active { transform: translateY(1px); }
+
+.app-head h1 {
+  margin: 0;
+  font-size: clamp(18px, 4.6vw, 24px);
+  letter-spacing: 0.02em;
+}
+
+.app-head .sub {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: clamp(11px, 3vw, 13px);
+  line-height: 1.5;
+}
+
+/*
+ * 手机竖屏（≤560px）：页头排成两行。
+ * 原先 logo、标题、语言按钮挤在同一行，标题列只剩 60–140px，于是
+ * 「CoQ Chess & Weiqi Clock」和副标题都被压成一词一行，页头能吃掉半屏
+ * （见 screenshots/Too_Big.jpeg）。现在：
+ *   第一行  logo（56）+ 标题（占满剩余宽度）+ 语言按钮
+ *   第二行  副标题独占整行（不再被语言按钮挤窄）
+ * 大屏沿用原来的 96px logo 与单行布局。
+ */
+@media (max-width: 560px) {
+  .app-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "logo title lang"
+      "sub  sub   sub";
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 2px;
+    padding: 10px 16px 2px;
+  }
+  .app-head-text { display: contents; }
+  .app-head .brand-logo {
+    width: 56px;
+    height: 56px;
+  }
+  .logo-btn-brand {
+    grid-area: logo;
+    border-radius: 13px;
+  }
+  .app-head h1 {
+    grid-area: title;
+    font-size: 18px;
+    line-height: 1.2;
+  }
+  .app-head .sub {
+    grid-area: sub;
+    margin-top: 3px;
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+  .app-head .lang-btn {
+    grid-area: lang;
+    align-self: center;
+    margin-left: 0;
+    padding: 5px 9px;
+    font-size: 11.5px;
+  }
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px 16px;
+}
+
+.card h2 {
+  margin: 0 0 12px;
+  font-size: clamp(13px, 3.4vw, 15px);
+  font-weight: 600;
+  color: var(--fg-soft);
+}
+
+.hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: clamp(11px, 3vw, 13px);
+  line-height: 1.6;
+}
+
+/* 四种模式：窄屏排成 2×2，宽屏一行四个 */
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+@media (min-width: 640px) {
+  .segmented { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.seg {
+  min-width: 0;
+  padding: 10px 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: clamp(11px, 3.1vw, 13px);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seg.is-on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* 时间预设：一个下拉框，占满整行（原来是一整片按钮宫格） */
+.preset-row { margin: 0 0 12px; }
+
+.preset-row select {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field-bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px; /* ≥16px 避免 iOS 聚焦时自动放大页面 */
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.preset-row select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+
+/* 设置页底部进入「怎么用」的那一行 */
+.help-link {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.help-link .chev { opacity: 0.6; font-weight: 700; }
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: clamp(11px, 3vw, 13px);
+  color: var(--muted);
+}
+
+.field input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--sunken);
+  color: var(--fg);
+  font-size: 16px; /* ≥16px 避免 iOS 聚焦时自动放大页面 */
+  font-variant-numeric: tabular-nums;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.field input:disabled { opacity: 0.45; }
+.field input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+
+.summary {
+  margin: 12px 0 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--sunken);
+  border: 1px dashed var(--line);
+  color: var(--fg-soft);
+  font-size: clamp(12px, 3.2vw, 14px);
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  font-size: clamp(12px, 3.4vw, 14px);
+  cursor: pointer;
+}
+
+.switch input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+  flex: 0 0 auto;
+}
+
+/* 主题下拉框：和 .field input 一套观感 */
+.select-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 0;
+  font-size: clamp(12px, 3.4vw, 14px);
+}
+
+.select-row select {
+  min-width: 46%;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field-bg);
+  color: var(--fg);
+  font-size: 16px; /* ≥16px 避免 iOS 聚焦时自动放大页面 */
+  cursor: pointer;
+}
+
+.select-row select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+
+/* ---------------- 怎么用（单独一页 #screen-help） ---------------- */
+
+.help { background: linear-gradient(180deg, var(--bg-grad-a) 0%, var(--bg-grad-b) 100%); }
+
+.help-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 8px;
+  flex: 0 0 auto;
+}
+
+.help-head h1 {
+  margin: 0;
+  font-size: clamp(17px, 4.4vw, 22px);
+  letter-spacing: 0.02em;
+}
+
+.back-btn { flex: 0 0 auto; }
+
+/* 两段说明现在在同一张卡片里，段间留点空（原来是两个 <p> 各在一张卡里） */
+.help .hint + .hint { margin-top: 16px; }
+
+.app-foot {
+  flex: 0 0 auto;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--sunken);
+}
+
+/* ---------------- 按钮 ---------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: clamp(13px, 3.6vw, 15px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn.primary:disabled { opacity: 0.5; }
+.btn.big { width: 100%; padding: 16px; font-size: clamp(15px, 4.4vw, 18px); }
+.btn:active { transform: translateY(1px); }
+
+/* ---------------- 棋钟界面 ---------------- */
+
+.clock { background: var(--clock-bg); }
+
+.panes {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pane {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.12s linear;
+}
+
+.pane-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5vmin;
+  padding: 2vmin 2vmin calc(2vmin + env(safe-area-inset-bottom));
+}
+
+/*
+ * 视觉顺序（≠ DOM 顺序）：默认黑方在前（竖屏在上、横屏在左），白方在后；操作条永远夹在中间。
+ * 「交换两侧位置」（#screen-clock.is-swapped）只改 order，不动 DOM —— DOM 顺序是
+ * 黑方面板 → 操作条 → 白方面板，挪节点会让操作条落到某一块面板的同一侧去。
+ * 三者都要写 order：只改两块面板的 order，操作条会跑到它们外面。
+ * 竖屏的 order 决定上下、横屏决定左右，同一套规则两边通用。
+ */
+.pane-b { order: 1; }
+.strip { order: 2; }
+.pane-w { order: 3; }
+
+#screen-clock.is-swapped .pane-w { order: 1; }
+#screen-clock.is-swapped .pane-b { order: 3; }
+
+.pane-w { background: var(--w-face); color: var(--w-ink); box-shadow: inset 0 0 0 1px var(--pane-edge); }
+.pane-b { background: var(--b-face); color: var(--b-ink); box-shadow: inset 0 0 0 1px var(--pane-edge); }
+
+/*
+ * 对坐模式（.facing）：手机平放在两人之间时，近侧玩家看到的正常方向就是屏幕默认方向，
+ * 因此需要把「对面那一块」的数字旋转 180°，两边才都读得正。
+ * 竖屏布局是上下分屏，对面 = 视觉上排在最前的那块（= 上方那块）。注意**不能用 DOM 顺序**判断：
+ * 两块面板的位置由上面的 order 决定，「交换两侧」之后排在前面的换成白方，
+ * 所以 app.js 会把 is-far 打在视觉上第一块面板上，这里只认这个类。
+ * 横屏是左右分屏，此时对面在上/下长边之外，任何单面板旋转都无法让两边同时读正，
+ * 所以横屏不做旋转（适合手机立起来、或裁判/观众查看），详见 README「摆放方式」。
+ */
+@media (orientation: portrait) {
+  .facing .pane.is-far .pane-inner { transform: rotate(180deg); }
+}
+
+.pane:active { filter: brightness(0.94); }
+
+.pane-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  max-width: 100%;
+  font-size: clamp(11px, 2.6vmin, 18px);
+  opacity: 0.72;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.side-tag { font-weight: 700; letter-spacing: 0.06em; }
+.pane-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+
+.state-chip {
+  padding: 0.12em 0.6em;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.82em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.66;
+  white-space: nowrap;
+}
+
+.pane.is-active .state-chip { opacity: 1; color: var(--accent); }
+.pane.is-out .state-chip { opacity: 1; color: var(--danger); }
+
+.pane-foot {
+  font-size: clamp(11px, 2.4vmin, 16px);
+  opacity: 0.62;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * 读秒段数条：夹在「数字」和「MOVE 那一行」之间（DOM 顺序就在 .time 与 .pane-foot 中间），
+ * 一段一格 —— 绿的是还剩几段，红的是已经用掉几段。
+ * 只在对局模式为 Byoyomi 时出现；不显示时 display:none，不占位。
+ * 它放在 .pane-inner 里，所以对坐模式下会跟着数字一起转 180°。
+ */
+.byo-bar {
+  display: none;
+  gap: 6px;
+  width: min(72%, 240px);
+  height: 7.7px; /* 原本 7px，按需求加厚 10% */
+  margin: 0.2vmin 0;
+  pointer-events: none;
+}
+
+.pane.has-byo-bar .byo-bar { display: flex; }
+
+/* 一格一段：绿 = 还剩几段，红 = 已经用掉（与 Godot / Defold 两版同一套语义） */
+.byo-bar i {
+  flex: 1 1 0;
+  border-radius: 999px;
+  background: var(--danger);
+}
+
+.byo-bar i.is-on { background: var(--ok); }
+
+.time {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-weight: 700;
+  font-size: 20vmin;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* 走棋方：高亮边框，实体钟上就是那根跷跷板压下去的方向 */
+.pane.is-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--accent);
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: inset 0 0 70px rgba(62, 166, 255, 0.22);
+}
+
+.pane.is-active .time { text-shadow: 0 0 26px rgba(62, 166, 255, 0.35); }
+
+.pane:not(.is-active) .time { opacity: 0.78; }
+
+/* 读秒阶段：紫色，与「主时间告急」的琥珀色区分开；最后 20 秒照旧转红 */
+.pane-w.is-byoyomi .time { color: var(--byo-w); }
+.pane-b.is-byoyomi .time { color: var(--byo-b); }
+.pane-w.is-byoyomi .pane-foot { color: var(--byo-w); }
+.pane-b.is-byoyomi .pane-foot { color: var(--byo-b); }
+.pane.is-byoyomi .state-chip { opacity: 0.95; }
+
+.pane-w.is-low .time { color: var(--w-low); }
+.pane-b.is-low .time { color: var(--b-low); }
+.pane-w.is-critical .time { color: var(--w-crit); }
+.pane-b.is-critical .time { color: var(--b-crit); }
+.pane.is-critical .time { animation: pulse 1s ease-in-out infinite; }
+
+.pane.is-out .time { opacity: 1; }
+.pane-w.is-out .time { color: var(--w-crit); }
+.pane-b.is-out .time { color: var(--b-crit); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* 中间的操做条：竖屏横放、横屏竖放，正好落在两块面板的分界线上 */
+.strip {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--strip);
+  padding: 0 8px;
+  background: var(--strip-bg);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.icon-btn {
+  min-width: 40px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--btn);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.icon-btn.primary { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); }
+.icon-btn:disabled { opacity: 0.45; }
+.icon-btn:active { transform: translateY(1px); }
+
+/*
+ * 「180°」是四字符文本（其余按钮都是单字符图标或短单词），按 13px/12px 内距会明显偏宽：
+ * 只给这一颗收一点内距与字号（收完正好落在 .icon-btn 的 40px 最小宽度上），
+ * 六颗按钮 + logo 在窄屏上才不会把操作条撑出屏幕。
+ * 其它按钮一律不动（含横屏那条 .icon-btn 规则 —— id 选择器优先级更高，这里保持不变即可）。
+ */
+#btnRotate { padding: 0 6px; font-size: 12px; }
+
+/* 棋钟页 logo：48×48，与设置页 96×96 用的是同一个源文件 */
+.strip-logo {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  display: block;
+  border-radius: 12px;   /* 与 32×32 时的 8px 保持同样的圆角比例（25%） */
+  opacity: 0.92;
+}
+
+.panes::after {
+  content: "已暂停";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px 22px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(6, 9, 14, 0.92);
+  color: var(--warn);
+  font-size: clamp(13px, 3.6vmin, 20px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s linear;
+}
+
+.clock.is-paused .panes::after { opacity: 1; }
+
+/* 横屏：左右分屏 */
+@media (orientation: landscape) {
+  .panes { flex-direction: row; }
+  .strip {
+    flex-direction: column;
+    height: auto;
+    width: var(--strip);
+    padding: 8px 0;
+    border-top: 0;
+    border-bottom: 0;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+  .icon-btn { min-width: 40px; padding: 0 6px; }
+  .pane-inner { padding: 2vmin calc(2vmin + env(safe-area-inset-right)) 2vmin 2vmin; }
+}
+
+@media (orientation: landscape) and (max-height: 420px) {
+  :root { --strip: 46px; }
+  .icon-btn { height: 32px; min-width: 34px; font-size: 12px; }
+}
+
+/* ---------------- 覆盖层 / 提示 ---------------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 6, 10, 0.86);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fade 0.18s ease-out;
+}
+
+.overlay[hidden] { display: none !important; }
+
+.overlay-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 26px 22px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.overlay-icon { font-size: 40px; line-height: 1; margin-bottom: 10px; }
+.overlay-card h2 { margin: 0 0 6px; font-size: clamp(20px, 6vw, 26px); }
+.overlay-sub { margin: 0; color: var(--accent); font-size: clamp(15px, 4.4vw, 18px); font-weight: 700; }
+.overlay-detail { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+.overlay-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 60;
+  max-width: 88vw;
+  padding: 11px 16px;
+  border-radius: 12px;
+  background: rgba(18, 25, 36, 0.97);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-size: 13px;
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  transition: opacity 0.2s linear, transform 0.2s ease-out;
+  pointer-events: none;
+}
+
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

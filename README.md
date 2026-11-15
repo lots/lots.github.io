@@ -1,7 +1,8 @@
 # lots.github.io
 
-A static portal for small, offline-first web apps. No framework, no runtime dependencies,
-no analytics: one HTML page, one stylesheet, one small script, and a folder per app.
+A static portal for small, offline-first tools — mostly for studying weiqi. No framework,
+no runtime dependencies, no analytics: one HTML page, one stylesheet, one small script, and
+a folder per app.
 
 Live at **https://lots.github.io/**.
 

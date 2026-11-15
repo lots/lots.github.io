@@ -43,6 +43,7 @@ html[data-theme="light"]{
 
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 body{
   margin:0;
   background:var(--bg);
@@ -122,7 +123,7 @@ html[data-lang="en"] .lang-opt[data-lang-opt="en"],
 html[data-lang="zh"] .lang-opt[data-lang-opt="zh"]{color:var(--text);font-weight:600}
 
 /* ---------- hero ---------- */
-.hero{padding:78px 0 54px;text-align:center}
+.hero{padding:78px 0 44px;text-align:center}
 .eyebrow{
   display:inline-flex;align-items:center;gap:9px;margin:0 0 22px;padding:7px 13px 7px 11px;
   border:1px solid var(--line);border-radius:999px;background:rgba(127,127,127,.06);
@@ -162,7 +163,7 @@ html[data-theme="light"] .btn-primary{box-shadow:0 8px 20px rgba(15,23,42,.18)}
 html[data-lang="zh"] .facts b{letter-spacing:.06em}
 
 /* ---------- apps ---------- */
-.apps{padding:66px 0 10px;scroll-margin-top:84px}
+.apps{padding:56px 0 10px;scroll-margin-top:84px}
 .apps-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:26px}
 .apps-head h2{margin:0;font-size:clamp(1.5rem,2.2vw,1.85rem);letter-spacing:-.03em;font-weight:640}
 html[data-lang="zh"] .apps-head h2{letter-spacing:-.01em}
@@ -242,13 +243,25 @@ html[data-theme="light"] .app-shot.is-landscape img{box-shadow:0 24px 50px -30px
 
 /* ---------- about ---------- */
 .about{padding:66px 0 0;scroll-margin-top:84px}
-.about-card{border:1px solid var(--line);border-radius:24px;padding:40px 44px;background:var(--card-bg)}
-.about-card h2{margin:0;font-size:clamp(1.45rem,2.2vw,1.8rem);letter-spacing:-.03em;font-weight:640;max-width:20em}
-html[data-lang="zh"] .about-card h2{letter-spacing:-.01em}
-.about-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;margin-top:30px}
-.about-cols h3{margin:0 0 7px;font-size:13px;color:var(--text);font-weight:620}
-.about-cols p{margin:0;color:var(--muted);font-size:13.2px;line-height:1.6}
-html[data-lang="zh"] .about-cols p{line-height:1.75}
+.about-card{
+  display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:start;
+  border:1px solid var(--line);border-radius:24px;padding:46px 48px;background:var(--card-bg);
+}
+.kicker{margin:0 0 18px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+html[data-lang="zh"] .kicker{letter-spacing:.06em}
+.about-lede h2{margin:0;font-size:clamp(1.7rem,2.6vw,2.15rem);line-height:1.2;letter-spacing:-.03em;font-weight:640;max-width:14em}
+html[data-lang="zh"] .about-lede h2{letter-spacing:-.01em;line-height:1.35}
+.about-lede p{margin:18px 0 0;color:var(--muted);font-size:14.6px;line-height:1.68;max-width:34em}
+html[data-lang="zh"] .about-lede p{line-height:1.82}
+.about-lede p.next{color:var(--muted-2);font-size:13.4px;margin-top:14px}
+.about-lede .link{display:inline-block;margin-top:20px}
+.principles{list-style:none;margin:0;padding:0;display:grid;align-content:start}
+.principles li{border-top:1px solid var(--line);padding:18px 0}
+.principles li:first-child{border-top:0;padding-top:0}
+.principles h3{display:flex;align-items:baseline;gap:10px;margin:0;font-size:13px;font-weight:620;color:var(--text)}
+.principles h3 .num{font-size:10.5px;letter-spacing:.08em;color:var(--muted-2);font-weight:500;font-variant-numeric:tabular-nums}
+.principles p{margin:6px 0 0;color:var(--muted);font-size:13.1px;line-height:1.62;max-width:30em}
+html[data-lang="zh"] .principles p{line-height:1.78}
 
 /* ---------- footer ---------- */
 .site-foot{
@@ -269,7 +282,7 @@ html[data-lang="zh"] .about-cols p{line-height:1.75}
 @media (max-width:900px){
   .app-card{grid-template-columns:1fr;padding:32px 28px 34px;gap:30px}
   .app-shot.is-portrait img{height:340px}
-  .about-cols{grid-template-columns:1fr;gap:22px}
+  .about-card{grid-template-columns:1fr;gap:34px;padding:32px 28px}
 }
 @media (max-width:640px){
   .wrap{width:calc(100% - 36px)}
@@ -284,7 +297,7 @@ html[data-lang="zh"] .about-cols p{line-height:1.75}
   .apps-head{align-items:flex-start}
   .search{flex:1}
   .search input{width:100%}
-  .about-card{padding:30px 24px}
+  .about-card{padding:28px 22px}
   .site-foot{gap:10px}
 }
 @media (prefers-reduced-motion:reduce){

@@ -1,7 +1,7 @@
 {
   "name": "lots — small apps",
   "short_name": "lots",
-  "description": "Offline-first web apps for the classroom, the board and the desk.",
+  "description": "Offline-first tools for studying weiqi, built by a hobbyist who likes AI.",
   "start_url": "/",
   "scope": "/",
   "display": "minimal-ui",

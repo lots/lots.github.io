@@ -56,6 +56,33 @@
       "updated": "2026-11-15"
     },
     {
+      "slug": "sgfmill-ff4",
+      "title": {
+        "en": "sgfmill-FF4-Toolkit",
+        "zh": "sgfmill-FF4-Toolkit"
+      },
+      "description": {
+        "en": "A browser front end for sgfmill, for putting SGF files in order: find and strip properties outside FF[4], correct a file's real encoding, rotate or flip a board, split a collection, and read a game's tree and position. Fourteen operations, no dependencies, nothing uploaded.",
+        "zh": "sgfmill 的浏览器前端，用来整理 SGF 文件：找出并清掉 FF[4] 之外的属性、修正文件真正的编码、旋转或翻转棋盘、拆分棋谱合集，还能直接看分支树与局面。十四项操作，无依赖，文件不上传。"
+      },
+      "cta": {
+        "en": "Open the toolkit",
+        "zh": "打开工具箱"
+      },
+      "url": "/apps/sgfmill-ff4/",
+      "icon": "/assets/apps/sgfmill-ff4.svg",
+      "image": "/assets/apps/sgfmill-ff4-shot.jpg",
+      "imageShape": "landscape",
+      "imageAlt": {
+        "en": "The sgfmill toolkit with an SGF loaded: the game tree in one pane and the board position in another",
+        "zh": "sgfmill 工具箱打开一份 SGF：一栏是分支树，另一栏是局面"
+      },
+      "tags": ["tools", "study"],
+      "badges": ["offline"],
+      "repo": "https://github.com/lots/my-sgfmill",
+      "updated": "2026-11-16"
+    },
+    {
       "slug": "my-sabaki",
       "title": {
         "en": "my-Sabaki",

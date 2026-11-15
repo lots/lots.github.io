@@ -116,6 +116,18 @@
         </p>
       </div>
       <!-- TOOLBAR:START -->
+      <div class="toolbar" id="filters" role="group" aria-label="Filter apps">
+        <div class="filter">
+          <button type="button" data-filter="all" aria-pressed="true"><span class="i18n-en">All</span><span class="i18n-zh">全部</span></button>
+          <button type="button" data-filter="games" aria-pressed="false"><span class="i18n-en">Games</span><span class="i18n-zh">游戏</span></button>
+          <button type="button" data-filter="study" aria-pressed="false"><span class="i18n-en">Study</span><span class="i18n-zh">学习</span></button>
+          <button type="button" data-filter="tools" aria-pressed="false"><span class="i18n-en">Tools</span><span class="i18n-zh">工具</span></button>
+        </div>
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="q" type="search" placeholder="Search apps" aria-label="Search apps" autocomplete="off">
+        </label>
+      </div>
     <!-- TOOLBAR:END -->
     </div>
 
@@ -155,6 +167,22 @@
       </div>
       <a class="app-shot is-landscape" href="/apps/multigo-neo/" tabindex="-1" aria-hidden="true">
         <img src="/assets/apps/multigo-neo-shot.jpg" alt="" loading="lazy" decoding="async">
+      </a>
+    </article>
+<article class="app-card js-app" data-tags="tools study">
+      <div class="app-copy">
+        <h3><span class="i18n-en">sgfmill-FF4-Toolkit</span><span class="i18n-zh">sgfmill-FF4-Toolkit</span></h3>
+        <p><span class="i18n-en">A browser front end for sgfmill, for putting SGF files in order: find and strip properties outside FF[4], correct a file's real encoding, rotate or flip a board, split a collection, and read a game's tree and position. Fourteen operations, no dependencies, nothing uploaded.</span><span class="i18n-zh">sgfmill 的浏览器前端，用来整理 SGF 文件：找出并清掉 FF[4] 之外的属性、修正文件真正的编码、旋转或翻转棋盘、拆分棋谱合集，还能直接看分支树与局面。十四项操作，无依赖，文件不上传。</span></p>
+        <ul class="chips">
+          <li><span class="i18n-en">Works offline</span><span class="i18n-zh">离线可用</span></li>
+        </ul>
+        <div class="app-actions">
+          <a class="btn btn-primary" href="/apps/sgfmill-ff4/"><img class="btn-app" src="/assets/apps/sgfmill-ff4.svg" alt="" width="20" height="20"><span class="i18n-en">Open the toolkit</span><span class="i18n-zh">打开工具箱</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="link" href="https://github.com/lots/my-sgfmill"><span class="i18n-en">Source on GitHub &rarr;</span><span class="i18n-zh">GitHub 源码 &rarr;</span></a>
+        </div>
+      </div>
+      <a class="app-shot is-landscape" href="/apps/sgfmill-ff4/" tabindex="-1" aria-hidden="true">
+        <img src="/assets/apps/sgfmill-ff4-shot.jpg" alt="" loading="lazy" decoding="async">
       </a>
     </article>
 <article class="app-card js-app" data-tags="games study">

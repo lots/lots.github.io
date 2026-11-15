@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sgfmill-FF4-Toolkit (web)</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="boot-error" hidden>
+  <h2>The app could not start</h2>
+  <p id="boot-error-detail"></p>
+  <p>
+    This page has to be served over HTTP. Opening <code>index.html</code>
+    straight from disk cannot work: browsers refuse to load JavaScript modules
+    from <code>file://</code> URLs.
+  </p>
+  <p>
+    <strong>Easiest fix:</strong> open <code>standalone.html</code>, in this
+    folder. It is the same app with everything inlined, so it needs no server at
+    all — double-clicking it just works.
+  </p>
+  <p>
+    Or double-click <code>run_web_app.cmd</code>, which serves this version and
+    opens your browser at the right address.
+  </p>
+  <p>Or serve it yourself —</p>
+<pre><code>cd WebApp
+python -m http.server 8000
+# then open http://localhost:8000/</code></pre>
+  <p>
+    If it <em>is</em> being served, check that <code>.js</code> files are served
+    as <code>text/javascript</code>, and that the browser console shows no
+    error.
+  </p>
+</div>
+
+<noscript>
+  <div id="boot-error">
+    <h2>JavaScript is turned off</h2>
+    <p>This app is written in JavaScript, so it cannot run without it.</p>
+  </div>
+</noscript>
+
+<header id="header">
+  <span id="title">sgfmill-FF4-Toolkit</span>
+  <span id="subtitle">a web front end for the sgfmill library</span>
+  <span id="target-summary"></span>
+</header>
+
+<main id="body">
+
+  <section class="pane" id="explorer" style="--pane-width: 240px">
+    <h2 class="pane-title">1&nbsp; Select target</h2>
+    <p class="hint" id="explorer-hint">Drop <code>.sgf</code> files here, or</p>
+    <p><label class="button" for="file-input">Open .sgf files…</label>
+       <input type="file" id="file-input" class="file-input"
+              accept=".sgf,.SGF,application/x-go-sgf" multiple></p>
+    <ul id="files" class="file-list"></ul>
+    <p id="explorer-status" class="hint" role="status"></p>
+  </section>
+
+  <div class="resizer" data-pane="explorer" title="Drag to resize"></div>
+
+  <section class="pane" id="actions" style="--pane-width: 260px">
+    <h2 class="pane-title">2&nbsp; Select action</h2>
+    <ul id="operations" class="action-list" role="listbox"
+        aria-label="Actions" tabindex="0"></ul>
+    <div id="params">
+      <label id="param-label" for="param-input"></label>
+      <input id="param-input" type="text" autocomplete="off" spellcheck="false">
+      <div class="buttons">
+        <button id="run" type="button" class="primary">Run</button>
+        <button id="apply-again" type="button">Apply one more</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="resizer" data-pane="actions" title="Drag to resize"></div>
+
+  <section class="pane" id="tree-pane" style="--pane-width: 300px">
+    <h2 class="pane-title">3&nbsp; Game tree</h2>
+    <div id="tree-tools" class="tree-tools" hidden>
+      <button type="button" id="tree-fold-all">Fold all</button>
+      <button type="button" id="tree-unfold-all">Unfold all</button>
+    </div>
+    <div id="tree" class="tree" role="tree" tabindex="-1"
+         aria-label="Game tree">
+      <p class="hint">Choose <em>Show tree</em> to fill this pane.</p>
+    </div>
+  </section>
+
+  <div class="resizer" data-pane="tree" title="Drag to resize"></div>
+
+  <section class="pane" id="results">
+    <div id="target-bar">No file loaded</div>
+    <nav id="tabs" role="tablist">
+      <button role="tab" data-tab="board" aria-selected="true">Board</button>
+      <button role="tab" data-tab="info">Info</button>
+      <button role="tab" data-tab="moves">Moves</button>
+      <button role="tab" data-tab="notes">Notes</button>
+    </nav>
+    <div id="panels">
+      <div class="panel active" id="panel-board">
+        <p class="caption" id="board-caption"></p>
+        <pre id="board-view" class="board"></pre>
+      </div>
+      <div class="panel" id="panel-info"><div id="info-view"></div></div>
+      <div class="panel" id="panel-moves"><div id="moves-view"></div></div>
+      <div class="panel" id="panel-notes">
+        <div id="downloads"></div>
+        <ol id="notes-view" class="log"></ol>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="message-bar">
+  <span id="message">&nbsp;</span>
+</footer>
+
+<script>
+  /*
+   * Watchdog.
+   *
+   * If js/app.js never runs -- because the page was opened from a file:// URL,
+   * or a server sent .js as text/plain, or something threw during start-up --
+   * the page would still look presentable but do nothing at all, which is
+   * exactly what "no file can be opened" looks like. Catch that and say why.
+   */
+  (function () {
+    var box = document.getElementById("boot-error");
+    var detail = document.getElementById("boot-error-detail");
+    function report(message) {
+      if (window.sgfToolkit) return;          // it started; nothing to report
+      detail.textContent = message;
+      box.hidden = false;
+    }
+    // Resource errors (a module that will not load) do not bubble, so the
+    // listener has to be in the capture phase.
+    window.addEventListener("error", function (event) {
+      var source = event.target;
+      if (source && source !== window && source.tagName) {
+        report("Could not load " + (source.src || source.tagName) + ".");
+      } else {
+        report("A script error stopped the app: " +
+               (event.message || "unknown error"));
+      }
+    }, true);
+    window.addEventListener("DOMContentLoaded", function () {
+      setTimeout(function () {
+        report("The app's JavaScript did not load.");
+      }, 400);
+    });
+  })();
+</script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

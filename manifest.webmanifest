@@ -1,6 +1,6 @@
 {
-  "name": "lots — small apps",
-  "short_name": "lots",
+  "name": "LotS — small apps",
+  "short_name": "LotS",
   "description": "Offline-first tools for studying weiqi, built by a hobbyist who likes AI.",
   "start_url": "/",
   "scope": "/",

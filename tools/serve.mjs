@@ -39,5 +39,5 @@ createServer((req, res) => {
   });
   createReadStream(file).pipe(res);
 }).listen(PORT, () => {
-  console.log(`lots preview: http://localhost:${PORT}/`);
+  console.log(`LotS preview: http://localhost:${PORT}/`);
 });

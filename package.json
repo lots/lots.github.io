@@ -2,7 +2,7 @@
   "name": "lots-landing",
   "private": true,
   "type": "module",
-  "description": "lots.github.io — a static portal for small offline-first apps.",
+  "description": "LotS.github.io — a static portal for small offline-first apps.",
   "scripts": {
     "build": "node tools/build.mjs",
     "check": "node tools/build.mjs --check",

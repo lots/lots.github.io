@@ -1,4 +1,4 @@
-/* lots.github.io — theme, language and catalogue filtering.
+/* LotS.github.io — theme, language and catalogue filtering.
    No dependencies, no build step needed for this file. */
 (function () {
   'use strict';

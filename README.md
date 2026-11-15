@@ -1,10 +1,11 @@
-# lots.github.io
+# LotS.github.io
 
 A static portal for small, offline-first tools — mostly for studying weiqi. No framework,
 no runtime dependencies, no analytics: one HTML page, one stylesheet, one small script, and
 a folder per app.
 
-Live at **https://lots.github.io/**.
+Live at **https://lots.github.io/** — the GitHub account and the URL stay lowercase (`lots`),
+only the visible name is **LotS**.
 
 ```
 .

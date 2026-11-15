@@ -35,8 +35,8 @@
         "zh": "MultiGo Neo 围棋打谱"
       },
       "description": {
-        "en": "Load any SGF and walk its variations on a 13×13 board. A blue line for the connection, a dimmed corner for what you are not talking about, a red arrow at the cutting point — the markup I use when teaching beginners. The browser build runs offline; the desktop app adds GTP engines and native dialogs.",
-        "zh": "读入任意 SGF，在 13×13 棋盘上逐手浏览变化。蓝线标出连络、淡化角落表示「先不看这里」、红箭头指向断点——教初学者时我就这样摆。浏览器版可离线使用，桌面版另有 GTP 引擎与原生文件对话框。"
+        "en": "Load any SGF and walk its variations on a 13×13 board. A blue line for the connection, a dimmed corner for what you are not discussing, a red arrow on the move — the markup I use when teaching beginners. The browser build runs offline; the desktop app adds GTP engines and native dialogs.",
+        "zh": "读入任意 SGF，在 13×13 棋盘上逐手浏览变化。蓝线标出连络、淡化角落表示「先不看这里」、红箭头指向那一手——教初学者时我就这样摆。浏览器版可离线使用，桌面版另有 GTP 引擎与原生文件对话框。"
       },
       "cta": {
         "en": "Open MultiGo Neo",
@@ -47,8 +47,8 @@
       "image": "/assets/apps/multigo-neo-shot.jpg",
       "imageShape": "landscape",
       "imageAlt": {
-        "en": "A beginner lesson in MultiGo Neo: a dimmed corner, a blue line joining two stones and a red arrow at the cutting point",
-        "zh": "MultiGo Neo 里的初学者讲解图：角落被淡化，蓝线连接两子，红箭头指向断点"
+        "en": "A real 13×13 game in MultiGo Neo: a dimmed corner, a blue line showing White's connection and a red arrow on the move",
+        "zh": "MultiGo Neo 里的一局 13 路实战：角落被淡化，蓝线标出白棋的连络，红箭头指向刚才那一手"
       },
       "tags": ["games", "study"],
       "badges": ["offline", "desktop"],

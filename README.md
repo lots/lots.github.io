@@ -53,9 +53,27 @@ if an icon is missing, a tag or badge is unknown, a slug is duplicated, an image
 `imageAlt` in both languages, or the folder has no `index.html`.
 
 Available `tags`: `games`, `study`, `tools` (used by the filter bar).
-Available `badges`: `offline`, `installable`, `android`, `bilingual`, `desktop`.
+Available `badges`: `offline`, `installable`, `android`, `bilingual`, `desktop`, `windows`.
 
 The first four apps turn on the filter + search toolbar automatically.
+
+### Apps that are not hosted here
+
+A desktop app has no folder to publish. Give it `"external": true` and an absolute https
+`url` — the card links out (`target="_blank"`) and the app is left out of `sitemap.xml`:
+
+```json
+{
+  "slug": "my-sabaki",
+  "url": "https://github.com/lots/my-Sabaki/releases/latest",
+  "external": true,
+  "cta": { "en": "Download for Windows", "zh": "下载 Windows 版" },
+  "badges": ["desktop", "windows", "offline"]
+}
+```
+
+Release binaries belong on GitHub Releases, not in this repo: GitHub caps a single file at
+100 MB and a Pages site at 1 GB, and a download is not something Pages serves well.
 
 ### Every app gets the same card
 

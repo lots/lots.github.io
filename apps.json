@@ -54,6 +54,34 @@
       "badges": ["offline", "desktop"],
       "repo": "https://github.com/lots/my-MultiGoNeo",
       "updated": "2026-11-15"
+    },
+    {
+      "slug": "my-sabaki",
+      "title": {
+        "en": "my-Sabaki",
+        "zh": "my-Sabaki"
+      },
+      "description": {
+        "en": "My study fork of Sabaki, the SGF editor: scoring that follows the record's rules, a real portable mode, and the board I already know. Desktop only — download the Windows build, unpack it, connect your own engines. Unstable; upstream Sabaki is the safer choice.",
+        "zh": "Sabaki 的个人学习分支：按棋谱规则判断胜负、真正的便携模式，还有我最熟悉的棋盘。只有桌面版——下载 Windows 包，解压即用，再连上自己的引擎。分支不稳定，求稳请用上游 Sabaki。"
+      },
+      "cta": {
+        "en": "Download for Windows",
+        "zh": "下载 Windows 版"
+      },
+      "url": "https://github.com/lots/my-Sabaki/releases/latest",
+      "external": true,
+      "icon": "/assets/apps/my-sabaki.png",
+      "image": "/assets/apps/my-sabaki-shot.jpg",
+      "imageShape": "landscape",
+      "imageAlt": {
+        "en": "my-Sabaki showing a finished professional game, with the result in the side panel",
+        "zh": "my-Sabaki 打开一局已结束的职业对局，右侧显示对局结果"
+      },
+      "tags": ["games", "study"],
+      "badges": ["desktop", "windows", "offline"],
+      "repo": "https://github.com/lots/my-Sabaki",
+      "updated": "2026-11-15"
     }
   ]
 }

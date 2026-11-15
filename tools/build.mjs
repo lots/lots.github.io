@@ -27,6 +27,7 @@ const BADGES = {
   android: { en: 'Android build', zh: '安卓版' },
   bilingual: { en: 'Bilingual', zh: '中英双语' },
   desktop: { en: 'Desktop', zh: '桌面端' },
+  windows: { en: 'Windows x64', zh: 'Windows x64' },
 };
 
 const fail = (msg) => { console.error(`build: ${msg}`); process.exit(1); };
@@ -59,14 +60,18 @@ for (const app of apps) {
   for (const key of ['title', 'description']) {
     if (!app[key] || !app[key].en || !app[key].zh) fail(`${where}: ${key} needs both "en" and "zh"`);
   }
-  if (!app.url || !app.url.startsWith('/') || !app.url.endsWith('/')) fail(`${where}: url must be a site path like "/apps/${app.slug}/"`);
+  if (app.external) {
+    if (!/^https:\/\//.test(app.url || '')) fail(`${where}: an external app needs an https url`);
+  } else {
+    if (!app.url || !app.url.startsWith('/') || !app.url.endsWith('/')) fail(`${where}: url must be a site path like "/apps/${app.slug}/"`);
+  }
   if (!app.icon || !existsSync(p(app.icon.replace(/^\//, '')))) fail(`${where}: icon not found — ${app.icon}`);
   if (app.image && !existsSync(p(app.image.replace(/^\//, '')))) fail(`${where}: image not found — ${app.image}`);
   if (app.image && (!app.imageAlt || !app.imageAlt.en || !app.imageAlt.zh)) fail(`${where}: an image needs imageAlt in both languages`);
   if (app.imageShape && !['portrait', 'landscape'].includes(app.imageShape)) fail(`${where}: imageShape must be "portrait" or "landscape"`);
   (app.tags || []).forEach((t) => { if (!TAGS[t]) fail(`${where}: unknown tag "${t}"`); });
   (app.badges || []).forEach((b) => { if (!BADGES[b]) fail(`${where}: unknown badge "${b}"`); });
-  if (app.url !== '/' && !existsSync(p(app.url.replace(/^\//, ''), 'index.html'))) {
+  if (!app.external && app.url !== '/' && !existsSync(p(app.url.replace(/^\//, ''), 'index.html'))) {
     fail(`${where}: no index.html under ${app.url}`);
   }
 }
@@ -90,8 +95,9 @@ function renderApp(app) {
   const source = app.repo
     ? `\n          <a class="link" href="${esc(app.repo)}">${both('Source on GitHub &rarr;', 'GitHub 源码 &rarr;')}</a>`
     : '';
+  const linkAttrs = app.external ? ' target="_blank" rel="noopener"' : '';
   const shot = app.image
-    ? `\n      <a class="app-shot ${shape}" href="${esc(app.url)}" tabindex="-1" aria-hidden="true">
+    ? `\n      <a class="app-shot ${shape}" href="${esc(app.url)}"${linkAttrs} tabindex="-1" aria-hidden="true">
         <img src="${esc(app.image)}" alt=""${dims} loading="lazy" decoding="async">
       </a>`
     : '';
@@ -100,7 +106,7 @@ function renderApp(app) {
 ${badge}        <h3>${both(esc(app.title.en), esc(app.title.zh))}</h3>
         <p>${both(esc(app.description.en), esc(app.description.zh))}</p>
 ${chips}        <div class="app-actions">
-          <a class="btn btn-primary" href="${esc(app.url)}"><img class="btn-app" src="${esc(app.icon)}" alt="" width="20" height="20">${both(esc(cta.en), esc(cta.zh))}${arrow}</a>${source}
+          <a class="btn btn-primary" href="${esc(app.url)}"${linkAttrs}><img class="btn-app" src="${esc(app.icon)}" alt="" width="20" height="20">${both(esc(cta.en), esc(cta.zh))}${arrow}</a>${source}
         </div>
       </div>${shot}
     </article>`;
@@ -148,7 +154,7 @@ const indexNext = fillBlocks(indexNow);
 const lastmod = apps.map((a) => a.updated).filter(Boolean).sort().pop();
 const urls = [
   `  <url>\n    <loc>${SITE_URL}/</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ''}\n  </url>`,
-  ...apps.map((a) => `  <url>\n    <loc>${SITE_URL}${a.url}</loc>${a.updated ? `\n    <lastmod>${a.updated}</lastmod>` : ''}\n  </url>`),
+  ...apps.filter((a) => !a.external).map((a) => `  <url>\n    <loc>${SITE_URL}${a.url}</loc>${a.updated ? `\n    <lastmod>${a.updated}</lastmod>` : ''}\n  </url>`),
 ].join('\n');
 const sitemapNext = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 

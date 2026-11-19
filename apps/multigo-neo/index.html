@@ -877,6 +877,24 @@
              aria-valuemin="12" aria-valuemax="80" aria-valuenow="41" tabindex="0"></div>
 
         <section class="pane pane-moves" id="pane-moves" aria-label="Game tree">
+          <div class="branch-panels" id="branch-panels">
+            <section class="tree-section" id="node-name-section">
+              <button type="button" class="tree-section-head" id="node-name-head" aria-expanded="false" aria-controls="node-name-body">
+                <span>Node name</span><span class="tree-section-chevron" aria-hidden="true">▸</span>
+              </button>
+              <div class="tree-section-body" id="node-name-body" hidden>
+                <input type="text" id="branch-node-name" maxlength="120" placeholder="Node name" aria-label="Node name">
+              </div>
+            </section>
+            <section class="tree-section" id="variations-section">
+              <button type="button" class="tree-section-head" id="variations-head" aria-expanded="true" aria-controls="variations-body">
+                <span>Variations</span><span class="tree-section-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="tree-section-body" id="variations-body">
+                <div class="variations-list" id="variations-list"></div>
+              </div>
+            </section>
+          </div>
           <div class="panel-head" id="tree-head">
             <span>Game Tree</span>
             <span class="panel-meta" id="tree-meta">0 nodes</span>
@@ -929,7 +947,7 @@
       <button type="button" class="icon-button" data-close-dialog aria-label="Close">×</button>
     </div>
     <div class="dialog-body">
-      <p class="about-name">MultiGo Neo <span class="muted">1.1.9</span></p>
+      <p class="about-name">MultiGo Neo <span class="muted">1.1.10</span></p>
       <p>A Go record editor and player modelled on the MultiGo workspace: a 13×13 board,
          game information, a move list, and a status bar in a single-window desktop shell.</p>
       <dl class="about-meta">

@@ -131,6 +131,13 @@
   const fileLabel = $('#file-label');
   const infoDone = $('#info-done');
   const treeMeta = $('#tree-meta');
+  const branchPanels = $('#branch-panels');
+  const nodeNameHead = $('#node-name-head');
+  const nodeNameBody = $('#node-name-body');
+  const branchNodeName = $('#branch-node-name');
+  const variationsHead = $('#variations-head');
+  const variationsBody = $('#variations-body');
+  const variationsList = $('#variations-list');
   const gameTree = $('#game-tree');
   const infoFields = {
     black: $('#info-black'), blackRank: $('#info-black-rank'), blackTeam: $('#info-black-team'),
@@ -335,6 +342,10 @@
     showSiblings: false,
     zoom: 1,
     showTree: true,
+    treeOpen: true,
+    messageOpen: true,
+    nodeNameOpen: false,
+    variationsOpen: true,
     language: 'en',
     theme: 'classic',
     autoLayout: true,
@@ -400,6 +411,10 @@
         showSiblings: parsed.showSiblings === true,
         zoom: clamp(Number(parsed.zoom) || 1, 0.5, 2),
         showTree: parsed.showTree !== false,
+        treeOpen: parsed.treeOpen !== false,
+        messageOpen: parsed.messageOpen !== false,
+        nodeNameOpen: parsed.nodeNameOpen === true,
+        variationsOpen: parsed.variationsOpen !== false,
         language: parsed.language === 'zh' ? 'zh' : 'en',
         theme: THEMES.includes(parsed.theme) ? parsed.theme : 'classic',
         autoLayout: parsed.autoLayout !== false,
@@ -850,6 +865,7 @@
   let lastBoardError = '';
   let portraitLayout = false;
   let portraitOpenPanel = 'tree';
+  let portraitBranchOpen = null;
   let responsiveFrame = 0;
 
   const startupParams = new URLSearchParams(window.location.search);
@@ -3392,6 +3408,102 @@
     if (current) current.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 
+  function applyBranchSectionState() {
+    const nameOpen = portraitLayout ? portraitBranchOpen === 'name' : settings.nodeNameOpen;
+    const variationsOpen = portraitLayout ? portraitBranchOpen === 'variations' : settings.variationsOpen;
+    nodeNameBody.hidden = !nameOpen;
+    variationsBody.hidden = !variationsOpen;
+    nodeNameHead.setAttribute('aria-expanded', String(nameOpen));
+    variationsHead.setAttribute('aria-expanded', String(variationsOpen));
+    nodeNameHead.querySelector('.tree-section-chevron').textContent = nameOpen ? '▾' : '▸';
+    variationsHead.querySelector('.tree-section-chevron').textContent = variationsOpen ? '▾' : '▸';
+  }
+
+  function renderBranchSections() {
+    if (!tree) return;
+    const node = currentNode();
+    branchNodeName.value = node?.data.N?.[0] || '';
+    branchNodeName.disabled = readOnly;
+    variationsList.replaceChildren();
+    const children = node?.children || [];
+    if (children.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'variations-empty';
+      empty.textContent = 'No next moves.';
+      variationsList.append(empty);
+      return;
+    }
+    const head = document.createElement('div');
+    head.className = 'variations-row is-head';
+    for (const text of ['#', 'Move', 'Branch']) {
+      const cell = document.createElement('span');
+      cell.textContent = text;
+      head.append(cell);
+    }
+    variationsList.append(head);
+    const dims = gameSize();
+    children.forEach((child, index) => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'variations-row';
+      row.title = `Go to next move ${index + 1}`;
+      const number = document.createElement('span');
+      number.textContent = String(index + 1);
+      const move = document.createElement('span');
+      move.textContent = nodeLabel(child, dims);
+      const name = document.createElement('span');
+      name.textContent = child.data.N?.[0]?.trim() || `Branch ${index + 1}`;
+      row.append(number, move, name);
+      row.addEventListener('click', () => selectNode(child.id));
+      variationsList.append(row);
+    });
+  }
+
+  function commitBranchNodeName() {
+    if (!tree || readOnly) return;
+    const node = currentNode();
+    if (!node) return;
+    const value = branchNodeName.value.trim();
+    const previous = (node.data.N?.[0] || '').trim();
+    if (value === previous) { branchNodeName.value = previous; return; }
+    mutateTree((draft) => {
+      if (value) draft.updateProperty(node.id, 'N', [value]);
+      else draft.removeProperty(node.id, 'N');
+    }, { message: value ? 'Node name updated.' : 'Node name removed.' });
+  }
+
+  nodeNameHead.addEventListener('click', () => {
+    if (portraitLayout) {
+      portraitBranchOpen = portraitBranchOpen === 'name' ? null : 'name';
+      applyBranchSectionState();
+      return;
+    }
+    settings.nodeNameOpen = !settings.nodeNameOpen;
+    saveSettings();
+    applyBranchSectionState();
+  });
+  variationsHead.addEventListener('click', () => {
+    if (portraitLayout) {
+      portraitBranchOpen = portraitBranchOpen === 'variations' ? null : 'variations';
+      applyBranchSectionState();
+      return;
+    }
+    settings.variationsOpen = !settings.variationsOpen;
+    saveSettings();
+    applyBranchSectionState();
+  });
+  branchNodeName.addEventListener('change', commitBranchNodeName);
+  branchNodeName.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      branchNodeName.blur();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      branchNodeName.value = currentNode()?.data.N?.[0] || '';
+      branchNodeName.blur();
+    }
+  });
+
   function closeNodeNameEditor() {
     if (nodeNameEditor) {
       nodeNameEditor.remove();
@@ -3836,6 +3948,8 @@
       scheduleBoardDraw();
     }
     renderTree();
+    renderBranchSections();
+    applyBranchSectionState();
     renderStatus();
     updateToolbar();
     syncMenuState();
@@ -5828,6 +5942,31 @@
     if (!portraitLayout) paneMoves.style.flex = '';
   }
 
+  function applyPanelCollapseState() {
+    const treeCollapsed = !settings.treeOpen;
+    const messageCollapsed = !settings.messageOpen;
+    paneMoves.classList.toggle('is-tree-collapsed', !portraitLayout && treeCollapsed);
+    paneMessage.classList.toggle('is-message-collapsed', !portraitLayout && messageCollapsed);
+    if (portraitLayout) return;
+    if (treeCollapsed && messageCollapsed) {
+      paneInfo.style.flex = '1 1 auto';
+      paneMoves.style.flex = '0 0 auto';
+      paneMessage.style.flex = '0 0 32px';
+    } else if (treeCollapsed) {
+      paneInfo.style.flex = `0 0 ${layout.topPct}%`;
+      paneMoves.style.flex = '0 0 auto';
+      paneMessage.style.flex = '1 1 auto';
+    } else if (messageCollapsed) {
+      paneInfo.style.flex = `0 0 ${layout.topPct}%`;
+      paneMoves.style.flex = '1 1 auto';
+      paneMessage.style.flex = '0 0 32px';
+    } else {
+      paneInfo.style.flex = settings.showTree ? `0 0 ${layout.topPct}%` : '1 1 auto';
+      paneMoves.style.flex = '1 1 auto';
+      paneMessage.style.flex = `0 0 ${layout.messagePct}%`;
+    }
+  }
+
   function togglePortraitPanel(name) {
     if (!portraitLayout) return;
     portraitOpenPanel = portraitOpenPanel === name ? null : name;
@@ -5845,10 +5984,24 @@
     if (event.target.closest('button')) return;
     togglePortraitPanel('info');
   });
-  treeHead.addEventListener('click', () => togglePortraitPanel('tree'));
+  treeHead.addEventListener('click', () => {
+    if (portraitLayout) {
+      togglePortraitPanel('tree');
+      return;
+    }
+    settings.treeOpen = !settings.treeOpen;
+    saveSettings();
+    applyPanelCollapseState();
+  });
   messageHead.addEventListener('click', (event) => {
     if (event.target.closest('button')) return;
-    togglePortraitPanel('message');
+    if (portraitLayout) {
+      togglePortraitPanel('message');
+      return;
+    }
+    settings.messageOpen = !settings.messageOpen;
+    saveSettings();
+    applyPanelCollapseState();
   });
   for (const [head, name] of [[infoHead, 'info'], [treeHead, 'tree'], [messageHead, 'message']]) {
     head.addEventListener('keydown', (event) => {
@@ -5870,6 +6023,7 @@
       return;
     }
     portraitLayout = shouldPortrait;
+    portraitBranchOpen = null;
     workspace.classList.toggle('is-portrait', shouldPortrait);
     if (shouldPortrait) {
       verticalSplitter.hidden = true;
@@ -5883,6 +6037,8 @@
       applyLayout(layout, { persist: false });
     }
     applyPortraitAccordion();
+    applyBranchSectionState();
+    applyPanelCollapseState();
     updateBowls();
     syncMenuState();
     requestAnimationFrame(resizeBoard);
@@ -5905,8 +6061,7 @@
     if (portraitLayout) {
       applyPortraitAccordion();
     } else {
-      paneInfo.style.flex = settings.showTree ? `0 0 ${layout.topPct}%` : '1 1 auto';
-      paneMessage.style.flex = `0 0 ${layout.messagePct}%`;
+      applyPanelCollapseState();
     }
     paneBoard.classList.toggle('is-zoomed', settings.zoom > 1.001);
     resizeBoard();

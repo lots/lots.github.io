@@ -919,11 +919,48 @@
     } catch (e) { toast(t('toast.fullscreenFailed')); }
   }
 
+  /* ============ 图标按钮：在一组预定义图标里循环 ============ */
+
+  /**
+   * 每个图标按钮对应**一组按固定顺序排好的图标**：点一下换到下一张，到头绕回第一张。
+   * 与 Defold 版 `ui.make_icon_button(anims)` 的 anims 列表、Godot 版
+   * `ClockView.ICON_SETS` 是同一套语义（三端都能循环，不会各改各的）。
+   *
+   * 现在只有声音按钮是两态的：[开, 关]。以后要给别的按钮加第二张图标，
+   * 在这里加一行、在按钮上写 data-icon-set="名字" 即可。
+   */
+  var ICON_SETS = {
+    sound: ['🔊', '🔇']
+  };
+
+  /** 当前显示的是第几张（下标存在 data-icon-index 上） */
+  function iconIndexOf(el, setName) {
+    var n = ICON_SETS[setName].length;
+    var i = parseInt(el.dataset.iconIndex || '0', 10);
+    if (!isFinite(i) || i < 0 || i >= n) { i = 0; }
+    return i;
+  }
+
+  /** 显示第 index 张（越界自动绕回）；返回实际下标 */
+  function setIcon(el, setName, index) {
+    var set = ICON_SETS[setName];
+    var i = ((index % set.length) + set.length) % set.length;
+    el.dataset.iconIndex = String(i);
+    el.textContent = set[i];
+    return i;
+  }
+
+  /** 点一下 → 下一张图标，到头绕回第一张；返回新下标 */
+  function cycleIcon(el, setName) {
+    return setIcon(el, setName, iconIndexOf(el, setName) + 1);
+  }
+
   /* ================= 声音开关按钮 ================= */
 
   function updateSoundButton() {
     var b = $('#btnSound');
-    b.textContent = cfg.sound ? '🔊' : '🔇';
+    // 图标集第 0 张 = 开、第 1 张 = 关（点击时用 cycleIcon 走到下一张）
+    setIcon(b, 'sound', cfg.sound ? 0 : 1);
     b.setAttribute('aria-pressed', cfg.sound ? 'true' : 'false');
     b.title = cfg.sound ? t('clock.sound.off') : t('clock.sound.on');
   }
@@ -1041,8 +1078,10 @@
     });
 
     $('#btnToggle').addEventListener('click', function () { togglePause(); });
+    // 点一下声音图标：换到图标集里的下一张（🔊 → 🔇 → 🔊 …），状态跟着它走
     $('#btnSound').addEventListener('click', function () {
-      cfg.sound = !cfg.sound;
+      var idx = cycleIcon($('#btnSound'), 'sound');
+      cfg.sound = (idx === 0);          // 第 0 张 = 开
       saveSettings();
       updateSoundButton();
       if (cfg.sound) { Sound.unlock(); Sound.click(); }

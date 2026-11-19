@@ -26,7 +26,8 @@
       "badges": ["offline", "installable", "android", "bilingual"],
       "featured": true,
       "repo": "https://github.com/lots/ChessClock",
-      "updated": "2026-11-15"
+      "version": "1.0.1",
+      "updated": "2026-10-27"
     },
     {
       "slug": "multigo-neo",
@@ -53,7 +54,8 @@
       "tags": ["games", "study"],
       "badges": ["offline", "desktop"],
       "repo": "https://github.com/lots/my-MultiGoNeo",
-      "updated": "2026-11-15"
+      "version": "1.1.9",
+      "updated": "2026-11-14"
     },
     {
       "slug": "sgfmill-ff4",
@@ -80,6 +82,7 @@
       "tags": ["tools", "study"],
       "badges": ["offline"],
       "repo": "https://github.com/lots/my-sgfmill",
+      "version": "1.1.1",
       "updated": "2026-11-16"
     },
     {
@@ -108,7 +111,8 @@
       "tags": ["games", "study"],
       "badges": ["desktop", "windows", "offline"],
       "repo": "https://github.com/lots/my-Sabaki",
-      "updated": "2026-11-15"
+      "version": "0.60.2",
+      "updated": "2026-10-26"
     }
   ]
 }

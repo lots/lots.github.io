@@ -71,6 +71,8 @@ for (const app of apps) {
   if (app.imageShape && !['portrait', 'landscape'].includes(app.imageShape)) fail(`${where}: imageShape must be "portrait" or "landscape"`);
   (app.tags || []).forEach((t) => { if (!TAGS[t]) fail(`${where}: unknown tag "${t}"`); });
   (app.badges || []).forEach((b) => { if (!BADGES[b]) fail(`${where}: unknown badge "${b}"`); });
+  if (app.version && !/^\d+(\.\d+)+$/.test(app.version)) fail(`${where}: version must look like "1.2.3"`);
+  if (app.updated && !/^\d{4}-\d{2}-\d{2}$/.test(app.updated)) fail(`${where}: updated must be a YYYY-MM-DD date`);
   if (!app.external && app.url !== '/' && !existsSync(p(app.url.replace(/^\//, ''), 'index.html'))) {
     fail(`${where}: no index.html under ${app.url}`);
   }
@@ -81,6 +83,26 @@ const ordered = apps.slice().sort((a, b) => Number(!!b.featured) - Number(!!a.fe
 
 /* ---------------- markup ---------------- */
 const arrow = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function formatDate(iso, lang) {
+  const d = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return '';
+  if (lang === 'zh') return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+function renderMeta(app) {
+  const parts = [];
+  if (app.version) parts.push(`<span class="ver">v${esc(app.version)}</span>`);
+  if (app.updated) {
+    parts.push(
+      `<time datetime="${esc(app.updated)}">${both(`Updated ${formatDate(app.updated, 'en')}`, `更新于 ${formatDate(app.updated, 'zh')}`)}</time>`,
+    );
+  }
+  if (!parts.length) return '';
+  return `        <p class="app-meta">${parts.join('<span class="sep" aria-hidden="true">·</span>')}</p>\n`;
+}
 
 function renderApp(app) {
   const shape = app.imageShape === 'portrait' ? 'is-portrait' : 'is-landscape';
@@ -105,7 +127,7 @@ function renderApp(app) {
       <div class="app-copy">
 ${badge}        <h3>${both(esc(app.title.en), esc(app.title.zh))}</h3>
         <p>${both(esc(app.description.en), esc(app.description.zh))}</p>
-${chips}        <div class="app-actions">
+${chips}${renderMeta(app)}        <div class="app-actions">
           <a class="btn btn-primary" href="${esc(app.url)}"${linkAttrs}><img class="btn-app" src="${esc(app.icon)}" alt="" width="20" height="20">${both(esc(cta.en), esc(cta.zh))}${arrow}</a>${source}
         </div>
       </div>${shot}

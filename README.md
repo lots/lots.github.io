@@ -40,6 +40,8 @@ only the visible name is **LotS**.
   "icon": "/apps/web-a/assets/icon.png",
   "tags": ["tools"],
   "badges": ["offline"],
+  "version": "1.2.0",
+  "updated": "2026-11-16",
   "image": "/assets/apps/web-a-shot.png",
   "imageShape": "landscape",
   "imageAlt": { "en": "…", "zh": "…" }
@@ -51,6 +53,11 @@ only the visible name is **LotS**.
 `slug` must be lowercase letters, digits and dashes; `url` must end in `/`. The build fails
 if an icon is missing, a tag or badge is unknown, a slug is duplicated, an image has no
 `imageAlt` in both languages, or the folder has no `index.html`.
+
+`version` and `updated` are optional and render as one muted line under the badges —
+`v1.2.0 · Updated 16 Nov 2026` / `更新于 2026年11月16日`. `updated` must be `YYYY-MM-DD`; it
+also feeds `sitemap.xml`. Use the version and release date of the copy you actually host, not
+whatever is newest upstream — the card should not claim a build the site does not serve.
 
 Available `tags`: `games`, `study`, `tools` (used by the filter bar).
 Available `badges`: `offline`, `installable`, `android`, `bilingual`, `desktop`, `windows`.

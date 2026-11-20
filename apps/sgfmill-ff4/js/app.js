@@ -10,7 +10,7 @@
 import {
   parseSgfCollection, serialiseGame, nodeMoveLabel, setText,
 } from "./sgf.js";
-import { renderBoard } from "./board.js";
+import { renderGoban } from "./goban.js";
 import {
   getSetupAndMoves, positionAfter, positionForNode, treeNodes,
 } from "./moves.js";
@@ -298,6 +298,20 @@ function setTargetBar(text) {
 
 // -- the board -------------------------------------------------------------
 
+/** Paint a position. The last move, if any, is marked. */
+function paintBoard(board, lastMove = null) {
+  $("#board-view").innerHTML = renderGoban(board, { lastMove });
+}
+
+/** The point of the last move in a list of plays, or null (a pass, or none). */
+function lastPointOf(plays) {
+  for (let i = (plays || []).length - 1; i >= 0; i--) {
+    const point = plays[i][1];
+    if (point) return point;
+  }
+  return null;
+}
+
 function drawFinalPosition() {
   drawPosition(() => positionAfter(state.current.game), captionForFinal());
 }
@@ -323,8 +337,9 @@ function captionForFinal() {
 /**
  * Draw whatever the given function returns.
  *
- * The function returns {board, stopped, } so the caller decides which position
- * is wanted; the caption says what is being shown.
+ * The function returns {board, plays, stopped} so the caller decides which
+ * position is wanted; the caption says what is being shown, and the last move
+ * played gets a marker on the board.
  */
 function drawPosition(getPosition, caption) {
   let result;
@@ -337,7 +352,7 @@ function drawPosition(getPosition, caption) {
   if (result.stopped) {
     note("Stopped early: the file contains an illegal move.", "warn");
   }
-  $("#board-view").textContent = renderBoard(result.board);
+  paintBoard(result.board, lastPointOf(result.plays));
   const captionNode = $("#board-caption");
   captionNode.replaceChildren();
   if (state.current) {
@@ -574,6 +589,11 @@ function showBoardAtMove() {
  * row shows that node's position. The rows are built nested, so folding
  * something hides everything beneath it.
  *
+ * A node's next move in the same branch stays in the same column; the indent
+ * only grows where the game actually branches, so the main line reads as one
+ * column instead of marching to the right one move at a time. A thin guide
+ * marks each branch level that is still open.
+ *
  * The arrow keys walk the visible rows, Right expands, Left folds (and then
  * moves to the parent), and Enter shows the position.
  */
@@ -586,15 +606,22 @@ function showTree() {
   const rows = [];                       // {node, row, label} in display order
   const rowFor = new Map();              // node -> row element
 
-  const build = (node, depth, parent) => {
+  /** level: how many branches deep this row is, not how deep in the tree. */
+  const build = (node, level, parent) => {
     const label = nodeLabel(node, side);
     const isMove = /^[BW] /.test(label);
     const row = element("div", {
       className: "node" + (isMove ? "" : " setup"),
-      attrs: { role: "treeitem", tabindex: "-1" },
+      attrs: { role: "treeitem", tabindex: "-1", "data-level": String(level) },
     });
-    row.style.paddingLeft = `${8 + depth * 14}px`;
+    row.style.paddingLeft = "8px";
     rowFor.set(node, row);
+
+    // One guide per open branch level, so a variation can be followed even
+    // though its continuation sits in the same column.
+    for (let i = 0; i < level; i++) {
+      row.append(element("span", { className: "guide" }));
+    }
 
     const hasChildren = node.children.length > 0;
     const isVariation = node.children.length > 1;
@@ -615,7 +642,10 @@ function showTree() {
 
     const branch = element("div", { className: "branch" });
     parent.append(branch);
-    for (const child of node.children) build(child, depth + 1, branch);
+    // A single child continues the branch, so it keeps the column; children of
+    // a branching node are variations, which do step in.
+    const childLevel = isVariation ? level + 1 : level;
+    for (const child of node.children) build(child, childLevel, branch);
 
     const setExpanded = (expanded) => {
       branch.hidden = !expanded;
@@ -727,7 +757,8 @@ function selectTreeNode(node, row) {
   }
   const side = state.current.game.getSize();
   const { board } = positionForNode(state.current.game, node);
-  $("#board-view").textContent = renderBoard(board);
+  const [, move] = node.getMove();
+  paintBoard(board, move || null);
   const label = nodeLabel(node, side);
   const captionNode = $("#board-caption");
   captionNode.replaceChildren();
@@ -850,11 +881,26 @@ function showCheck() {
 
 // -- writing actions -------------------------------------------------------
 
+/**
+ * Serialise a game for writing.
+ *
+ * Whatever the file declared, the bytes a browser writes are UTF-8, so the
+ * copy says so. Without this a file that declared CA[ISO-8859-1] would be
+ * written as UTF-8 while still claiming to be Latin-1, and a reader trusting
+ * the declaration would show mojibake for every non-ASCII character. A copy is
+ * used so the loaded game keeps the encoding it was read with.
+ */
+function serialiseForWrite(game) {
+  const copy = parseSgfCollection(serialiseGame(game))[0];
+  convertGameToUtf8(copy);
+  return serialiseGame(copy);
+}
+
 function writeTransformed() {
   const operation = currentOperation();
   const copy = parseSgfCollection(serialiseGame(state.current.game))[0];
   for (const transformation of state.pending) transformGame(copy, transformation);
-  download(outputName(operation), serialiseGame(copy));
+  download(outputName(operation), serialiseForWrite(copy));
   state.pending = [];
   state.previewAction = null;
   drawFinalPosition();
@@ -864,7 +910,7 @@ function writeCleaned() {
   const operation = currentOperation();
   const copy = parseSgfCollection(serialiseGame(state.current.game))[0];
   const report = cleanGame(copy);
-  download(outputName(operation), serialiseGame(copy));
+  download(outputName(operation), serialiseForWrite(copy));
   note(`Cleaned ${state.current.name}: removed ${report.count()} propert${
     report.count() === 1 ? "y" : "ies"}.`, "ok");
 }
@@ -882,13 +928,13 @@ function writeSplit() {
   const games = state.current.games;
   const base = baseName(outputName(operation)) || baseName(state.current.name);
   for (const [index, game] of games.entries()) {
-    download(`${base}-${index + 1}.sgf`, serialiseGame(game));
+    download(`${base}-${index + 1}.sgf`, serialiseForWrite(game));
   }
   note(`Split ${state.current.name} into ${games.length} file(s).`, "ok");
 }
 
 function writeSelf() {
-  download(state.current.name, serialiseGame(state.current.game));
+  download(state.current.name, serialiseForWrite(state.current.game));
   note(`Wrote ${state.current.name}.`, "ok");
 }
 

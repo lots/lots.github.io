@@ -264,6 +264,8 @@ button:disabled { opacity: 0.45; cursor: default; }
   font-family: var(--mono);
   font-size: 12px;
 }
+/* A node's next move in the same branch keeps the column, so only branch
+   levels indent. The guide marks each level that is still open. */
 .tree .node {
   padding: 2px 10px 2px 0;
   cursor: pointer;
@@ -271,6 +273,12 @@ button:disabled { opacity: 0.45; cursor: default; }
   display: flex;
   align-items: baseline;
   gap: 4px;
+}
+.tree .guide {
+  flex: 0 0 14px;
+  align-self: stretch;
+  border-left: 1px solid #3b4250;
+  margin-right: 0;
 }
 .tree .node:hover { background: var(--panel-alt); }
 .tree .node[aria-selected="true"] { background: #2c4a7c; }
@@ -343,11 +351,24 @@ button:disabled { opacity: 0.45; cursor: default; }
 .caption .preview { color: var(--preview); font-weight: 600; }
 .caption .dim { color: #6e7686; }
 
-pre.board {
-  margin: 0;
+/* The board is drawn as SVG (js/goban.js), so it scales with the panel. */
+#board-view {
+  display: flex;
+  justify-content: center;
+  padding: 2px 0 12px;
+}
+#board-view svg.goban {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  border-radius: 5px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+/* A text fallback, used if a board cannot be drawn at all. */
+#board-view:not(:has(svg)) {
   font-family: var(--mono);
   font-size: 13px;
-  line-height: 1.25;
   white-space: pre;
   color: var(--text);
 }

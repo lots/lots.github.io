@@ -335,6 +335,7 @@
   };
   const DEFAULT_SETTINGS = {
     coords: true,
+    coordFontLarge: false,
     moveNumberLimit: -1,
     coordinatesStyle: 'A1',
     moveNumbersMode: 'start',
@@ -398,6 +399,7 @@
       const parsed = JSON.parse(raw);
       return {
         coords: parsed.coords !== false,
+        coordFontLarge: parsed.coordFontLarge === true,
         moveNumberLimit: Number.isInteger(Number(parsed.moveNumberLimit))
           && Number(parsed.moveNumberLimit) >= -1
           && Number(parsed.moveNumberLimit) <= 999
@@ -2226,6 +2228,14 @@
   const BOARD_FONT = 'Inter, "Segoe UI", system-ui, sans-serif';
   let boardFrame = 0;
 
+  // Coordinate labels use 8–12 px normally; clicking the label ring toggles a
+  // double-size mode. Keep the calculation in one place so the draw code and
+  // the margin reservation in resizeBoard agree.
+  function coordinateFontSize(width, height) {
+    const base = Math.max(8, Math.min(12, Math.round(Math.min(width, height) * 0.0155)));
+    return settings.coordFontLarge ? base * 2 : base;
+  }
+
   function roundRect(context, x, y, width, height, radius) {
     context.beginPath();
     context.moveTo(x + radius, y);
@@ -2321,10 +2331,14 @@
     const fitHeight = Math.max(60, rect.height - boardPadding);
     const zoom = settings.zoom || 1;
     const baseMargin = Math.max(19, Math.round(Math.min(fitWidth, fitHeight) * 0.055)) * zoom;
+    // Large coordinate labels need room outside the edge stones, so the margin
+    // (and its cap) grows with the doubled font.
+    const coordFont = coordinateFontSize(fitWidth, fitHeight);
+    const labelGap = settings.coordFontLarge ? 14 + coordFont : 14;
     // Small boards get very large spacing, and a stone radius that overflows the
     // margin would be clipped by the canvas edge. Grow the margin until the edge
     // stones and their labels fit, capped so tiny boards stay compact.
-    const maxMargin = baseMargin * 1.8;
+    const maxMargin = baseMargin * (settings.coordFontLarge ? 2.4 : 1.8);
     let margin = baseMargin;
     let spacing = 4;
     let stoneRadius = margin * 0.465;
@@ -2337,16 +2351,21 @@
         ) * zoom,
       );
       stoneRadius = spacing * 0.465;
-      if (stoneRadius + 14 <= margin) break;
-      const nextMargin = Math.min(maxMargin, Math.ceil(stoneRadius + 14));
+      if (stoneRadius + labelGap <= margin) break;
+      const nextMargin = Math.min(maxMargin, Math.ceil(stoneRadius + labelGap));
       if (nextMargin <= margin + 0.5) {
-        spacing = Math.min(spacing, (margin - 14) / 0.465);
+        spacing = Math.min(spacing, (margin - labelGap) / 0.465);
         stoneRadius = spacing * 0.465;
         break;
       }
       margin = nextMargin;
     }
-    const labelOffset = Math.min(margin - 6, Math.max(stoneRadius + 8, margin * 0.5));
+    const labelOffset = settings.coordFontLarge
+      ? Math.max(4, Math.min(
+        margin - coordFont / 2 - 2,
+        Math.max(stoneRadius + coordFont / 2 + 2, margin * 0.5),
+      ))
+      : Math.min(margin - 6, Math.max(stoneRadius + 8, margin * 0.5));
     const cssWidth = Math.max(80, Math.round((cols - 1) * spacing + margin * 2));
     const cssHeight = Math.max(80, Math.round((rows - 1) * spacing + margin * 2));
     paneBoard.classList.toggle('is-zoomed', zoom > 1.001);
@@ -2410,6 +2429,32 @@
     const point = inverseBoardPoint(gx, gy);
     if (point.x < 0 || point.y < 0 || point.x >= boardView.sourceCols || point.y >= boardView.sourceRows) return null;
     return { x: point.x, y: point.y };
+  }
+
+  // The label ring is the margin between the outermost grid lines (plus half a
+  // space, where stones live) and the canvas edge. Clicks there toggle the
+  // coordinate font between normal and double size.
+  function isCoordinateRingClick(event) {
+    if (!boardView.cssWidth || !boardView.cssHeight) return false;
+    const rect = boardCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) return false;
+    const half = boardView.spacing / 2;
+    const left = boardView.originX - half;
+    const right = boardView.originX + (boardView.cols - 1) * boardView.spacing + half;
+    const top = boardView.originY - half;
+    const bottom = boardView.originY + (boardView.rows - 1) * boardView.spacing + half;
+    return x < left || x > right || y < top || y > bottom;
+  }
+
+  function toggleCoordinateFontSize() {
+    settings.coordFontLarge = !settings.coordFontLarge;
+    saveSettings();
+    resizeBoard();
+    log(settings.coordFontLarge
+      ? 'Coordinate labels enlarged. Click the margin again to restore them.'
+      : 'Coordinate labels restored.');
   }
 
   function markerColor(x, y) {
@@ -2934,7 +2979,7 @@
     }
 
     if (settings.coords) {
-      const fontSize = Math.max(8, Math.min(12, Math.round(Math.min(cssWidth, cssHeight) * 0.0155)));
+      const fontSize = coordinateFontSize(cssWidth, cssHeight);
       context.font = `500 ${fontSize}px ${BOARD_FONT}`;
       context.fillStyle = palette.label;
       context.textAlign = 'center';
@@ -6381,7 +6426,10 @@
       return;
     }
     const point = pointFromEvent(event);
-    if (!point) return;
+    if (!point) {
+      if (settings.coords && isCoordinateRingClick(event)) toggleCoordinateFontSize();
+      return;
+    }
     event.preventDefault();
     if (countState.active) toggleCountStone(point.x, point.y);
     else if (mode === 'edit') editAt(point.x, point.y);

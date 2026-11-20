@@ -447,6 +447,16 @@
         <button type="button" class="menu-trigger" id="menu-help" role="menuitem"
                 aria-haspopup="true" aria-expanded="false" aria-controls="popup-help" data-key="h">Help</button>
         <div class="menu-popup" id="popup-help" role="menu" aria-labelledby="menu-help" hidden>
+          <button type="button" class="menu-item" role="menuitem" data-action="doc-readme">
+            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">README (PDF)</span>
+          </button>
+          <button type="button" class="menu-item" role="menuitem" data-action="doc-features">
+            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Features (PDF)</span>
+          </button>
+          <button type="button" class="menu-item" role="menuitem" data-action="doc-tutorial">
+            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Tutorial (PDF)</span>
+          </button>
+          <div class="menu-separator" role="separator"></div>
           <button type="button" class="menu-item" role="menuitem" data-action="shortcuts">
             <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Keyboard Shortcuts</span><kbd>F1</kbd>
           </button>
@@ -947,7 +957,7 @@
       <button type="button" class="icon-button" data-close-dialog aria-label="Close">×</button>
     </div>
     <div class="dialog-body">
-      <p class="about-name">MultiGo Neo <span class="muted">1.1.12</span></p>
+      <p class="about-name">MultiGo Neo <span class="muted">1.1.14</span></p>
       <p>A Go record editor and player modelled on the MultiGo workspace: a 13×13 board,
          game information, a move list, and a status bar in a single-window desktop shell.</p>
       <dl class="about-meta">

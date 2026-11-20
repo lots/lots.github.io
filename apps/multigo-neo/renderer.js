@@ -733,6 +733,8 @@
     'Remember Last Board Size': '记住上次棋盘尺寸',
     'Autoplay Delay': '自动播放间隔',
     'Reset All Settings': '重置所有设置', 'Keyboard Shortcuts': '快捷键', 'About MultiGo Neo': '关于 MultiGo Neo',
+    README: 'README', Features: '功能', Tutorial: '教程',
+    'README (PDF)': 'README (PDF)', 'Features (PDF)': '功能 (PDF)', 'Tutorial (PDF)': '教程 (PDF)',
     'Show Go Bowls': '显示棋钵', Rules: '规则',
     Estimate: '形势判断', Score: '计算胜负', 'Score Result': '计算胜负',
     'Toggle group status.': '点击切换棋块状态。',
@@ -5638,6 +5640,9 @@
       if (window.MultiGoEngine) window.MultiGoEngine.openConsole();
     },
     preferences: openSetup, shortcuts: showShortcuts, about: showAbout,
+    'doc-readme': () => openDocumentation('README.pdf'),
+    'doc-features': () => openDocumentation('Features.pdf'),
+    'doc-tutorial': () => openDocumentation('Tutorial.pdf'),
   };
 
   // Game info / preferences / help --------------------------------------
@@ -6268,6 +6273,19 @@
   }
 
   function showShortcuts() { if (!shortcutsDialog.open) shortcutsDialog.showModal(); }
+
+  async function openDocumentation(name) {
+    try {
+      if (desktop?.openDoc) {
+        const result = await desktop.openDoc(name);
+        if (!result?.ok) log(`Could not open ${name}: ${result?.error || 'unknown error'}`, 'error');
+      } else {
+        window.open(name, '_blank', 'noopener');
+      }
+    } catch (error) {
+      log(`Could not open ${name}: ${error.message}`, 'error');
+    }
+  }
 
   // Board input ----------------------------------------------------------
   function updateCursor(point) {

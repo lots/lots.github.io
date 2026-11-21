@@ -86,6 +86,32 @@
       "updated": "2026-11-20"
     },
     {
+      "slug": "multilingual-goterm",
+      "title": {
+        "en": "Go Term Manager",
+        "zh": "围棋词典"
+      },
+      "description": {
+        "en": "A bilingual Go glossary you can actually maintain: 721 terms and 97 proverbs in Chinese and English, with pinyin, sources and notes. Search in either language or by pinyin, fix a translation, attach a diagram, and export JSON or CSV — everything stays in the browser, nothing is uploaded.",
+        "zh": "可以真正维护的中英围棋词典：721 条术语、97 条棋谚，含拼音、出处与备注。用中文、英文或拼音搜索，改一条翻译、配一张图，再导出 JSON 或 CSV——全部在浏览器里，文件不上传。"
+      },
+      "cta": {
+        "en": "Open the dictionary",
+        "zh": "打开词典"
+      },
+      "url": "/apps/multilingual-goterm/",
+      "icon": "/assets/apps/multilingual-goterm.svg",
+      "image": "/assets/apps/multilingual-goterm-shot.jpg",
+      "imageShape": "landscape",
+      "imageAlt": {
+        "en": "The Go dictionary's Terms tab: 721 entries with Chinese, pinyin and English columns",
+        "zh": "围棋词典的术语页：721 条词条，中文、拼音与英文对照"
+      },
+      "tags": ["study", "tools"],
+      "badges": ["offline", "bilingual"],
+      "updated": "2026-11-21"
+    },
+    {
       "slug": "my-sabaki",
       "title": {
         "en": "my-Sabaki",

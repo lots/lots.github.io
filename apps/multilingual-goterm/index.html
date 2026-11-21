@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>围棋词典 · Go Dictionary — Manager</title>
+<script>
+/* Set the theme before first paint to avoid a flash. */
+(function () {
+  try {
+    var mode = localStorage.getItem('goterm.theme') || 'auto';
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', mode === 'auto' ? (dark ? 'dark' : 'light') : mode);
+  } catch (e) { /* ignore */ }
+})();
+</script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" class="svg-sprite" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.2-4.2"></path></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"></path><path d="M8 4v6h8V4M8 20v-6h8v6"></path></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="m4 20 4.5-1 9.6-9.6a2.1 2.1 0 0 0-3-3L5.5 16z"></path><path d="m14.5 5.5 3 3"></path></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v5M14 11v5"></path></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"></path><path d="M19 14v5H5V5h5"></path></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a6 6 0 1 1 0 12"></path></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a6 6 0 1 0 0 12"></path></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="8.5" cy="9" r="1.5"></circle><path d="m21 15-5-5L5 20"></path></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"></path><path d="M15 2v5h5M9 13h6M9 17h6"></path></symbol>
+</svg>
+
+<div class="board-watermark" aria-hidden="true">
+  <svg viewBox="0 0 420 420">
+    <rect x="10" y="10" width="400" height="400" rx="26"></rect>
+    <g class="wm-grid">
+      <path d="M40 10v400M70 10v400M100 10v400M130 10v400M160 10v400M190 10v400M220 10v400M250 10v400M280 10v400M310 10v400M340 10v400M370 10v400M400 10v400"></path>
+      <path d="M10 40h400M10 70h400M10 100h400M10 130h400M10 160h400M10 190h400M10 220h400M10 250h400M10 280h400M10 310h400M10 340h400M10 370h400M10 400h400"></path>
+    </g>
+    <g class="wm-stones">
+      <circle cx="160" cy="160" r="14" class="wm-black"></circle>
+      <circle cx="220" cy="190" r="14" class="wm-white"></circle>
+      <circle cx="190" cy="250" r="14" class="wm-black"></circle>
+      <circle cx="280" cy="250" r="14" class="wm-white"></circle>
+      <circle cx="250" cy="310" r="14" class="wm-black"></circle>
+    </g>
+  </svg>
+</div>
+<div class="bilingual-rail" aria-hidden="true">
+  <span>围</span><span>棋</span><span>棋</span><span>谚</span>
+  <em>WEIQI</em>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+      <rect x="1" y="1" width="42" height="42" rx="10" class="brand-board"></rect>
+      <path d="M11 8v28M22 8v28M33 8v28M8 11h28M8 22h28M8 33h28" class="brand-grid"></path>
+      <circle cx="22" cy="22" r="4.4" class="brand-black"></circle>
+      <circle cx="33" cy="33" r="4.4" class="brand-white"></circle>
+    </svg>
+    <div class="brand-text">
+      <h1><span class="brand-cn">围棋词典</span><span class="brand-en">Go Dictionary</span></h1>
+      <p><span id="brandEdition">Glossary</span> · <span id="brandCount">0</span> terms · <span id="brandProverbs">0</span> proverbs</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button type="button" id="pdfBtn" class="btn ghost pdf-btn" title="Print or save the dictionary as PDF">
+      <svg class="icon"><use href="#i-pdf"></use></svg> PDF
+    </button>
+    <button type="button" id="reviewBtn" class="btn ghost review-btn" title="Scan both sections for issues">
+      Review <span class="badge" id="reviewCount">0</span>
+    </button>
+    <button type="button" id="themeBtn" class="icon-btn" title="Switch theme" aria-label="Switch theme">◐</button>
+    <button type="button" id="helpBtn" class="icon-btn" title="Help and shortcuts" aria-label="Help">?</button>
+  </div>
+</header>
+
+<div class="banner" id="banner" hidden>
+  <div class="banner-text" id="bannerText"></div>
+  <div class="banner-actions" id="bannerActions"></div>
+</div>
+
+<main class="page">
+
+  <nav class="section-tabs" role="tablist" aria-label="Dictionary sections">
+    <button type="button" id="tabTerms" class="section-tab active" role="tab" aria-selected="true" aria-controls="termsView" data-view="terms">
+      <span class="tab-cn">围棋术语</span>
+      <span class="tab-en">Terms</span>
+      <span class="tab-count" id="tabTermCount">0</span>
+    </button>
+    <button type="button" id="tabProverbs" class="section-tab" role="tab" aria-selected="false" aria-controls="proverbsView" data-view="proverbs">
+      <span class="tab-cn">围棋棋谚</span>
+      <span class="tab-en">Proverbs</span>
+      <span class="tab-count" id="tabProverbCount">0</span>
+    </button>
+    <span class="tabs-note"><b>中</b> · <b>EN</b> bilingual reference</span>
+  </nav>
+
+  <div class="global-actions">
+    <div class="menu-wrap">
+      <button type="button" id="fileMenuBtn" class="btn ghost" aria-haspopup="true" aria-expanded="false">File ▾</button>
+      <div class="menu" id="fileMenu" hidden>
+        <button type="button" data-action="import">Import…</button>
+        <button type="button" data-action="connect">Connect data file…</button>
+        <hr>
+        <button type="button" data-action="save-json">Save JSON</button>
+        <button type="button" data-action="save-as">Save JSON as…</button>
+        <button type="button" data-action="save-csv">Save CSV as…</button>
+        <hr>
+        <button type="button" data-action="download-json">Download JSON</button>
+        <button type="button" data-action="download-csv">Download CSV</button>
+        <button type="button" data-action="copy-json">Copy JSON to clipboard</button>
+        <hr>
+        <button type="button" data-action="pdf">Export PDF / Print…</button>
+      </div>
+    </div>
+    <div class="menu-wrap">
+      <button type="button" id="toolsMenuBtn" class="btn ghost" aria-haspopup="true" aria-expanded="false">Tools ▾</button>
+      <div class="menu" id="toolsMenu" hidden>
+        <button type="button" data-action="review">Scan for issues…</button>
+        <button type="button" data-action="rebuild">Rebuild derived fields</button>
+        <button type="button" data-action="renumber">Renumber IDs…</button>
+        <hr>
+        <button type="button" data-action="clear-filters">Clear filters</button>
+        <button type="button" data-action="reset" class="danger-text">Reset to bundled data…</button>
+      </div>
+    </div>
+    <button type="button" id="importBtn" class="btn ghost">Import</button>
+    <button type="button" id="saveJsonBtn" class="btn">
+      <svg class="icon"><use href="#i-save"></use></svg> Save JSON
+    </button>
+    <span class="global-spacer"></span>
+    <span class="global-hint" id="globalHint"></span>
+    <button type="button" id="newTermBtn" class="btn primary">
+      <svg class="icon"><use href="#i-plus"></use></svg> New term
+    </button>
+  </div>
+
+  <!-- ===================== Terms ===================== -->
+  <div id="termsView" class="view" role="tabpanel" aria-labelledby="tabTerms">
+    <section class="stats" aria-label="Term statistics">
+      <button type="button" class="stat" data-stat="all">
+        <span class="stat-cn">术语</span>
+        <span class="stat-value" id="statTotal">0</span>
+        <span class="stat-label">Terms</span>
+        <span class="stat-note">in the working copy</span>
+      </button>
+      <button type="button" class="stat" data-stat="edited">
+        <span class="stat-cn">修订</span>
+        <span class="stat-value" id="statEdited">0</span>
+        <span class="stat-label">Edited</span>
+        <span class="stat-note">differ from the bundled snapshot</span>
+      </button>
+      <button type="button" class="stat" data-stat="review">
+        <span class="stat-cn">待审</span>
+        <span class="stat-value" id="statReview">0</span>
+        <span class="stat-label">Needs review</span>
+        <span class="stat-note">errors or warnings</span>
+      </button>
+      <button type="button" class="stat" data-stat="nolink" id="statExtraButton">
+        <span class="stat-cn" id="statExtraCn">链接</span>
+        <span class="stat-value" id="statExtra">0</span>
+        <span class="stat-label" id="statExtraLabel">No source link</span>
+        <span class="stat-note" id="statExtraNote">no Sensei's Library link</span>
+      </button>
+    </section>
+
+    <section class="toolbar card" aria-label="Search and filter terms">
+      <div class="search">
+        <svg class="icon"><use href="#i-search"></use></svg>
+        <input id="search" type="search" placeholder="Search characters, pinyin, English, source or notes…" autocomplete="off" spellcheck="false" aria-label="Search terms">
+        <button type="button" id="clearSearch" class="search-clear" hidden aria-label="Clear search">×</button>
+        <kbd class="search-kbd">Ctrl K</kbd>
+      </div>
+
+      <div class="toolbar-row">
+        <div class="letters" id="letterChips" role="group" aria-label="Filter by pinyin section"></div>
+        <div class="toolbar-spacer"></div>
+        <label class="select edition-picker">
+          <span>Edition</span>
+          <select id="editionSelect" aria-label="Glossary edition"></select>
+        </label>
+        <label class="select">
+          <span>Filter</span>
+          <select id="filterSelect">
+            <option value="all">All terms</option>
+            <option value="review">Needs review</option>
+            <option value="edited">Edited only</option>
+            <option value="multisense">Multiple senses</option>
+            <option value="nolink">No source link</option>
+            <option value="duplicates">Shared characters</option>
+            <option value="media">With diagrams</option>
+          </select>
+        </label>
+        <label class="select">
+          <span>Sort</span>
+          <select id="sortSelect">
+            <option value="id">Source order</option>
+            <option value="simplified">Chinese</option>
+            <option value="pinyin">Pinyin</option>
+            <option value="english">English</option>
+            <option value="letter">Section</option>
+          </select>
+        </label>
+        <button type="button" id="sortDirBtn" class="icon-btn sort-dir" title="Toggle sort direction" aria-label="Toggle sort direction">↑</button>
+      </div>
+    </section>
+
+    <section class="table-card card" aria-label="Glossary terms">
+      <div class="table-head-bar">
+        <span id="resultSummary">0 terms</span>
+        <div class="bulk" id="bulkBar" hidden>
+          <span id="selCount">0 selected</span>
+          <button type="button" id="bulkDelete" class="btn danger mini">Delete</button>
+          <button type="button" id="bulkClear" class="btn ghost mini">Clear</button>
+        </div>
+        <span class="saved-indicator" id="savedIndicator"></span>
+      </div>
+
+      <div class="table-scroll" id="tableScroll">
+        <table id="termTable">
+          <thead>
+            <tr>
+              <th class="col-check"><input type="checkbox" id="selectAll" aria-label="Select all visible terms"></th>
+              <th class="col-id sortable" data-sort="id">#<span class="sort-arrow"></span></th>
+              <th class="col-letter sortable" data-sort="letter">Sec<span class="sort-arrow"></span></th>
+              <th class="col-cn sortable" data-sort="simplified"><span class="th-cn">中文</span><span class="th-en">Chinese</span><span class="sort-arrow"></span></th>
+              <th class="col-pinyin sortable" data-sort="pinyin"><span class="th-cn">拼音</span><span class="th-en">Pinyin</span><span class="sort-arrow"></span></th>
+              <th class="col-english sortable" data-sort="english"><span class="th-cn">英文</span><span class="th-en">English</span><span class="sort-arrow"></span></th>
+              <th class="col-links"><span class="th-cn">链接</span><span class="th-en">Links</span></th>
+              <th class="col-media"><span class="th-cn">图</span><span class="th-en">Media</span></th>
+              <th class="col-actions"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="termBody"></tbody>
+        </table>
+        <div class="empty" id="emptyState" hidden>
+          <svg viewBox="0 0 120 120" aria-hidden="true" class="empty-board">
+            <rect x="6" y="6" width="108" height="108" rx="14"></rect>
+            <path d="M24 6v108M42 6v108M60 6v108M78 6v108M96 6v108M6 24h108M6 42h108M6 60h108M6 78h108M6 96h108"></path>
+            <circle cx="42" cy="42" r="7" class="stone-black"></circle>
+            <circle cx="78" cy="78" r="7" class="stone-white"></circle>
+          </svg>
+          <h2>No terms match</h2>
+          <p>Try a different search, or clear the filters.</p>
+          <button type="button" class="btn" id="emptyClear">Clear filters</button>
+        </div>
+      </div>
+
+      <div class="table-foot">
+        <span id="footerSummary"></span>
+        <div class="history-controls">
+          <button type="button" id="undoBtn" class="btn ghost mini" title="Undo (Ctrl+Z)">
+            <svg class="icon"><use href="#i-undo"></use></svg> Undo
+          </button>
+          <button type="button" id="redoBtn" class="btn ghost mini" title="Redo (Ctrl+Y)">
+            <svg class="icon"><use href="#i-redo"></use></svg> Redo
+          </button>
+        </div>
+        <span class="file-status" id="fileStatus"></span>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== Proverbs ===================== -->
+  <div id="proverbsView" class="view" role="tabpanel" aria-labelledby="tabProverbs" hidden>
+    <section class="stats" aria-label="Proverb statistics">
+      <button type="button" class="stat" data-pstat="all">
+        <span class="stat-cn">棋谚</span>
+        <span class="stat-value" id="pStatTotal">0</span>
+        <span class="stat-label">Proverbs</span>
+        <span class="stat-note">sourced sayings</span>
+      </button>
+      <button type="button" class="stat" data-pstat="edited">
+        <span class="stat-cn">修订</span>
+        <span class="stat-value" id="pStatEdited">0</span>
+        <span class="stat-label">Edited</span>
+        <span class="stat-note">differ from the bundle</span>
+      </button>
+      <button type="button" class="stat" data-pstat="review">
+        <span class="stat-cn">待审</span>
+        <span class="stat-value" id="pStatReview">0</span>
+        <span class="stat-label">Needs review</span>
+        <span class="stat-note">errors or warnings</span>
+      </button>
+      <button type="button" class="stat" data-pstat="categories">
+        <span class="stat-cn">分类</span>
+        <span class="stat-value" id="pStatCategories">0</span>
+        <span class="stat-label">Categories</span>
+        <span class="stat-note">十诀 · 新十诀 · 布局 · 攻防 · 死活 · 棋形 · 棋理</span>
+      </button>
+    </section>
+
+    <section class="toolbar card" aria-label="Search and filter proverbs">
+      <div class="search">
+        <svg class="icon"><use href="#i-search"></use></svg>
+        <input id="proverbSearch" type="search" placeholder="搜索棋谚 · Search Chinese, pinyin, English or explanation…" autocomplete="off" spellcheck="false" aria-label="Search proverbs">
+        <button type="button" id="pClearSearch" class="search-clear" hidden aria-label="Clear search">×</button>
+        <kbd class="search-kbd">Ctrl K</kbd>
+      </div>
+
+      <div class="toolbar-row">
+        <div class="letters" id="proverbCategories" role="group" aria-label="Filter by proverb category"></div>
+        <div class="toolbar-spacer"></div>
+        <label class="select">
+          <span>Filter</span>
+          <select id="proverbFilter">
+            <option value="all">All proverbs</option>
+            <option value="review">Needs review</option>
+            <option value="edited">Edited only</option>
+            <option value="media">With diagrams</option>
+          </select>
+        </label>
+        <label class="select">
+          <span>Sort</span>
+          <select id="proverbSort">
+            <option value="order">Group order</option>
+            <option value="simplified">Chinese</option>
+            <option value="pinyin">Pinyin</option>
+            <option value="english">English</option>
+            <option value="category">Category</option>
+          </select>
+        </label>
+        <button type="button" id="proverbSortDir" class="icon-btn sort-dir" title="Toggle sort direction" aria-label="Toggle sort direction">↑</button>
+      </div>
+    </section>
+
+    <section class="table-card card" aria-label="Go proverbs">
+      <div class="table-head-bar">
+        <span id="proverbResultSummary">0 proverbs</span>
+        <div class="bulk" id="proverbBulkBar" hidden>
+          <span id="pSelCount">0 selected</span>
+          <button type="button" id="pBulkDelete" class="btn danger mini">Delete</button>
+          <button type="button" id="pBulkClear" class="btn ghost mini">Clear</button>
+        </div>
+        <span class="saved-indicator" id="proverbSavedIndicator"></span>
+      </div>
+
+      <div class="table-scroll" id="proverbTableScroll">
+        <table id="proverbTable">
+          <thead>
+            <tr>
+              <th class="col-check"><input type="checkbox" id="pSelectAll" aria-label="Select all visible proverbs"></th>
+              <th class="col-id sortable" data-psort="order">#<span class="sort-arrow"></span></th>
+              <th class="col-category sortable" data-psort="category"><span class="th-cn">分类</span><span class="th-en">Group</span><span class="sort-arrow"></span></th>
+              <th class="col-cn sortable" data-psort="simplified"><span class="th-cn">谚语</span><span class="th-en">Proverb</span><span class="sort-arrow"></span></th>
+              <th class="col-pinyin sortable" data-psort="pinyin"><span class="th-cn">拼音</span><span class="th-en">Pinyin</span><span class="sort-arrow"></span></th>
+              <th class="col-english sortable" data-psort="english"><span class="th-cn">英文 · 简释</span><span class="th-en">English · Meaning</span><span class="sort-arrow"></span></th>
+              <th class="col-media"><span class="th-cn">图</span><span class="th-en">Media</span></th>
+              <th class="col-actions"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="proverbBody"></tbody>
+        </table>
+        <div class="empty" id="proverbEmptyState" hidden>
+          <svg viewBox="0 0 120 120" aria-hidden="true" class="empty-board">
+            <rect x="6" y="6" width="108" height="108" rx="14"></rect>
+            <path d="M24 6v108M42 6v108M60 6v108M78 6v108M96 6v108M6 24h108M6 42h108M6 60h108M6 78h108M6 96h108"></path>
+            <circle cx="42" cy="42" r="7" class="stone-black"></circle>
+            <circle cx="78" cy="78" r="7" class="stone-white"></circle>
+          </svg>
+          <h2>没有匹配的棋谚</h2>
+          <p>No proverbs match. Try another search or clear the filters.</p>
+          <button type="button" class="btn" id="pEmptyClear">Clear filters</button>
+        </div>
+      </div>
+
+      <div class="table-foot">
+        <span id="proverbFooterSummary"></span>
+        <div class="history-controls">
+          <button type="button" id="pUndoBtn" class="btn ghost mini" title="Undo (Ctrl+Z)">
+            <svg class="icon"><use href="#i-undo"></use></svg> Undo
+          </button>
+          <button type="button" id="pRedoBtn" class="btn ghost mini" title="Redo (Ctrl+Y)">
+            <svg class="icon"><use href="#i-redo"></use></svg> Redo
+          </button>
+        </div>
+        <span class="file-status" id="proverbFileStatus"></span>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+
+<aside class="drawer" id="editor" role="dialog" aria-modal="true" aria-labelledby="editorTitle" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <p class="eyebrow" id="editorEyebrow">Term #1</p>
+      <h2 id="editorTitle">Edit term</h2>
+    </div>
+    <div class="drawer-nav">
+      <span class="nav-position" id="navPosition"></span>
+      <button type="button" id="prevTerm" class="icon-btn" title="Previous term (Alt+↑)" aria-label="Previous term">↑</button>
+      <button type="button" id="nextTerm" class="icon-btn" title="Next term (Alt+↓)" aria-label="Next term">↓</button>
+      <button type="button" id="closeEditor" class="icon-btn" title="Close" aria-label="Close editor">×</button>
+    </div>
+  </div>
+
+  <form id="termForm" novalidate>
+    <div class="drawer-body">
+      <div class="field-grid">
+        <label class="field">
+          <span class="field-label">Simplified 简体 <em>required</em></span>
+          <input id="f_simplified" type="text" autocomplete="off" spellcheck="false" lang="zh-CN" placeholder="白">
+        </label>
+        <label class="field">
+          <span class="field-label">Traditional 繁體 <em>optional</em></span>
+          <input id="f_traditional" type="text" autocomplete="off" spellcheck="false" lang="zh-TW" placeholder="敗">
+        </label>
+      </div>
+      <p class="hint">Leave traditional blank when it is identical to the simplified form.</p>
+
+      <label class="field">
+        <span class="field-label">Pinyin 拼音</span>
+        <input id="f_pinyin" type="text" autocomplete="off" spellcheck="false" placeholder="bái zhāo">
+        <small class="field-note" id="pinyinPreview"></small>
+      </label>
+
+      <label class="field">
+        <span class="field-label">English gloss 英文</span>
+        <textarea id="f_english" rows="2" autocomplete="off" spellcheck="true" placeholder="losing move; …"></textarea>
+        <small class="field-note" id="sensesPreview"></small>
+      </label>
+
+      <section class="edition-fields" id="editionFields" hidden>
+        <div class="edition-fields-head">
+          <span class="field-label">Merged-edition fields</span>
+          <span class="mini-tag">merged</span>
+        </div>
+        <div class="field-grid">
+          <label class="field">
+            <span class="field-label">Origin source</span>
+            <input id="f_source" type="text" list="sourceOptions" autocomplete="off" placeholder="yeefan.sg">
+          </label>
+          <label class="field">
+            <span class="field-label">Legacy ID</span>
+            <input id="f_legacy_id" type="text" inputmode="numeric" autocomplete="off" placeholder="id in go-terms.json">
+          </label>
+        </div>
+        <datalist id="sourceOptions">
+          <option value="yeefan.sg"></option>
+          <option value="senseis.xmp.net"></option>
+          <option value="gomagic.org"></option>
+        </datalist>
+        <label class="field">
+          <span class="field-label">Chinese definition 简释 <em>optional</em></span>
+          <textarea id="f_definition_zh" rows="2" lang="zh-CN" autocomplete="off" placeholder="白棋、执白的一方"></textarea>
+        </label>
+        <div class="field-grid">
+          <label class="field">
+            <span class="field-label">Alternative forms</span>
+            <input id="f_alt_forms" type="text" lang="zh-CN" autocomplete="off" placeholder="收官|官子">
+          </label>
+          <label class="field">
+            <span class="field-label">Notes</span>
+            <input id="f_notes" type="text" autocomplete="off" placeholder="pinyin corrected: …">
+          </label>
+        </div>
+        <label class="check-field">
+          <input type="checkbox" id="f_general_meaning">
+          <span>General vocabulary, not Go jargon</span>
+        </label>
+      </section>
+
+      <section class="field">
+        <div class="field-head">
+          <span class="field-label">Sensei's Library links</span>
+          <button type="button" id="addLink" class="btn ghost mini">＋ Add link</button>
+        </div>
+        <div id="linkRows" class="link-rows"></div>
+      </section>
+
+      <section class="field media-field">
+        <div class="field-head">
+          <span class="field-label">图示 / Diagrams <em>optional</em></span>
+          <span class="media-actions">
+            <button type="button" id="termAddMediaImage" class="btn ghost mini">＋ Image</button>
+            <button type="button" id="termAddMediaSgf" class="btn ghost mini">＋ SGF</button>
+          </span>
+        </div>
+        <div id="termMediaRows" class="media-rows"><p class="media-empty">No diagrams yet.</p></div>
+        <p class="hint">PNG, JPG, GIF or WebP · SGF previews the main line. Media travels with the JSON export and the PDF.</p>
+      </section>
+
+      <section class="issues" id="editorIssues" aria-live="polite"></section>
+    </div>
+
+    <div class="drawer-foot">
+      <div class="foot-left">
+        <button type="button" id="deleteTerm" class="btn ghost danger-text">Delete</button>
+        <button type="button" id="duplicateTerm" class="btn ghost">Duplicate</button>
+      </div>
+      <div class="foot-right">
+        <button type="button" id="cancelEdit" class="btn ghost">Cancel</button>
+        <button type="submit" id="saveTerm" class="btn primary">Save term</button>
+      </div>
+    </div>
+  </form>
+</aside>
+
+<aside class="drawer" id="proverbEditor" role="dialog" aria-modal="true" aria-labelledby="pEditorTitle" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <p class="eyebrow" id="pEditorEyebrow">Proverb #1</p>
+      <h2 id="pEditorTitle">Edit proverb</h2>
+    </div>
+    <div class="drawer-nav">
+      <span class="nav-position" id="pNavPosition"></span>
+      <button type="button" id="pPrev" class="icon-btn" title="Previous proverb (Alt+↑)" aria-label="Previous proverb">↑</button>
+      <button type="button" id="pNext" class="icon-btn" title="Next proverb (Alt+↓)" aria-label="Next proverb">↓</button>
+      <button type="button" id="pClose" class="icon-btn" title="Close" aria-label="Close editor">×</button>
+    </div>
+  </div>
+
+  <form id="proverbForm" novalidate>
+    <div class="drawer-body">
+      <div class="field-grid">
+        <label class="field">
+          <span class="field-label">Category 分类</span>
+          <input id="pf_category" type="text" list="proverbCategoryOptions" autocomplete="off" lang="zh-CN" placeholder="布局">
+          <datalist id="proverbCategoryOptions"></datalist>
+        </label>
+        <label class="field">
+          <span class="field-label">Order 序号</span>
+          <input id="pf_order" type="number" min="0" step="1" inputmode="numeric" placeholder="1">
+        </label>
+      </div>
+
+      <div class="field-grid">
+        <label class="field">
+          <span class="field-label">Simplified 简体 <em>required</em></span>
+          <input id="pf_simplified" type="text" autocomplete="off" spellcheck="false" lang="zh-CN" placeholder="金角银边草肚皮">
+        </label>
+        <label class="field">
+          <span class="field-label">Traditional 繁體 <em>optional</em></span>
+          <input id="pf_traditional" type="text" autocomplete="off" spellcheck="false" lang="zh-TW" placeholder="金角銀邊草肚皮">
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="field-label">Pinyin 拼音</span>
+        <input id="pf_pinyin" type="text" autocomplete="off" spellcheck="false" placeholder="jīn jiǎo yín biān cǎo dù pí">
+        <small class="field-note" id="pPinyinPreview"></small>
+      </label>
+
+      <label class="field">
+        <span class="field-label">English 英文</span>
+        <textarea id="pf_english" rows="2" autocomplete="off" spellcheck="true" placeholder="Gold in the corners, silver on the sides, straw in the belly."></textarea>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Chinese explanation 简释</span>
+        <textarea id="pf_explanation" rows="3" lang="zh-CN" autocomplete="off" placeholder="同样围十二目地，角上约需八子、边上十二子、中央十八子……"></textarea>
+      </label>
+
+      <div class="field-grid">
+        <label class="field">
+          <span class="field-label">Source 出处</span>
+          <input id="pf_source" type="text" autocomplete="off" placeholder="zh.wikipedia 围棋十诀">
+        </label>
+        <label class="field">
+          <span class="field-label">Source URL</span>
+          <input id="pf_source_url" type="url" autocomplete="off" placeholder="https://…">
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="field-label">Notes 备注</span>
+        <textarea id="pf_notes" rows="2" autocomplete="off" placeholder="Variants, classical wording, caveats…"></textarea>
+      </label>
+
+      <section class="field media-field">
+        <div class="field-head">
+          <span class="field-label">图示 / Diagrams <em>optional</em></span>
+          <span class="media-actions">
+            <button type="button" id="pAddMediaImage" class="btn ghost mini">＋ Image</button>
+            <button type="button" id="pAddMediaSgf" class="btn ghost mini">＋ SGF</button>
+          </span>
+        </div>
+        <div id="proverbMediaRows" class="media-rows"><p class="media-empty">No diagrams yet.</p></div>
+      </section>
+
+      <section class="issues" id="proverbIssues" aria-live="polite"></section>
+    </div>
+
+    <div class="drawer-foot">
+      <div class="foot-left">
+        <button type="button" id="pDelete" class="btn ghost danger-text">Delete</button>
+        <button type="button" id="pDuplicate" class="btn ghost">Duplicate</button>
+      </div>
+      <div class="foot-right">
+        <button type="button" id="pCancel" class="btn ghost">Cancel</button>
+        <button type="submit" id="pSave" class="btn primary">Save proverb</button>
+      </div>
+    </div>
+  </form>
+</aside>
+
+<input type="file" id="imageInput" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+<input type="file" id="sgfInput" accept=".sgf,text/plain,application/x-go-sgf" hidden>
+
+<dialog id="mediaDialog" class="dialog media-viewer">
+  <div id="mediaDialogBody"></div>
+  <div class="dialog-actions">
+    <button type="button" id="mediaDialogClose" class="btn">Close</button>
+  </div>
+</dialog>
+
+<dialog id="confirmDialog" class="dialog narrow">
+  <h2 id="confirmTitle">Confirm</h2>
+  <p id="confirmMsg"></p>
+  <div class="dialog-actions">
+    <button type="button" id="confirmCancel" class="btn ghost">Cancel</button>
+    <button type="button" id="confirmOk" class="btn primary">Confirm</button>
+  </div>
+</dialog>
+
+<dialog id="importDialog" class="dialog">
+  <h2>Import</h2>
+  <p class="dialog-intro">Bring in a term or proverb JSON/CSV export. The app detects the section from the file. Nothing changes until you confirm.</p>
+
+  <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Choose a JSON or CSV file">
+    <svg class="icon drop-icon"><use href="#i-plus"></use></svg>
+    <strong>Drop a file here</strong>
+    <span>or click to choose · JSON or CSV</span>
+    <input type="file" id="importFile" accept=".json,.csv,application/json,text/csv" hidden>
+  </div>
+
+  <div id="importPreview" hidden>
+    <div class="import-summary" id="importSummary"></div>
+    <div class="import-modes">
+      <label class="radio">
+        <input type="radio" name="importMode" value="replace" checked>
+        <span><strong>Replace all</strong><small>Swap that section's working copy for the imported rows.</small></span>
+      </label>
+      <label class="radio">
+        <input type="radio" name="importMode" value="merge">
+        <span><strong>Merge</strong><small>Update matching Chinese + pinyin rows and add the rest.</small></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="dialog-actions">
+    <button type="button" id="importCancel" class="btn ghost">Cancel</button>
+    <button type="button" id="importConfirm" class="btn primary" disabled>Import</button>
+  </div>
+</dialog>
+
+<dialog id="reviewDialog" class="dialog">
+  <h2>Dataset review</h2>
+  <p class="dialog-intro" id="reviewSummary"></p>
+  <div class="review-body" id="reviewBody"></div>
+  <div class="dialog-actions">
+    <button type="button" id="reviewClose" class="btn">Close</button>
+  </div>
+</dialog>
+
+<dialog id="helpDialog" class="dialog">
+  <h2>围棋词典 · Go Dictionary</h2>
+  <p class="dialog-intro">A portable manager for Chinese–English Go terms and proverbs. It runs straight from a USB stick — no server, no install, no network.</p>
+
+  <div class="help-grid">
+    <section>
+      <h3>Two sections 两部</h3>
+      <ul>
+        <li><strong>围棋术语 Terms</strong> — 721 merged rows or the 630-row base extraction, with source, notes and definitions.</li>
+        <li><strong>围棋棋谚 Proverbs</strong> — 97 sourced sayings with pinyin, English, Chinese explanation and provenance.</li>
+        <li>Each section autosaves separately and exports its own JSON/CSV file.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Everyday use</h3>
+      <ul>
+        <li>Click a row to edit; <kbd>N</kbd> adds a term or proverb.</li>
+        <li><kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>/</kbd> jumps to search.</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes; <kbd>Ctrl</kbd>+<kbd>Y</kbd> redoes.</li>
+        <li>Use the tabs to move between 术语 and 棋谚.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Saving to the USB stick</h3>
+      <ul>
+        <li><strong>Save JSON</strong> writes the active section's file in place in Chrome/Edge (choose it once).</li>
+        <li>Otherwise use <strong>Download JSON</strong> and copy the file beside the project.</li>
+        <li>CSV is for spreadsheets. Media is kept in JSON and PDF, not CSV.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>PDF 打印</h3>
+      <ul>
+        <li><strong>PDF</strong> opens a print-ready dictionary of the current term edition plus all proverbs.</li>
+        <li>Press the preview's <em>Print / Save as PDF</em> button (or Ctrl+P), then choose <em>Save as PDF</em>.</li>
+        <li>A4 portrait, repeating table headers, bilingual columns; images and SGF diagrams are included.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Diagrams 图示</h3>
+      <ul>
+        <li>Attach PNG, JPG, GIF or WebP to a term or proverb. GIFs stay animated.</li>
+        <li>SGF files are rendered as a board preview of the first main line.</li>
+        <li>Media lives in the JSON export; keep files small (localStorage is limited).</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Data rules</h3>
+      <ul>
+        <li>Leave <em>traditional</em> empty when it matches the simplified form.</li>
+        <li>Separate multiple English senses with semicolons; proverbs use one sentence.</li>
+        <li>Pinyin uses tone marks; the plain, searchable form is derived.</li>
+        <li>Merged terms and proverbs are personal reference material — see the sources in <code>README.md</code>.</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="dialog-actions">
+    <a class="btn ghost" href="https://yeefan.sg/weiqi/chinesegoterms/" target="_blank" rel="noopener">Yee Fan source ↗</a>
+    <button type="button" id="helpClose" class="btn">Close</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="media.js"></script>
+<script src="print.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="proverbs.js"></script>
+</body>
+</html>

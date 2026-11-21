@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Go Term Manager">
+  <rect width="64" height="64" rx="14" fill="#101720"/>
+  <path d="M32 19c-5-3-10.5-4-15.5-3.2v30.4c5-.8 10.5.2 15.5 3.2 5-3 10.5-4 15.5-3.2V15.8C42.5 15 37 16 32 19z" fill="#e9eef5"/>
+  <path d="M32 19v30.4" stroke="#101720" stroke-width="2"/>
+  <g stroke="#8fa3bd" stroke-width="1.7" stroke-linecap="round">
+    <path d="M21 25h7M21 30h7M21 35h7M36 25h7M36 30h7M36 35h7"/>
+  </g>
+  <circle cx="45" cy="45" r="9" fill="#0b0f14" stroke="#e9eef5" stroke-width="2"/>
+</svg>

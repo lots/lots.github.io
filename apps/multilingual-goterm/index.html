@@ -30,6 +30,8 @@
   <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a6 6 0 1 0 0 12"></path></symbol>
   <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="8.5" cy="9" r="1.5"></circle><path d="m21 15-5-5L5 20"></path></symbol>
   <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"></path><path d="M15 2v5h5M9 13h6M9 17h6"></path></symbol>
+  <symbol id="i-portrait" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"></rect><path d="M10 6h4"></path></symbol>
+  <symbol id="i-landscape" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"></rect><path d="M6 10v4"></path></symbol>
 </svg>
 
 <div class="board-watermark" aria-hidden="true">
@@ -67,13 +69,28 @@
     </div>
   </div>
   <div class="topbar-actions">
+    <div class="layout-switch" role="group" aria-label="Layout mode">
+      <button type="button" id="layoutPortrait" class="layout-btn" data-layout-choice="portrait" title="Portrait layout" aria-label="Portrait layout">
+        <svg class="icon"><use href="#i-portrait"></use></svg>
+      </button>
+      <button type="button" id="layoutLandscape" class="layout-btn" data-layout-choice="landscape" title="Landscape layout" aria-label="Landscape layout">
+        <svg class="icon"><use href="#i-landscape"></use></svg>
+      </button>
+    </div>
     <button type="button" id="pdfBtn" class="btn ghost pdf-btn" title="Print or save the dictionary as PDF">
       <svg class="icon"><use href="#i-pdf"></use></svg> PDF
     </button>
     <button type="button" id="reviewBtn" class="btn ghost review-btn" title="Scan both sections for issues">
       Review <span class="badge" id="reviewCount">0</span>
     </button>
-    <button type="button" id="themeBtn" class="icon-btn" title="Switch theme" aria-label="Switch theme">◐</button>
+    <div class="menu-wrap theme-wrap">
+      <button type="button" id="themeBtn" class="icon-btn" title="Theme: light" aria-label="Choose theme" aria-haspopup="true" aria-expanded="false">◐</button>
+      <div class="menu theme-menu" id="themeMenu" hidden>
+        <button type="button" data-theme-choice="light"><span class="theme-swatch swatch-light"></span><span>Light <em>明亮</em></span></button>
+        <button type="button" data-theme-choice="medium"><span class="theme-swatch swatch-medium"></span><span>Medium <em>米色</em></span></button>
+        <button type="button" data-theme-choice="dark"><span class="theme-swatch swatch-dark"></span><span>Dark <em>深色</em></span></button>
+      </div>
+    </div>
     <button type="button" id="helpBtn" class="icon-btn" title="Help and shortcuts" aria-label="Help">?</button>
   </div>
 </header>
@@ -128,6 +145,15 @@
         <button type="button" data-action="reset" class="danger-text">Reset to bundled data…</button>
       </div>
     </div>
+    <div class="menu-wrap">
+      <button type="button" id="columnsMenuBtn" class="btn ghost" aria-haspopup="true" aria-expanded="false" title="Show or hide table columns">
+        <span class="columns-icon">▦</span> Columns ▾
+      </button>
+      <div class="menu columns-menu" id="columnsMenu" hidden></div>
+    </div>
+    <button type="button" id="statsToggleBtn" class="btn ghost stats-toggle" aria-pressed="true" title="Show or hide the statistics">
+      <span class="stats-toggle-icon">▤</span> Stats <span class="stats-badge" id="statsBadge">0</span>
+    </button>
     <button type="button" id="importBtn" class="btn ghost">Import</button>
     <button type="button" id="saveJsonBtn" class="btn">
       <svg class="icon"><use href="#i-save"></use></svg> Save JSON
@@ -184,6 +210,23 @@
           <select id="editionSelect" aria-label="Glossary edition"></select>
         </label>
         <label class="select">
+          <span>Rank</span>
+          <select id="rankFilter">
+            <option value="ALL">All ranks</option>
+            <option value="NONE">Unranked</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+          </select>
+        </label>
+        <label class="select">
           <span>Filter</span>
           <select id="filterSelect">
             <option value="all">All terms</option>
@@ -199,6 +242,7 @@
           <span>Sort</span>
           <select id="sortSelect">
             <option value="id">Source order</option>
+            <option value="rank">Rank</option>
             <option value="simplified">Chinese</option>
             <option value="pinyin">Pinyin</option>
             <option value="english">English</option>
@@ -226,6 +270,7 @@
             <tr>
               <th class="col-check"><input type="checkbox" id="selectAll" aria-label="Select all visible terms"></th>
               <th class="col-id sortable" data-sort="id">#<span class="sort-arrow"></span></th>
+              <th class="col-rank sortable" data-sort="rank"><span class="th-cn">等级</span><span class="th-en">Rank</span><span class="sort-arrow"></span></th>
               <th class="col-letter sortable" data-sort="letter">Sec<span class="sort-arrow"></span></th>
               <th class="col-cn sortable" data-sort="simplified"><span class="th-cn">中文</span><span class="th-en">Chinese</span><span class="sort-arrow"></span></th>
               <th class="col-pinyin sortable" data-sort="pinyin"><span class="th-cn">拼音</span><span class="th-en">Pinyin</span><span class="sort-arrow"></span></th>
@@ -306,6 +351,23 @@
         <div class="letters" id="proverbCategories" role="group" aria-label="Filter by proverb category"></div>
         <div class="toolbar-spacer"></div>
         <label class="select">
+          <span>Rank</span>
+          <select id="proverbRankFilter">
+            <option value="ALL">All ranks</option>
+            <option value="NONE">Unranked</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+          </select>
+        </label>
+        <label class="select">
           <span>Filter</span>
           <select id="proverbFilter">
             <option value="all">All proverbs</option>
@@ -318,6 +380,7 @@
           <span>Sort</span>
           <select id="proverbSort">
             <option value="order">Group order</option>
+            <option value="rank">Rank</option>
             <option value="simplified">Chinese</option>
             <option value="pinyin">Pinyin</option>
             <option value="english">English</option>
@@ -345,10 +408,13 @@
             <tr>
               <th class="col-check"><input type="checkbox" id="pSelectAll" aria-label="Select all visible proverbs"></th>
               <th class="col-id sortable" data-psort="order">#<span class="sort-arrow"></span></th>
+              <th class="col-rank sortable" data-psort="rank"><span class="th-cn">等级</span><span class="th-en">Rank</span><span class="sort-arrow"></span></th>
+              <th class="col-letter"><span class="th-cn">字母</span><span class="th-en">Sec</span></th>
               <th class="col-category sortable" data-psort="category"><span class="th-cn">分类</span><span class="th-en">Group</span><span class="sort-arrow"></span></th>
               <th class="col-cn sortable" data-psort="simplified"><span class="th-cn">谚语</span><span class="th-en">Proverb</span><span class="sort-arrow"></span></th>
               <th class="col-pinyin sortable" data-psort="pinyin"><span class="th-cn">拼音</span><span class="th-en">Pinyin</span><span class="sort-arrow"></span></th>
               <th class="col-english sortable" data-psort="english"><span class="th-cn">英文 · 简释</span><span class="th-en">English · Meaning</span><span class="sort-arrow"></span></th>
+              <th class="col-links"><span class="th-cn">链接</span><span class="th-en">Links</span></th>
               <th class="col-media"><span class="th-cn">图</span><span class="th-en">Media</span></th>
               <th class="col-actions"><span class="sr-only">Actions</span></th>
             </tr>
@@ -414,11 +480,30 @@
       </div>
       <p class="hint">Leave traditional blank when it is identical to the simplified form.</p>
 
-      <label class="field">
-        <span class="field-label">Pinyin 拼音</span>
-        <input id="f_pinyin" type="text" autocomplete="off" spellcheck="false" placeholder="bái zhāo">
-        <small class="field-note" id="pinyinPreview"></small>
-      </label>
+      <div class="field-grid">
+        <label class="field">
+          <span class="field-label">Pinyin 拼音</span>
+          <input id="f_pinyin" type="text" autocomplete="off" spellcheck="false" placeholder="bái zhāo">
+          <small class="field-note" id="pinyinPreview"></small>
+        </label>
+        <label class="field">
+          <span class="field-label">Rank 等级</span>
+          <select id="f_rank">
+            <option value="">— blank —</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+          </select>
+          <small class="field-note">0–9, or leave blank.</small>
+        </label>
+      </div>
 
       <label class="field">
         <span class="field-label">English gloss 英文</span>
@@ -541,11 +626,30 @@
         </label>
       </div>
 
-      <label class="field">
-        <span class="field-label">Pinyin 拼音</span>
-        <input id="pf_pinyin" type="text" autocomplete="off" spellcheck="false" placeholder="jīn jiǎo yín biān cǎo dù pí">
-        <small class="field-note" id="pPinyinPreview"></small>
-      </label>
+      <div class="field-grid">
+        <label class="field">
+          <span class="field-label">Pinyin 拼音</span>
+          <input id="pf_pinyin" type="text" autocomplete="off" spellcheck="false" placeholder="jīn jiǎo yín biān cǎo dù pí">
+          <small class="field-note" id="pPinyinPreview"></small>
+        </label>
+        <label class="field">
+          <span class="field-label">Rank 等级</span>
+          <select id="pf_rank">
+            <option value="">— blank —</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+          </select>
+          <small class="field-note">0–9, or leave blank.</small>
+        </label>
+      </div>
 
       <label class="field">
         <span class="field-label">English 英文</span>
@@ -679,6 +783,16 @@
         <li><kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>/</kbd> jumps to search.</li>
         <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes; <kbd>Ctrl</kbd>+<kbd>Y</kbd> redoes.</li>
         <li>Use the tabs to move between 术语 and 棋谚.</li>
+        <li><strong>Rank 等级</strong> is an optional digit 0–9 (or blank) stored with each term/proverb. Filter it with the Rank menu, or sort by clicking the Rank header / choosing Rank in Sort.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Display 显示</h3>
+      <ul>
+        <li>Three themes: <strong>Light</strong> 明亮, <strong>Medium</strong> 米色, <strong>Dark</strong> 深色 — open the ◐ menu.</li>
+        <li>Two layouts: <strong>Portrait</strong> stacks the controls; <strong>Landscape</strong> moves navigation and actions into a left rail so the table gets the full height.</li>
+        <li><strong>Columns</strong> hides individual list columns (Sec, Group, Pinyin, English, Links, Media…) per section, giving more room on horizontal displays.</li>
+        <li><strong>Stats</strong> hides or restores the statistic cards. Landscape hides them by default; the button keeps a compact total visible.</li>
       </ul>
     </section>
     <section>

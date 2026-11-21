@@ -24,7 +24,47 @@
   var LS_DISMISS = 'goterm.snapshotDismissed';
   var LS_EDITION = 'goterm.edition';
   var LS_VIEW = 'goterm.view';
+  var LS_LAYOUT = 'goterm.layout';
+  var LS_STATS = 'goterm.statsVisible';
+  var LS_COLUMNS = 'goterm.columns';
   var TOOL_VERSION = 3;
+
+  var COLUMN_DEFS = {
+    terms: [
+      { key: 'id', label: '#', className: 'col-id' },
+      { key: 'rank', label: 'Rank 等级', className: 'col-rank' },
+      { key: 'letter', label: 'Sec 段', className: 'col-letter' },
+      { key: 'cn', label: '中文 Chinese', className: 'col-cn' },
+      { key: 'pinyin', label: '拼音 Pinyin', className: 'col-pinyin' },
+      { key: 'english', label: '英文 English', className: 'col-english' },
+      { key: 'links', label: '链接 Links', className: 'col-links' },
+      { key: 'media', label: '图 Media', className: 'col-media' },
+    ],
+    proverbs: [
+      { key: 'id', label: '#', className: 'col-id' },
+      { key: 'rank', label: 'Rank 等级', className: 'col-rank' },
+      { key: 'letter', label: 'Sec 字母', className: 'col-letter' },
+      { key: 'category', label: '分类 Group', className: 'col-category' },
+      { key: 'cn', label: '谚语 Proverb', className: 'col-cn' },
+      { key: 'pinyin', label: '拼音 Pinyin', className: 'col-pinyin' },
+      { key: 'english', label: '英文 · 简释 English · Meaning', className: 'col-english' },
+      { key: 'links', label: '链接 Links', className: 'col-links' },
+      { key: 'media', label: '图 Media', className: 'col-media' },
+    ],
+  };
+
+  var columnPrefs = { terms: [], proverbs: [] };
+  try {
+    var storedColumns = JSON.parse(localStorage.getItem(LS_COLUMNS) || 'null');
+    ['terms', 'proverbs'].forEach(function (section) {
+      var list = storedColumns && Array.isArray(storedColumns[section]) ? storedColumns[section] : [];
+      columnPrefs[section] = list.filter(function (key) {
+        return COLUMN_DEFS[section].some(function (def) { return def.key === key; });
+      });
+    });
+  } catch (e) {
+    columnPrefs = { terms: [], proverbs: [] };
+  }
 
   var savedEdition = null;
   try { savedEdition = localStorage.getItem(LS_EDITION); } catch (e) { savedEdition = null; }
@@ -37,6 +77,24 @@
       ? 'base'
       : (BUNDLES && BUNDLES.merged ? 'merged' : EDITION_KEYS[0]));
   var BUNDLE = BUNDLES ? BUNDLES[DEFAULT_EDITION] : null;
+
+  function inferLayout() {
+    var width = window.innerWidth;
+    var height = Math.max(1, window.innerHeight);
+    if (width < 900) return 'portrait';
+    return (width / height >= 1.45 || height < 720) ? 'landscape' : 'portrait';
+  }
+
+  var savedLayout = null;
+  try { savedLayout = localStorage.getItem(LS_LAYOUT); } catch (e) { savedLayout = null; }
+  var DEFAULT_LAYOUT = savedLayout === 'portrait' || savedLayout === 'landscape'
+    ? savedLayout
+    : inferLayout();
+  var savedStatsVisible = null;
+  try { savedStatsVisible = localStorage.getItem(LS_STATS); } catch (e) { savedStatsVisible = null; }
+  var DEFAULT_STATS_VISIBLE = savedStatsVisible === null
+    ? DEFAULT_LAYOUT === 'portrait'
+    : savedStatsVisible === '1';
 
   if (!BUNDLE || !Array.isArray(BUNDLE.terms) || !BUNDLE.terms.length) {
     document.body.innerHTML =
@@ -61,6 +119,7 @@
     view: 'terms',
     query: '',
     letter: 'ALL',
+    rank: 'ALL',
     filter: 'all',
     sort: 'id',
     dir: 'asc',
@@ -74,6 +133,8 @@
     jsonHandle: null,
     csvHandle: null,
     theme: 'auto',
+    layout: DEFAULT_LAYOUT,
+    statsVisible: DEFAULT_STATS_VISIBLE,
     stamp: BUNDLE.stamp,
   };
 
@@ -164,6 +225,15 @@
       .toLowerCase();
   }
 
+  function normalizeRank(value) {
+    if (value === null || value === undefined) return null;
+    var text = String(value).trim();
+    if (text === '') return null;
+    var numeric = Number(text);
+    if (!Number.isInteger(numeric) || numeric < 0 || numeric > 9) return null;
+    return numeric;
+  }
+
   function normalizeTerm(raw, idOverride) {
     raw = raw || {};
     var simplified = String(raw.simplified == null ? '' : raw.simplified)
@@ -229,6 +299,7 @@
 
     return {
       id: numericId,
+      rank: normalizeRank(raw.rank),
       legacy_id: legacyId,
       letter: letter,
       simplified: simplified,
@@ -252,6 +323,7 @@
   function termSignature(term) {
     return JSON.stringify([
       term.id,
+      term.rank,
       term.legacy_id,
       term.letter,
       term.simplified,
@@ -289,6 +361,7 @@
 
   function draftFromTerm(term) {
     return {
+      rank: term.rank == null ? '' : String(term.rank),
       simplified: term.simplified,
       traditional: term.traditional,
       pinyin: term.pinyin,
@@ -306,6 +379,7 @@
 
   function blankDraft() {
     return {
+      rank: '',
       simplified: '',
       traditional: '',
       pinyin: '',
@@ -323,6 +397,7 @@
 
   function draftKey(draft) {
     return JSON.stringify([
+      draft.rank,
       draft.simplified,
       draft.traditional,
       draft.pinyin,
@@ -510,6 +585,11 @@
       result = (Number(a.id) || 0) - (Number(b.id) || 0);
     } else if (state.sort === 'simplified') {
       result = CN_COLLATOR.compare(a.simplified, b.simplified);
+    } else if (state.sort === 'rank') {
+      if (a.rank == null && b.rank == null) result = 0;
+      else if (a.rank == null) result = 1;
+      else if (b.rank == null) result = -1;
+      else result = a.rank - b.rank;
     } else {
       result = EN_COLLATOR.compare(String(sortValue(a)), String(sortValue(b)));
     }
@@ -523,6 +603,13 @@
     var rows = state.terms.filter(function (term) {
       var letter = term.letter || '#';
       if (state.letter !== 'ALL' && letter !== state.letter) return false;
+      if (state.rank !== 'ALL') {
+        if (state.rank === 'NONE') {
+          if (term.rank != null) return false;
+        } else if (term.rank !== Number(state.rank)) {
+          return false;
+        }
+      }
       if (!matchesQuery(term, tokens)) return false;
 
       switch (state.filter) {
@@ -643,6 +730,8 @@
         ((hasError || hasWarning) ? '<span class="issue-dot' + (hasError ? ' error' : '') + '" title="' +
           escapeHtml(issueTitle) + '"></span>' : '') +
         '</span></td>' +
+      '<td class="col-rank">' + (term.rank == null ? '' :
+        '<span class="rank-badge">' + term.rank + '</span>') + '</td>' +
       '<td class="col-letter"><span class="letter-chip-cell">' + escapeHtml(term.letter || '–') + '</span></td>' +
       '<td class="col-cn"><span class="cn-simplified">' + highlight(term.simplified) + '</span>' + traditional +
         (term.pinyin ? '<span class="mobile-pinyin">' + pinyinHtml(term, tokens) + '</span>' : '') + '</td>' +
@@ -687,6 +776,7 @@
     var context = [];
     if (state.query.trim()) context.push('“' + state.query.trim() + '”');
     if (state.letter !== 'ALL') context.push('section ' + state.letter);
+    if (state.rank !== 'ALL') context.push(state.rank === 'NONE' ? 'unranked' : 'rank ' + state.rank);
     if (state.filter !== 'all') context.push(filterLabels[state.filter]);
 
     E.resultSummary.textContent = context.length
@@ -849,6 +939,9 @@
     E.brandProverbs.textContent = pCount;
     E.tabTermCount.textContent = state.terms.length;
     E.tabProverbCount.textContent = pCount;
+    if (E.statsBadge) {
+      E.statsBadge.textContent = state.view === 'proverbs' ? pCount : state.terms.length;
+    }
 
     E.reviewCount.textContent = total;
     E.reviewCount.dataset.tone = counts.error ? 'error' : ((counts.warning || pReview) ? 'warn' : '');
@@ -916,6 +1009,8 @@
 
     updateFileLabels();
     updateGlobalBadges();
+    renderColumnsMenu();
+    applyColumns();
 
     if (view === 'proverbs') {
       window.GoProverbs.onActivate();
@@ -1222,6 +1317,7 @@
   }
 
   function fillEditor(draft) {
+    E.f_rank.value = draft.rank == null ? '' : String(draft.rank);
     E.f_simplified.value = draft.simplified;
     E.f_traditional.value = draft.traditional;
     E.f_pinyin.value = draft.pinyin;
@@ -1269,6 +1365,7 @@
       };
     }).filter(function (link) { return link.url; });
     return {
+      rank: E.f_rank.value,
       simplified: E.f_simplified.value,
       traditional: E.f_traditional.value,
       pinyin: E.f_pinyin.value,
@@ -1457,7 +1554,8 @@
     mediaPickHandler = null;
 
     if (handler.kind === 'image') {
-      if (!/^image\/(png|jpe?g|gif|webp)$/i.test(file.type)) {
+      if (!/^image\/(png|jpe?g|gif|webp)$/i.test(file.type) &&
+          !/\.(png|jpe?g|gif|webp)$/i.test(file.name || '')) {
         toast('Use a PNG, JPG, GIF or WebP image.', 'error');
         return;
       }
@@ -1467,12 +1565,19 @@
       }
       var reader = new FileReader();
       reader.onload = function () {
+        var data = String(reader.result || '');
+        if (!/^data:image\//i.test(data)) {
+          var mime = /\.png$/i.test(file.name) ? 'image/png'
+            : /\.gif$/i.test(file.name) ? 'image/gif'
+              : /\.webp$/i.test(file.name) ? 'image/webp' : 'image/jpeg';
+          data = data.replace(/^data:[^;,]*/i, 'data:' + mime);
+        }
         handler.callback({
           id: window.GoMedia.mediaId(),
           type: 'image',
           name: file.name,
           caption: '',
-          data: String(reader.result || ''),
+          data: data,
         });
       };
       reader.onerror = function () { toast('Could not read that image.', 'error'); };
@@ -1485,7 +1590,7 @@
       return;
     }
     file.text().then(function (text) {
-      if (text.indexOf('(') === -1 || !/;\s*[BW]\s*\[/i.test(text)) {
+      if (text.indexOf('(') === -1 || !/;\s*[BW]\s*\[|A[BW]\s*\[/i.test(text)) {
         toast('That file does not look like an SGF game record.', 'error');
         return;
       }
@@ -1562,9 +1667,11 @@
     if (!visible) {
       state.query = '';
       state.letter = 'ALL';
+      state.rank = 'ALL';
       state.filter = 'all';
       E.search.value = '';
       E.clearSearch.hidden = true;
+      E.rankFilter.value = 'ALL';
       E.filterSelect.value = 'all';
       renderStats();
       renderLetters();
@@ -1677,6 +1784,7 @@
         return { url: link.url, label: link.label };
       }),
     };
+    if (term.rank != null) projected.rank = term.rank;
     if (term.media && term.media.length) projected.media = cloneMedia(term.media);
     return projected;
   }
@@ -1699,6 +1807,7 @@
       notes: term.notes,
       legacy_id: term.legacy_id,
     };
+    if (term.rank != null) projected.rank = term.rank;
     if (term.media && term.media.length) projected.media = cloneMedia(term.media);
     return projected;
   }
@@ -1756,9 +1865,9 @@
     var header = merged
       ? ['id', 'letter', 'simplified', 'traditional', 'alt_forms', 'pinyin', 'pinyin_plain',
         'english', 'definition_zh', 'source', 'general_meaning', 'sense_count', 'sensei_urls',
-        'notes', 'legacy_id']
+        'notes', 'legacy_id', 'rank']
       : ['id', 'letter', 'simplified', 'traditional', 'pinyin', 'pinyin_plain', 'english',
-        'sense_count', 'sensei_urls'];
+        'sense_count', 'sensei_urls', 'rank'];
 
     var lines = [header.join(',')];
     state.terms.forEach(function (term) {
@@ -1768,12 +1877,13 @@
           term.pinyin, term.pinyin_plain, term.english, term.definition_zh, term.source,
           String(!!term.general_meaning), term.senses.length,
           term.sensei_links.map(function (link) { return link.url; }).join('|'),
-          term.notes, term.legacy_id,
+          term.notes, term.legacy_id, term.rank == null ? '' : term.rank,
         ]
         : [
           term.id, term.letter, term.simplified, term.traditional, term.pinyin,
           term.pinyin_plain, term.english, term.senses.length,
           term.sensei_links.map(function (link) { return link.url; }).join('|'),
+          term.rank == null ? '' : term.rank,
         ];
       lines.push(row.map(csvEscape).join(','));
     });
@@ -2017,6 +2127,7 @@
       var urls = value(row, 'sensei_urls').split('|').map(function (url) { return url.trim(); }).filter(Boolean);
       terms.push(normalizeTerm({
         id: Number(value(row, 'id')),
+        rank: value(row, 'rank'),
         legacy_id: value(row, 'legacy_id'),
         letter: value(row, 'letter'),
         simplified: simplified,
@@ -2300,9 +2411,11 @@
   function clearFilters() {
     state.query = '';
     state.letter = 'ALL';
+    state.rank = 'ALL';
     state.filter = 'all';
     E.search.value = '';
     E.clearSearch.hidden = true;
+    E.rankFilter.value = 'ALL';
     E.filterSelect.value = 'all';
     renderAll();
   }
@@ -2362,6 +2475,7 @@
     state.selected.clear();
     state.query = '';
     state.letter = 'ALL';
+    state.rank = 'ALL';
     state.filter = 'all';
     state.sort = 'id';
     state.dir = 'asc';
@@ -2373,6 +2487,7 @@
 
     E.search.value = '';
     E.clearSearch.hidden = true;
+    E.rankFilter.value = 'ALL';
     E.banner.hidden = true;
     E.sortSelect.value = 'id';
     E.sortDirBtn.textContent = '↑';
@@ -2444,10 +2559,10 @@
      Menus
      ------------------------------------------------------------ */
   function closeMenus() {
-    [E.fileMenu, E.toolsMenu].forEach(function (menu) {
+    [E.fileMenu, E.toolsMenu, E.themeMenu, E.columnsMenu].forEach(function (menu) {
       if (menu) menu.hidden = true;
     });
-    [E.fileMenuBtn, E.toolsMenuBtn].forEach(function (button) {
+    [E.fileMenuBtn, E.toolsMenuBtn, E.themeBtn, E.columnsMenuBtn].forEach(function (button) {
       if (button) button.setAttribute('aria-expanded', 'false');
     });
   }
@@ -2459,6 +2574,52 @@
       menu.hidden = false;
       button.setAttribute('aria-expanded', 'true');
     }
+  }
+
+  function renderColumnsMenu() {
+    if (!E.columnsMenu) return;
+    var defs = COLUMN_DEFS[state.view] || [];
+    var hidden = columnPrefs[state.view] || [];
+    var html = defs.map(function (def) {
+      var visible = hidden.indexOf(def.key) === -1;
+      return '<button type="button" data-column="' + def.key + '" aria-checked="' + visible + '">' +
+        '<span class="column-check">' + (visible ? '✓' : '') + '</span><span>' +
+        escapeHtml(def.label) + '</span></button>';
+    }).join('');
+    html += '<hr><button type="button" data-column-action="all">Show all columns</button>';
+    html += '<p class="column-note">These settings are saved per section. Narrow screens may hide some columns automatically.</p>';
+    E.columnsMenu.innerHTML = html;
+  }
+
+  function applyColumns() {
+    var table = state.view === 'terms' ? E.termTable : E.proverbTable;
+    if (!table) return;
+    var defs = COLUMN_DEFS[state.view] || [];
+    var hidden = columnPrefs[state.view] || [];
+    defs.forEach(function (def) {
+      table.classList.toggle('hide-col-' + def.key, hidden.indexOf(def.key) !== -1);
+    });
+  }
+
+  function saveColumns() {
+    try { localStorage.setItem(LS_COLUMNS, JSON.stringify(columnPrefs)); } catch (e) { /* ignore */ }
+  }
+
+  function toggleColumn(key) {
+    var list = columnPrefs[state.view];
+    var at = list.indexOf(key);
+    if (at === -1) list.push(key);
+    else list.splice(at, 1);
+    saveColumns();
+    applyColumns();
+    renderColumnsMenu();
+  }
+
+  function showAllColumns() {
+    columnPrefs[state.view] = [];
+    saveColumns();
+    applyColumns();
+    renderColumnsMenu();
   }
 
   function proverbsActive() {
@@ -2511,23 +2672,59 @@
   }
 
   /* ------------------------------------------------------------
-     Theme
+     Theme, layout and statistics visibility
      ------------------------------------------------------------ */
   function applyTheme(mode, save) {
-    state.theme = mode;
-    if (save) {
-      try { localStorage.setItem(LS_THEME, mode); } catch (error) { /* ignore */ }
+    var resolved = mode;
+    if (mode === 'auto') {
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      resolved = prefersDark ? 'dark' : 'light';
     }
-    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var resolved = mode === 'auto' ? (dark ? 'dark' : 'light') : mode;
+    if (['light', 'medium', 'dark'].indexOf(resolved) === -1) resolved = 'light';
+    state.theme = resolved;
+    if (save) {
+      try { localStorage.setItem(LS_THEME, resolved); } catch (error) { /* ignore */ }
+    }
     document.documentElement.setAttribute('data-theme', resolved);
-    E.themeBtn.textContent = mode === 'light' ? '☀' : (mode === 'dark' ? '☾' : '◐');
-    E.themeBtn.title = 'Theme: ' + mode + ' (click to change)';
+    E.themeBtn.textContent = resolved === 'light' ? '☀' : (resolved === 'medium' ? '◒' : '☾');
+    E.themeBtn.title = 'Theme: ' + resolved + ' — choose Light, Medium or Dark';
+    $$('[data-theme-choice]').forEach(function (button) {
+      var active = button.dataset.themeChoice === resolved;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
   }
 
-  function cycleTheme() {
-    var next = state.theme === 'light' ? 'dark' : (state.theme === 'dark' ? 'auto' : 'light');
-    applyTheme(next, true);
+  function setStatsVisible(visible, save) {
+    state.statsVisible = !!visible;
+    document.body.classList.toggle('stats-hidden', !state.statsVisible);
+    if (E.statsToggleBtn) {
+      E.statsToggleBtn.setAttribute('aria-pressed', String(state.statsVisible));
+      E.statsToggleBtn.title = state.statsVisible ? 'Hide statistics' : 'Show statistics';
+    }
+    if (save) {
+      try { localStorage.setItem(LS_STATS, state.statsVisible ? '1' : '0'); } catch (error) { /* ignore */ }
+    }
+  }
+
+  function applyLayout(mode, options) {
+    options = options || {};
+    if (mode !== 'portrait' && mode !== 'landscape') return;
+    state.layout = mode;
+    document.body.setAttribute('data-layout', mode);
+    [E.layoutPortrait, E.layoutLandscape].forEach(function (button) {
+      if (!button) return;
+      var active = button.dataset.layoutChoice === mode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    if (!options.keepStats) {
+      setStatsVisible(mode === 'portrait', options.save !== false);
+    }
+    if (options.save) {
+      try { localStorage.setItem(LS_LAYOUT, mode); } catch (error) { /* ignore */ }
+    }
+    if (E.statsToggleBtn) E.statsToggleBtn.hidden = false;
   }
 
   /* ------------------------------------------------------------
@@ -2536,16 +2733,18 @@
   function cacheElements() {
     [
       'brandCount', 'brandEdition', 'brandProverbs', 'pdfBtn', 'reviewBtn', 'reviewCount', 'themeBtn', 'helpBtn',
+      'layoutPortrait', 'layoutLandscape', 'statsToggleBtn', 'statsBadge', 'themeMenu',
+      'columnsMenuBtn', 'columnsMenu',
       'banner', 'bannerText', 'bannerActions',
       'tabTerms', 'tabProverbs', 'tabTermCount', 'tabProverbCount', 'termsView', 'proverbsView', 'globalHint',
       'statTotal', 'statEdited', 'statReview', 'statExtra', 'statExtraLabel', 'statExtraNote', 'statExtraButton',
-      'search', 'clearSearch', 'letterChips', 'editionSelect', 'filterSelect', 'sortSelect', 'sortDirBtn',
+      'search', 'clearSearch', 'letterChips', 'editionSelect', 'rankFilter', 'filterSelect', 'sortSelect', 'sortDirBtn',
       'toolsMenuBtn', 'toolsMenu', 'fileMenuBtn', 'fileMenu', 'importBtn', 'saveJsonBtn', 'newTermBtn',
       'resultSummary', 'bulkBar', 'selCount', 'bulkDelete', 'bulkClear', 'savedIndicator',
-      'termTable', 'termBody', 'selectAll', 'emptyState', 'emptyClear',
+      'termTable', 'termBody', 'selectAll', 'emptyState', 'emptyClear', 'proverbTable',
       'footerSummary', 'undoBtn', 'redoBtn', 'fileStatus',
       'scrim', 'editor', 'editorEyebrow', 'editorTitle', 'navPosition', 'prevTerm', 'nextTerm', 'closeEditor',
-      'termForm', 'f_simplified', 'f_traditional', 'f_pinyin', 'f_english', 'pinyinPreview', 'sensesPreview',
+      'termForm', 'f_simplified', 'f_traditional', 'f_pinyin', 'f_english', 'f_rank', 'pinyinPreview', 'sensesPreview',
       'editionFields', 'f_source', 'f_legacy_id', 'f_definition_zh', 'f_alt_forms', 'f_notes', 'f_general_meaning',
       'addLink', 'linkRows', 'editorIssues', 'deleteTerm', 'duplicateTerm', 'cancelEdit', 'saveTerm',
       'termAddMediaImage', 'termAddMediaSgf', 'termMediaRows', 'imageInput', 'sgfInput',
@@ -2615,6 +2814,10 @@
     E.filterSelect.addEventListener('change', function () {
       state.filter = E.filterSelect.value;
       renderStats();
+      renderTable();
+    });
+    E.rankFilter.addEventListener('change', function () {
+      state.rank = E.rankFilter.value;
       renderTable();
     });
     E.sortSelect.addEventListener('change', function () {
@@ -2730,6 +2933,22 @@
     E.toolsMenuBtn.addEventListener('click', function (event) {
       event.stopPropagation();
       toggleMenu(E.toolsMenu, E.toolsMenuBtn);
+    });
+    E.columnsMenuBtn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      renderColumnsMenu();
+      toggleMenu(E.columnsMenu, E.columnsMenuBtn);
+    });
+    E.columnsMenu.addEventListener('click', function (event) {
+      event.stopPropagation();
+      var column = event.target.closest('button[data-column]');
+      if (column) {
+        toggleColumn(column.dataset.column);
+        return;
+      }
+      if (event.target.closest('[data-column-action="all"]')) {
+        showAllColumns();
+      }
     });
     E.fileMenu.addEventListener('click', function (event) {
       var button = event.target.closest('button[data-action]');
@@ -2883,16 +3102,22 @@
     E.helpBtn.addEventListener('click', function () { E.helpDialog.showModal(); });
     E.helpClose.addEventListener('click', function () { E.helpDialog.close(); });
 
-    /* Theme */
-    E.themeBtn.addEventListener('click', cycleTheme);
-    if (window.matchMedia) {
-      var query = window.matchMedia('(prefers-color-scheme: dark)');
-      if (query.addEventListener) {
-        query.addEventListener('change', function () {
-          if (state.theme === 'auto') applyTheme('auto', false);
-        });
-      }
-    }
+    /* Theme, layout and statistics */
+    E.themeBtn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      toggleMenu(E.themeMenu, E.themeBtn);
+    });
+    $$('[data-theme-choice]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        applyTheme(button.dataset.themeChoice, true);
+        closeMenus();
+      });
+    });
+    E.layoutPortrait.addEventListener('click', function () { applyLayout('portrait', { save: true }); });
+    E.layoutLandscape.addEventListener('click', function () { applyLayout('landscape', { save: true }); });
+    E.statsToggleBtn.addEventListener('click', function () {
+      setStatsVisible(!state.statsVisible, true);
+    });
 
     /* Keyboard */
     document.addEventListener('keydown', function (event) {
@@ -2964,14 +3189,30 @@
     applyTheme((function () {
       try { return localStorage.getItem(LS_THEME) || 'auto'; } catch (e) { return 'auto'; }
     })(), false);
+
+    if (window.innerWidth < 900 && state.layout === 'landscape') {
+      state.layout = 'portrait';
+      state.statsVisible = true;
+    }
+    applyLayout(state.layout, { initial: true, keepStats: true, save: false });
+    setStatsVisible(state.statsVisible, false);
+    renderColumnsMenu();
+    applyColumns();
+
     wireEvents();
     renderAll();
     updateFileLabels();
 
     var savedView = null;
     try { savedView = localStorage.getItem(LS_VIEW); } catch (e) { savedView = null; }
-    if (savedView === 'proverbs' && window.GoProverbs) {
-      setView('proverbs', { initial: true, force: true });
+    if (savedView === 'proverbs') {
+      if (window.GoProverbs) {
+        setView('proverbs', { initial: true, force: true });
+      } else {
+        setTimeout(function () {
+          if (window.GoProverbs) setView('proverbs', { initial: true, force: true });
+        }, 0);
+      }
     } else {
       setView('terms', { initial: true, force: true });
     }
@@ -3045,6 +3286,9 @@
     refresh: function () { renderAll(); },
     setView: setView,
     openPdf: openPdf,
+    setTheme: applyTheme,
+    setLayout: applyLayout,
+    setStatsVisible: setStatsVisible,
   };
 
   /* Shared surface used by the proverb section module. */

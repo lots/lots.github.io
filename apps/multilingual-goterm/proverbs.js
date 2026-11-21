@@ -23,6 +23,7 @@
     items: [],
     query: '',
     category: 'ALL',
+    rank: 'ALL',
     filter: 'all',
     sort: 'order',
     dir: 'asc',
@@ -51,6 +52,15 @@
   function esc(value) { return SHARED.escapeHtml(value); }
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
 
+  function normalizeRank(value) {
+    if (value === null || value === undefined) return null;
+    var text = String(value).trim();
+    if (text === '') return null;
+    var numeric = Number(text);
+    if (!Number.isInteger(numeric) || numeric < 0 || numeric > 9) return null;
+    return numeric;
+  }
+
   /* ---------------- model ---------------- */
   function normalize(raw, idOverride) {
     raw = raw || {};
@@ -67,6 +77,7 @@
 
     return {
       id: numericId,
+      rank: normalizeRank(raw.rank),
       category: String(raw.category == null ? '' : raw.category).trim(),
       order: Number(raw.order) || 0,
       simplified: simplified,
@@ -84,7 +95,7 @@
 
   function signature(item) {
     return JSON.stringify([
-      item.id, item.category, item.order, item.simplified, item.traditional,
+      item.id, item.rank, item.category, item.order, item.simplified, item.traditional,
       item.pinyin, item.pinyin_plain, item.english, item.explanation_zh,
       item.source, item.source_url, item.notes,
       (item.media || []).map(function (m) {
@@ -325,6 +336,13 @@
     var tokens = queryTokens();
     var rows = state.items.filter(function (item) {
       if (state.category !== 'ALL' && item.category !== state.category) return false;
+      if (state.rank !== 'ALL') {
+        if (state.rank === 'NONE') {
+          if (item.rank != null) return false;
+        } else if (item.rank !== Number(state.rank)) {
+          return false;
+        }
+      }
       if (!matchesQuery(item, tokens)) return false;
       if (state.filter === 'review') return hasReview(item, index);
       if (state.filter === 'edited') return isEdited(item);
@@ -334,7 +352,12 @@
 
     rows.sort(function (a, b) {
       var result = 0;
-      if (state.sort === 'order') result = categoryRank(a.category) - categoryRank(b.category) || (a.order - b.order) || (a.id - b.id);
+      if (state.sort === 'rank') {
+        if (a.rank == null && b.rank == null) result = 0;
+        else if (a.rank == null) result = 1;
+        else if (b.rank == null) result = -1;
+        else result = a.rank - b.rank;
+      } else if (state.sort === 'order') result = categoryRank(a.category) - categoryRank(b.category) || (a.order - b.order) || (a.id - b.id);
       else if (state.sort === 'category') result = categoryRank(a.category) - categoryRank(b.category) || a.simplified.localeCompare(b.simplified, 'zh');
       else if (state.sort === 'simplified') result = a.simplified.localeCompare(b.simplified, 'zh');
       else if (state.sort === 'pinyin') result = a.pinyin_plain.localeCompare(b.pinyin_plain) || a.simplified.localeCompare(b.simplified, 'zh');
@@ -383,6 +406,16 @@
       (item.media.length > 1 ? '<span class="media-count">+' + (item.media.length - 1) + '</span>' : '');
   }
 
+  function sectionLetter(item) {
+    return item.pinyin_plain ? item.pinyin_plain.charAt(0).toUpperCase() : '·';
+  }
+
+  function sourceLink(item) {
+    if (!/^https?:\/\//i.test(item.source_url)) return '<span class="muted">—</span>';
+    return '<a class="link-chip" href="' + esc(item.source_url) + '" target="_blank" rel="noopener" title="' +
+      esc(item.source || item.source_url) + '" aria-label="Open source link"><svg class="icon"><use href="#i-external"></use></svg></a>';
+  }
+
   function rowHtml(item, index, highlight, tokens) {
     var issues = issuesFor(item, index);
     var error = issues.some(function (issue) { return issue.level === 'error'; });
@@ -398,6 +431,9 @@
         item.id +
         ((error || warning) ? '<span class="issue-dot' + (error ? ' error' : '') + '" title="' +
           esc(issueTitle) + '"></span>' : '') + '</span></td>' +
+      '<td class="col-rank">' + (item.rank == null ? '' :
+        '<span class="rank-badge">' + item.rank + '</span>') + '</td>' +
+      '<td class="col-letter"><span class="letter-chip-cell">' + esc(sectionLetter(item)) + '</span></td>' +
       '<td class="col-category"><span class="category-chip">' + highlight(item.category || '—') + '</span></td>' +
       '<td class="col-cn"><span class="cn-simplified">' + highlight(item.simplified) + '</span>' +
         (item.traditional ? '<span class="cn-traditional">(' + highlight(item.traditional) + ')</span>' : '') +
@@ -406,6 +442,7 @@
         pinyinHtml(item, tokens) + '</span></td>' +
       '<td class="col-english"><div class="proverb-en">' + highlight(item.english) + '</div>' +
         (item.explanation_zh ? '<div class="proverb-explanation">' + highlight(item.explanation_zh) + '</div>' : '') + '</td>' +
+      '<td class="col-links">' + sourceLink(item) + '</td>' +
       '<td class="col-media">' + mediaThumb(item) + '</td>' +
       '<td class="col-actions"><div class="row-actions">' +
         '<button type="button" class="row-action" data-pact="edit" title="Edit proverb #' + item.id + '">' +
@@ -459,6 +496,7 @@
     var context = [];
     if (state.query.trim()) context.push('“' + state.query.trim() + '”');
     if (state.category !== 'ALL') context.push(state.category);
+    if (state.rank !== 'ALL') context.push(state.rank === 'NONE' ? 'unranked' : 'rank ' + state.rank);
     if (state.filter === 'review') context.push('needs review');
     if (state.filter === 'edited') context.push('edited');
     if (state.filter === 'media') context.push('with diagrams');
@@ -527,6 +565,7 @@
   /* ---------------- editor ---------------- */
   function draftFrom(item) {
     return {
+      rank: item.rank == null ? '' : String(item.rank),
       category: item.category,
       order: item.order,
       simplified: item.simplified,
@@ -548,6 +587,7 @@
       maxOrder = Math.max(maxOrder, item.order || 0);
     });
     return {
+      rank: '',
       category: category,
       order: maxOrder + 1,
       simplified: '',
@@ -564,6 +604,7 @@
 
   function draftKey(draft) {
     return JSON.stringify([
+      draft.rank,
       draft.category, draft.order, draft.simplified, draft.traditional,
       draft.pinyin, draft.english, draft.explanation_zh,
       draft.source, draft.source_url, draft.notes,
@@ -575,6 +616,7 @@
 
   function readEditor() {
     return {
+      rank: el.pf_rank.value,
       category: el.pf_category.value.trim(),
       order: Number(el.pf_order.value) || 0,
       simplified: el.pf_simplified.value,
@@ -590,6 +632,7 @@
   }
 
   function fillEditor(draft) {
+    el.pf_rank.value = draft.rank == null ? '' : String(draft.rank);
     el.pf_category.value = draft.category;
     el.pf_order.value = draft.order;
     el.pf_simplified.value = draft.simplified;
@@ -771,9 +814,11 @@
     if (!visible) {
       state.query = '';
       state.category = 'ALL';
+      state.rank = 'ALL';
       state.filter = 'all';
       el.proverbSearch.value = '';
       el.pClearSearch.hidden = true;
+      el.proverbRankFilter.value = 'ALL';
       el.proverbFilter.value = 'all';
       renderAll();
     }
@@ -870,6 +915,7 @@
         if (!simplified) { skippedCsv += 1; continue; }
         list.push(normalize({
           id: Number(value(row, 'id')),
+          rank: value(row, 'rank'),
           category: value(row, 'category'),
           order: Number(value(row, 'order')) || 0,
           simplified: simplified,
@@ -977,6 +1023,7 @@
       source_url: item.source_url,
       notes: item.notes,
     };
+    if (item.rank != null) out.rank = item.rank;
     if (item.media && item.media.length) out.media = clone(item.media);
     return out;
   }
@@ -1012,12 +1059,13 @@
 
   function exportCSVString() {
     var header = ['id', 'category', 'order', 'simplified', 'traditional', 'pinyin',
-      'pinyin_plain', 'english', 'explanation_zh', 'source', 'source_url', 'notes'];
+      'pinyin_plain', 'english', 'explanation_zh', 'source', 'source_url', 'notes', 'rank'];
     var lines = [header.join(',')];
     state.items.forEach(function (item) {
       lines.push([
         item.id, item.category, item.order, item.simplified, item.traditional, item.pinyin,
         item.pinyin_plain, item.english, item.explanation_zh, item.source, item.source_url, item.notes,
+        item.rank == null ? '' : item.rank,
       ].map(csvEscape).join(','));
     });
     return '\uFEFF' + lines.join('\r\n') + '\r\n';
@@ -1174,9 +1222,11 @@
   function clearFilters() {
     state.query = '';
     state.category = 'ALL';
+    state.rank = 'ALL';
     state.filter = 'all';
     el.proverbSearch.value = '';
     el.pClearSearch.hidden = true;
+    el.proverbRankFilter.value = 'ALL';
     el.proverbFilter.value = 'all';
     renderAll();
   }
@@ -1204,13 +1254,13 @@
   function cache() {
     [
       'pStatTotal', 'pStatEdited', 'pStatReview', 'pStatCategories',
-      'proverbSearch', 'pClearSearch', 'proverbCategories', 'proverbFilter',
+      'proverbSearch', 'pClearSearch', 'proverbCategories', 'proverbRankFilter', 'proverbFilter',
       'proverbSort', 'proverbSortDir', 'proverbResultSummary', 'proverbBulkBar',
       'pSelCount', 'pBulkDelete', 'pBulkClear', 'proverbSavedIndicator',
       'proverbTable', 'proverbBody', 'pSelectAll', 'proverbEmptyState', 'pEmptyClear',
       'proverbFooterSummary', 'pUndoBtn', 'pRedoBtn', 'proverbFileStatus',
       'proverbEditor', 'pEditorEyebrow', 'pEditorTitle', 'pNavPosition', 'pPrev', 'pNext', 'pClose',
-      'proverbForm', 'pf_category', 'pf_order', 'pf_simplified', 'pf_traditional',
+      'proverbForm', 'pf_category', 'pf_order', 'pf_rank', 'pf_simplified', 'pf_traditional',
       'pf_pinyin', 'pf_english', 'pf_explanation', 'pf_source', 'pf_source_url', 'pf_notes',
       'pPinyinPreview', 'pAddMediaImage', 'pAddMediaSgf', 'proverbMediaRows',
       'proverbIssues', 'pDelete', 'pDuplicate', 'pCancel', 'pSave',
@@ -1241,6 +1291,10 @@
     el.proverbFilter.addEventListener('change', function () {
       state.filter = el.proverbFilter.value;
       renderStats();
+      renderTable();
+    });
+    el.proverbRankFilter.addEventListener('change', function () {
+      state.rank = el.proverbRankFilter.value;
       renderTable();
     });
     el.proverbSort.addEventListener('change', function () {

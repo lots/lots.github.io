@@ -221,7 +221,7 @@
       '.diagram { text-align:center; }',
       '.diagram figure { margin:0 0 1mm; }',
       '.diagram img, .diagram svg { max-width:22mm; max-height:22mm; width:auto; height:auto; display:block; margin:0 auto; }',
-      '.diagram figcaption { display:none; }',
+      '.diagram figcaption { display:block; margin-top:0.5mm; color:#777c73; font-size:6.2pt; line-height:1.3; }',
       '.sgf-board { border-radius:1mm; }',
       '.proverb-group { margin-bottom:5mm; }',
       '.proverb-group h3 { margin:0 0 2mm; font-family:"Songti SC","STSong","SimSun",serif; font-size:11pt; letter-spacing:0.08em; color:var(--ink); }',

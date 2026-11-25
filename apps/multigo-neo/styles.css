@@ -314,6 +314,43 @@ button {
   background: var(--toolbar);
 }
 
+/* Scrolling mode: both bars stay on one row and expose a horizontal scrollbar. */
+.app.bars-scroll .menubar,
+.app.bars-scroll .toolbar {
+  flex-wrap: nowrap;
+  align-content: normal;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: var(--menubar-height);
+  scrollbar-width: thin;
+  scrollbar-color: #999 #eee;
+}
+
+.app.bars-scroll .toolbar {
+  max-height: var(--toolbar-height);
+}
+
+.app.bars-scroll .menubar > *,
+.app.bars-scroll .toolbar > * {
+  flex-shrink: 0;
+}
+
+.app.bars-scroll .menubar::-webkit-scrollbar,
+.app.bars-scroll .toolbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.app.bars-scroll .menubar::-webkit-scrollbar-thumb,
+.app.bars-scroll .toolbar::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: #999;
+}
+
+.app.bars-scroll .menubar::-webkit-scrollbar-track,
+.app.bars-scroll .toolbar::-webkit-scrollbar-track {
+  background: #eee;
+}
+
 .tool-group {
   display: flex;
   flex: 0 0 auto;

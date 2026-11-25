@@ -343,6 +343,7 @@
     showSiblings: false,
     zoom: 1,
     showTree: true,
+    barOverflow: 'wrap',
     treeOpen: true,
     messageOpen: true,
     nodeNameOpen: false,
@@ -413,6 +414,7 @@
         showSiblings: parsed.showSiblings === true,
         zoom: clamp(Number(parsed.zoom) || 1, 0.5, 2),
         showTree: parsed.showTree !== false,
+        barOverflow: parsed.barOverflow === 'scroll' ? 'scroll' : 'wrap',
         treeOpen: parsed.treeOpen !== false,
         messageOpen: parsed.messageOpen !== false,
         nodeNameOpen: parsed.nodeNameOpen === true,
@@ -712,7 +714,8 @@
     'Show Next Moves': '显示下一手', 'Show Sibling Variations': '显示同父变化',
     Theme: '主题', Classic: '经典', Flat: '平面', Dark: '暗色', Paper: '纸张',
     'Theme: Classic': '主题：经典', 'Theme: Flat': '主题：平面', 'Theme: Dark': '主题：暗色', 'Theme: Paper': '主题：纸张',
-    'Responsive Layout': '自适应布局', 'Copy Position Link': '复制局面链接',
+    'Responsive Layout': '自适应布局', 'Scroll Menu and Tool Bars': '菜单和工具栏横向滚动',
+    'Copy Position Link': '复制局面链接',
     'Zoom In': '放大', 'Zoom Out': '缩小', 'Reset Zoom': '重置缩放', 'Toggle Full Screen': '切换全屏',
     'Show Game Tree': '显示棋谱树', 'Reset Panel Layout': '重置面板布局', Done: '完成',
     'Preferences…': '首选项…', 'Set Up…': '设置…', 'Options — Set Up': '选项 — 设置',
@@ -3947,6 +3950,7 @@
     setMenuItemChecked('toggle-bowls', !portraitLayout && settings.showBowls !== false);
     setMenuItemDisabled('toggle-bowls', portraitLayout);
     setMenuItemChecked('toggle-auto-layout', settings.autoLayout !== false);
+    setMenuItemChecked('toggle-bar-overflow', settings.barOverflow === 'scroll');
     setMenuItemChecked('toggle-tree', settings.showTree);
     setMenuItemChecked('toggle-remember-size', settings.rememberBoardSize !== false);
     setMenuItemChecked('toggle-edit', mode === 'edit');
@@ -5447,6 +5451,9 @@
   const menubar = $('.menubar');
   let activeMenu = null;
   const menuItems = (menu) => $$('.menu-item:not(:disabled)', menu);
+  menubar.addEventListener('scroll', () => {
+    if (activeMenu) closeMenus();
+  }, { passive: true });
 
   function setMenuOpen(menu, open) {
     const trigger = $('.menu-trigger', menu);
@@ -5465,7 +5472,15 @@
     const popup = $('.menu-popup', menu);
     const barRect = menubar.getBoundingClientRect();
     const menuRect = menu.getBoundingClientRect();
-    popup.style.top = `${Math.max(0, Math.round(barRect.bottom - menuRect.top))}px`;
+    if (settings.barOverflow === 'scroll') {
+      popup.style.position = 'fixed';
+      popup.style.left = `${Math.max(4, Math.min(Math.round(menuRect.left), window.innerWidth - 294))}px`;
+      popup.style.top = `${Math.round(barRect.bottom)}px`;
+    } else {
+      popup.style.position = '';
+      popup.style.left = '';
+      popup.style.top = `${Math.max(0, Math.round(barRect.bottom - menuRect.top))}px`;
+    }
     popup.style.maxHeight = `${Math.max(160, Math.round(window.innerHeight - barRect.bottom - 8))}px`;
     if (focus) {
       const items = menuItems(menu);
@@ -5614,7 +5629,7 @@
     estimate: () => toggleCountMode('estimate'),
     score: () => toggleCountMode('score'),
     'toggle-bowls': toggleGoBowls,
-    'toggle-auto-layout': toggleAutoLayout,
+    'toggle-auto-layout': toggleAutoLayout, 'toggle-bar-overflow': toggleBarOverflow,
     'copy-position-link': copyPositionLink,
     'rotate-cw': rotateBoardView,
     'flip-h': () => flipBoardView('h'),
@@ -6100,6 +6115,23 @@
       responsiveFrame = 0;
       updateResponsiveLayout();
     });
+  }
+
+  function applyBarOverflowMode() {
+    document.querySelector('.app')?.classList.toggle('bars-scroll', settings.barOverflow === 'scroll');
+  }
+
+  function toggleBarOverflow() {
+    if (activeMenu) closeMenus();
+    settings.barOverflow = settings.barOverflow === 'scroll' ? 'wrap' : 'scroll';
+    saveSettings();
+    applyBarOverflowMode();
+    syncMenuState();
+    scheduleResponsiveLayout();
+    requestAnimationFrame(resizeBoard);
+    log(settings.barOverflow === 'scroll'
+      ? 'Menu and tool bars now scroll horizontally when space is short.'
+      : 'Menu and tool bars now wrap onto extra rows when space is short.');
   }
 
   function applyViewState() {
@@ -6834,6 +6866,7 @@
     if (startupPath && !startupPathApplied) {
       if (!maybeApplyStartupPath()) log('The position link will apply once a game is loaded.', 'warn');
     }
+    applyBarOverflowMode();
     updateResponsiveLayout();
     log('MultiGo Neo ready — play moves, or press Ctrl+E to edit.');
     log(`${gameSize().width}×${gameSize().height} board · ${runtimeSummary()} · ${layoutRestored ? 'layout restored' : 'default layout'}.`);

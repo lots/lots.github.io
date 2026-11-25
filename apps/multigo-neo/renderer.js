@@ -736,6 +736,7 @@
     'Remember Last Board Size': '记住上次棋盘尺寸',
     'Autoplay Delay': '自动播放间隔',
     'Reset All Settings': '重置所有设置', 'Keyboard Shortcuts': '快捷键', 'About MultiGo Neo': '关于 MultiGo Neo',
+    Sidebar: '侧栏', Study: '研习', 'Node Name': '节点名称', Messages: '消息',
     README: 'README', Features: '功能', Tutorial: '教程',
     'README (PDF)': 'README (PDF)', 'Features (PDF)': '功能 (PDF)', 'Tutorial (PDF)': '教程 (PDF)',
     'Show Go Bowls': '显示棋钵', Rules: '规则',
@@ -4239,6 +4240,16 @@
     log(`New ${gameSize().width}×${gameSize().height} game.`);
   }
 
+  function newWindow() {
+    if (isElectron && typeof desktop.newWindow === 'function') {
+      void desktop.newWindow();
+      log('Opened a new window.');
+      return;
+    }
+    window.open(window.location.href, '_blank');
+    log('Opened a new browser tab. Each tab keeps its own board and game.');
+  }
+
   async function openAssociatedFile(filePath) {
     if (!filePath || !isElectron) return false;
     if (dirty && !(await askConfirm('Open another game? Unsaved changes will be lost.', 'Open'))) return false;
@@ -5606,7 +5617,7 @@
   }
 
   const menuActions = {
-    'new-game': newGame, 'open-sgf': openSgf,
+    'new-game': newGame, 'new-window': newWindow, 'open-sgf': openSgf,
     'reload-file': reloadCurrentFile, 'import-branch': importFilesAsBranch,
     'save-sgf': () => saveSgf(false), 'save-sgf-as': () => saveSgf(true),
     'save-board-picture': saveBoardPicture,
@@ -6625,7 +6636,8 @@
     }
     if (modifier && !event.altKey) {
       const key = event.key.toLowerCase();
-      if (key === 'n') { event.preventDefault(); runAction(newGame); }
+      if (key === 'n' && event.shiftKey) { event.preventDefault(); runAction(newWindow); }
+      else if (key === 'n') { event.preventDefault(); runAction(newGame); }
       else if (key === 'o') { event.preventDefault(); runAction(openSgf); }
       else if (key === 's') { event.preventDefault(); runAction(() => saveSgf(event.shiftKey)); }
       else if (key === 'q') { event.preventDefault(); runAction(event.shiftKey ? quitApp : saveBoardPicture); }

@@ -98,6 +98,9 @@
           <button type="button" class="menu-item" role="menuitem" data-action="new-game">
             <span class="menu-check" aria-hidden="true"></span><span class="menu-label">New Game</span><kbd data-accel="Ctrl+N">Ctrl+N</kbd>
           </button>
+          <button type="button" class="menu-item" role="menuitem" data-action="new-window">
+            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">New Window</span><kbd data-accel="Ctrl+Shift+N">Ctrl+Shift+N</kbd>
+          </button>
           <button type="button" class="menu-item" role="menuitem" data-action="open-sgf">
             <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Open SGF…</span><kbd data-accel="Ctrl+O">Ctrl+O</kbd>
           </button>
@@ -647,9 +650,13 @@
            aria-orientation="vertical" aria-label="Resize board and side panels"
            aria-valuemin="18" aria-valuemax="82" aria-valuenow="72.6" tabindex="0"></div>
 
-      <div class="right-column" id="right-column">
-        <section class="pane pane-info" id="pane-info" aria-label="Game info and comments">
-          <div class="panel-head info-head" id="info-head">
+      <div class="right-column" id="right-column" aria-labelledby="sidebar-heading">
+        <div class="sidebar-heading" id="sidebar-heading" title="Sidebar parts: Info tabs, Node Name, Variations, Game Tree, Messages">
+          <span>Sidebar</span>
+          <span class="panel-meta">Study</span>
+        </div>
+        <section class="pane pane-info" id="pane-info" aria-label="Info tabs: Info, Comment, Engine and Score">
+          <div class="panel-head info-head" id="info-head" title="Info tabs: Info, Comment, Engine, Score">
             <div class="tabs" role="tablist" aria-label="Information panels">
               <button type="button" class="tab is-active" id="tab-info" role="tab" aria-selected="true" aria-controls="panel-info" data-tab="info">Info</button>
               <button type="button" class="tab" id="tab-comment" role="tab" aria-selected="false" aria-controls="panel-comment" data-tab="comment">Comment</button>
@@ -891,16 +898,16 @@
 
         <section class="pane pane-moves" id="pane-moves" aria-label="Game tree">
           <div class="branch-panels" id="branch-panels">
-            <section class="tree-section" id="node-name-section">
-              <button type="button" class="tree-section-head" id="node-name-head" aria-expanded="false" aria-controls="node-name-body">
-                <span>Node name</span><span class="tree-section-chevron" aria-hidden="true">▸</span>
+            <section class="tree-section" id="node-name-section" aria-label="Node Name section">
+              <button type="button" class="tree-section-head" id="node-name-head" aria-expanded="false" aria-controls="node-name-body" title="Node Name section">
+                <span>Node Name</span><span class="tree-section-chevron" aria-hidden="true">▸</span>
               </button>
               <div class="tree-section-body" id="node-name-body" hidden>
                 <input type="text" id="branch-node-name" maxlength="120" placeholder="Node name" aria-label="Node name">
               </div>
             </section>
-            <section class="tree-section" id="variations-section">
-              <button type="button" class="tree-section-head" id="variations-head" aria-expanded="true" aria-controls="variations-body">
+            <section class="tree-section" id="variations-section" aria-label="Variations section">
+              <button type="button" class="tree-section-head" id="variations-head" aria-expanded="true" aria-controls="variations-body" title="Variations section: immediate next moves">
                 <span>Variations</span><span class="tree-section-chevron" aria-hidden="true">▾</span>
               </button>
               <div class="tree-section-body" id="variations-body">
@@ -908,7 +915,7 @@
               </div>
             </section>
           </div>
-          <div class="panel-head" id="tree-head">
+          <div class="panel-head" id="tree-head" title="Game Tree panel">
             <span>Game Tree</span>
             <span class="panel-meta" id="tree-meta">0 nodes</span>
           </div>
@@ -920,8 +927,8 @@
              aria-valuemin="10" aria-valuemax="50" aria-valuenow="20" tabindex="0"></div>
 
         <section class="pane pane-message" id="pane-message" aria-label="Messages">
-          <div class="panel-head" id="message-head">
-            <span>Message</span>
+          <div class="panel-head" id="message-head" title="Messages panel">
+            <span>Messages</span>
             <button type="button" class="message-clear" id="clear-message-button">Clear</button>
           </div>
           <div class="statuslog" id="statuslog" role="log" aria-live="polite"></div>
@@ -960,7 +967,7 @@
       <button type="button" class="icon-button" data-close-dialog aria-label="Close">×</button>
     </div>
     <div class="dialog-body">
-      <p class="about-name">MultiGo Neo <span class="muted">1.1.16</span></p>
+      <p class="about-name">MultiGo Neo <span class="muted">1.1.18</span></p>
       <p>A Go record editor and player modelled on the MultiGo workspace: a 13×13 board,
          game information, a move list, and a status bar in a single-window desktop shell.</p>
       <dl class="about-meta">

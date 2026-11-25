@@ -132,6 +132,8 @@
   const infoDone = $('#info-done');
   const treeMeta = $('#tree-meta');
   const branchPanels = $('#branch-panels');
+  const nodeNameSection = $('#node-name-section');
+  const variationsSection = $('#variations-section');
   const nodeNameHead = $('#node-name-head');
   const nodeNameBody = $('#node-name-body');
   const branchNodeName = $('#branch-node-name');
@@ -343,6 +345,10 @@
     showSiblings: false,
     zoom: 1,
     showTree: true,
+    showInfo: true,
+    showNodeName: true,
+    showVariations: true,
+    showMessage: true,
     barOverflow: 'wrap',
     treeOpen: true,
     messageOpen: true,
@@ -414,6 +420,10 @@
         showSiblings: parsed.showSiblings === true,
         zoom: clamp(Number(parsed.zoom) || 1, 0.5, 2),
         showTree: parsed.showTree !== false,
+        showInfo: parsed.showInfo !== false,
+        showNodeName: parsed.showNodeName !== false,
+        showVariations: parsed.showVariations !== false,
+        showMessage: parsed.showMessage !== false,
         barOverflow: parsed.barOverflow === 'scroll' ? 'scroll' : 'wrap',
         treeOpen: parsed.treeOpen !== false,
         messageOpen: parsed.messageOpen !== false,
@@ -717,7 +727,9 @@
     'Responsive Layout': '自适应布局', 'Scroll Menu and Tool Bars': '菜单和工具栏横向滚动',
     'Copy Position Link': '复制局面链接',
     'Zoom In': '放大', 'Zoom Out': '缩小', 'Reset Zoom': '重置缩放', 'Toggle Full Screen': '切换全屏',
-    'Show Game Tree': '显示棋谱树', 'Reset Panel Layout': '重置面板布局', Done: '完成',
+    'Show Info Tabs': '显示信息标签', 'Show Node Name': '显示节点名称',
+    'Show Variations': '显示变化', 'Show Game Tree': '显示棋谱树',
+    'Show Messages': '显示消息', 'Reset Panel Layout': '重置面板布局', Done: '完成',
     'Preferences…': '首选项…', 'Set Up…': '设置…', 'Options — Set Up': '选项 — 设置',
     Board: '棋盘', Stones: '棋子', 'Markers & Numbers': '标记与手数', Other: '其他', Traverse: '浏览', 'Set Up categories': '设置分类',
     Brightness: '亮度', 'Show coordinates': '显示坐标', 'Coordinate style': '坐标样式', Surface: '表面',
@@ -3952,7 +3964,11 @@
     setMenuItemDisabled('toggle-bowls', portraitLayout);
     setMenuItemChecked('toggle-auto-layout', settings.autoLayout !== false);
     setMenuItemChecked('toggle-bar-overflow', settings.barOverflow === 'scroll');
+    setMenuItemChecked('toggle-info-tabs', settings.showInfo);
+    setMenuItemChecked('toggle-node-name', settings.showNodeName);
+    setMenuItemChecked('toggle-variations', settings.showVariations);
     setMenuItemChecked('toggle-tree', settings.showTree);
+    setMenuItemChecked('toggle-messages', settings.showMessage);
     setMenuItemChecked('toggle-remember-size', settings.rememberBoardSize !== false);
     setMenuItemChecked('toggle-edit', mode === 'edit');
     setMenuItemChecked('toggle-readonly', readOnly);
@@ -5652,6 +5668,10 @@
     'zoom-reset': () => setZoom(1),
     'toggle-fullscreen': toggleFullScreen,
     'toggle-tree': toggleTree,
+    'toggle-info-tabs': () => toggleSidebarPart('showInfo', 'Info tabs'),
+    'toggle-node-name': () => toggleSidebarPart('showNodeName', 'Node Name'),
+    'toggle-variations': () => toggleSidebarPart('showVariations', 'Variations'),
+    'toggle-messages': () => toggleSidebarPart('showMessage', 'Messages'),
     'toggle-remember-size': toggleRememberBoardSize,
     'reset-settings': resetAllSettings,
     'reset-layout': resetLayout, 'copy-sgf': copySgf, 'paste-sgf': pasteSgf,
@@ -6003,11 +6023,15 @@
       ['tree', paneMoves, treeHead],
       ['message', paneMessage, messageHead],
     ];
+    const visiblePanels = panels.filter(([, pane]) => !pane.hidden);
+    if (portraitLayout && !visiblePanels.some(([name]) => name === portraitOpenPanel)) {
+      portraitOpenPanel = visiblePanels[0]?.[0] ?? null;
+    }
     for (const [name, pane, head] of panels) {
-      const open = portraitLayout && portraitOpenPanel === name;
+      const open = portraitLayout && portraitOpenPanel === name && !pane.hidden;
       pane.classList.toggle('is-portrait-open', open);
       if (portraitLayout) {
-        pane.style.flex = open ? '1 1 auto' : '0 0 32px';
+        pane.style.flex = pane.hidden ? '0 0 0' : (open ? '1 1 auto' : '0 0 32px');
         head.setAttribute('aria-expanded', String(open));
         head.tabIndex = 0;
       } else {
@@ -6019,27 +6043,47 @@
   }
 
   function applyPanelCollapseState() {
-    const treeCollapsed = !settings.treeOpen;
-    const messageCollapsed = !settings.messageOpen;
+    const infoVisible = settings.showInfo;
+    const treeVisible = settings.showTree;
+    const sectionsVisible = settings.showNodeName || settings.showVariations;
+    const movesVisible = treeVisible || sectionsVisible;
+    const messageVisible = settings.showMessage;
+    const treeCollapsed = treeVisible && !settings.treeOpen;
+    const messageCollapsed = messageVisible && !settings.messageOpen;
+
+    paneInfo.hidden = !infoVisible;
+    paneMoves.hidden = !movesVisible;
+    paneMessage.hidden = !messageVisible;
+    treeHead.hidden = !treeVisible;
+    gameTree.hidden = !treeVisible;
+    branchPanels.hidden = !sectionsVisible;
+    nodeNameSection.hidden = !settings.showNodeName;
+    variationsSection.hidden = !settings.showVariations;
+    horizontalSplitter.hidden = !(infoVisible && movesVisible);
+    messageSplitter.hidden = !(movesVisible && messageVisible);
+
     paneMoves.classList.toggle('is-tree-collapsed', !portraitLayout && treeCollapsed);
     paneMessage.classList.toggle('is-message-collapsed', !portraitLayout && messageCollapsed);
     if (portraitLayout) return;
-    if (treeCollapsed && messageCollapsed) {
-      paneInfo.style.flex = '1 1 auto';
-      paneMoves.style.flex = '0 0 auto';
-      paneMessage.style.flex = '0 0 32px';
-    } else if (treeCollapsed) {
-      paneInfo.style.flex = `0 0 ${layout.topPct}%`;
-      paneMoves.style.flex = '0 0 auto';
-      paneMessage.style.flex = '1 1 auto';
-    } else if (messageCollapsed) {
-      paneInfo.style.flex = `0 0 ${layout.topPct}%`;
-      paneMoves.style.flex = '1 1 auto';
-      paneMessage.style.flex = '0 0 32px';
-    } else {
-      paneInfo.style.flex = settings.showTree ? `0 0 ${layout.topPct}%` : '1 1 auto';
-      paneMoves.style.flex = '1 1 auto';
-      paneMessage.style.flex = `0 0 ${layout.messagePct}%`;
+
+    if (!movesVisible) {
+      paneInfo.style.flex = infoVisible ? '1 1 auto' : '0 0 0';
+      paneMoves.style.flex = '0 0 0';
+      paneMessage.style.flex = messageVisible
+        ? (infoVisible ? `0 0 ${layout.messagePct}%` : '1 1 auto')
+        : '0 0 0';
+      return;
+    }
+
+    paneInfo.style.flex = infoVisible ? `0 0 ${layout.topPct}%` : '0 0 0';
+    const movesAuto = !treeVisible || treeCollapsed;
+    paneMoves.style.flex = movesAuto ? '0 0 auto' : '1 1 auto';
+    paneMessage.style.flex = messageVisible
+      ? (messageCollapsed ? '0 0 32px' : (movesAuto ? '1 1 auto' : `0 0 ${layout.messagePct}%`))
+      : '0 0 0';
+    if (infoVisible && !messageVisible && movesAuto) paneInfo.style.flex = '1 1 auto';
+    if (!infoVisible && !messageVisible) {
+      paneMoves.style.flex = movesAuto ? '0 0 auto' : '1 1 auto';
     }
   }
 
@@ -6147,15 +6191,8 @@
 
   function applyViewState() {
     if (!tree) return;
-    paneMoves.hidden = !settings.showTree;
-    horizontalSplitter.hidden = !settings.showTree;
-    paneMessage.hidden = false;
-    messageSplitter.hidden = false;
-    if (portraitLayout) {
-      applyPortraitAccordion();
-    } else {
-      applyPanelCollapseState();
-    }
+    applyPanelCollapseState();
+    if (portraitLayout) applyPortraitAccordion();
     paneBoard.classList.toggle('is-zoomed', settings.zoom > 1.001);
     resizeBoard();
   }
@@ -6166,6 +6203,14 @@
     syncMenuState();
     applyViewState();
     log(`Game tree ${settings.showTree ? 'shown' : 'hidden'}.`);
+  }
+
+  function toggleSidebarPart(key, label) {
+    settings[key] = !settings[key];
+    saveSettings();
+    syncMenuState();
+    applyViewState();
+    log(`${label} ${settings[key] ? 'shown' : 'hidden'}.`);
   }
 
   function clearMessages() { statuslog.replaceChildren(); log('Messages cleared.'); }

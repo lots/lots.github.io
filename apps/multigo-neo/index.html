@@ -369,8 +369,20 @@
           <button type="button" class="menu-item" role="menuitem" data-action="toggle-fullscreen">
             <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Toggle Full Screen</span><kbd>F11</kbd>
           </button>
+          <button type="button" class="menu-item" role="menuitemcheckbox" data-action="toggle-info-tabs" aria-checked="true">
+            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Show Info Tabs</span>
+          </button>
+          <button type="button" class="menu-item" role="menuitemcheckbox" data-action="toggle-node-name" aria-checked="true">
+            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Show Node Name</span>
+          </button>
+          <button type="button" class="menu-item" role="menuitemcheckbox" data-action="toggle-variations" aria-checked="true">
+            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Show Variations</span>
+          </button>
           <button type="button" class="menu-item" role="menuitemcheckbox" data-action="toggle-tree" aria-checked="true">
             <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Show Game Tree</span>
+          </button>
+          <button type="button" class="menu-item" role="menuitemcheckbox" data-action="toggle-messages" aria-checked="true">
+            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Show Messages</span>
           </button>
           <button type="button" class="menu-item" role="menuitemcheckbox" data-action="toggle-auto-layout" aria-checked="true">
             <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Responsive Layout</span>
@@ -967,7 +979,7 @@
       <button type="button" class="icon-button" data-close-dialog aria-label="Close">×</button>
     </div>
     <div class="dialog-body">
-      <p class="about-name">MultiGo Neo <span class="muted">1.1.18</span></p>
+      <p class="about-name">MultiGo Neo <span class="muted">1.1.19</span></p>
       <p>A Go record editor and player modelled on the MultiGo workspace: a 13×13 board,
          game information, a move list, and a status bar in a single-window desktop shell.</p>
       <dl class="about-meta">

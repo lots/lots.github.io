@@ -1,0 +1,89 @@
+/* MultiGo 4.4.4 "Basic" look: the stock 50x50 board-default wood tile,
+   glass stones and classic Windows-grey chrome. */
+.theme-basic {
+  --chrome: #f0f0f0;
+  --toolbar: #f0f0f0;
+  --ink: #000;
+  --line: #404040;
+  --hair: #d4d0c8;
+  --panel-head: #f0f0f0;
+  --muted: #666;
+  --accent: #0a246a;
+  --font-ui: Tahoma, "MS Sans Serif", "Microsoft Sans Serif", sans-serif;
+
+  --board-surface: #c99b47;
+  --board-surface-image: url("basic-board.png");
+  --board-edge: rgba(70, 49, 20, 0.7);
+  --board-shadow: 0 0 0 1px rgba(70, 49, 20, 0.5);
+  --board-line: rgba(0, 0, 0, 0.9);
+  --board-line-width: 1;
+  --board-star: rgba(0, 0, 0, 0.9);
+  --board-label: rgba(0, 0, 0, 0.9);
+
+  /* MultiGo's default glass stones: near-black with a crisp specular cap,
+     and a cool white stone with a soft grey rim. */
+  --stone-black-hi: #9a9a9a;
+  --stone-black-mid: #1d1d1d;
+  --stone-black-low: #000;
+  --stone-white-hi: #fff;
+  --stone-white-mid: #f4f4f4;
+  --stone-white-low: #c6c6c6;
+  --stone-white-edge: rgba(0, 0, 0, 0.32);
+  --overlay-variant: #d40000;
+  --overlay-last: #0066ff;
+  --overlay-both: #8000c0;
+  --overlay-backer: rgba(255, 255, 255, 0.88);
+  --overlay-halo: rgba(255, 255, 255, 0.9);
+}
+
+.theme-basic #board {
+  border: 1px solid #7b5b2e;
+  border-radius: 0;
+  background-color: #c99b47;
+  background-size: 50px 50px;
+  background-repeat: repeat;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.theme-basic .pane-board {
+  background: #fff;
+}
+
+.theme-basic .menu-trigger {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.theme-basic .toolbar {
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #808080;
+}
+
+.theme-basic .tool {
+  height: 28px;
+  min-width: 28px;
+  border-radius: 0;
+}
+
+.theme-basic .panel-head,
+.theme-basic .sidebar-heading,
+.theme-basic .tab {
+  font-family: var(--font-ui);
+}
+
+.theme-basic .sidebar-heading,
+.theme-basic .panel-head {
+  background: #f0f0f0;
+}
+
+.theme-basic .tab.is-active {
+  color: #000;
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.theme-basic .tree-node,
+.theme-basic .tree-node-name {
+  font-family: var(--font-ui);
+}

@@ -656,13 +656,6 @@ button {
   text-transform: uppercase;
 }
 
-.sidebar-heading .panel-meta {
-  color: #888;
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-}
-
 .pane-info,
 .pane-moves,
 .pane-message {

@@ -54,7 +54,7 @@
   }
   const colorCss = { black: '#111', white: '#f5f5f5', red: '#d92b2b', yellow: '#e6b800', blue: '#2f6fed', green: '#1a7f37' };
   // Board themes live in src/themes/*.css; the canvas reads these custom properties.
-  const THEMES = ['classic', 'flat', 'dark', 'paper'];
+  const THEMES = ['basic', 'classic', 'flat', 'dark', 'paper'];
   const DEFAULT_PALETTE = Object.freeze({
     surface: '#d7a760',
     edge: 'rgba(91,56,17,.45)',
@@ -748,7 +748,7 @@
     'Remember Last Board Size': '记住上次棋盘尺寸',
     'Autoplay Delay': '自动播放间隔',
     'Reset All Settings': '重置所有设置', 'Keyboard Shortcuts': '快捷键', 'About MultiGo Neo': '关于 MultiGo Neo',
-    Sidebar: '侧栏', Study: '研习', 'Node Name': '节点名称', Messages: '消息',
+    Sidebar: '侧栏', 'Node Name': '节点名称', Messages: '消息',
     README: 'README', Features: '功能', Tutorial: '教程',
     'README (PDF)': 'README (PDF)', 'Features (PDF)': '功能 (PDF)', 'Tutorial (PDF)': '教程 (PDF)',
     'Show Go Bowls': '显示棋钵', Rules: '规则',
@@ -1690,8 +1690,14 @@
     // same edges of the screen.
     let blackRow = settings.blackAtBottom === false ? 'top' : 'bottom';
     let whiteRow = blackRow === 'bottom' ? 'top' : 'bottom';
-    let blackCol = settings.boardFlipH === true ? 'left' : 'right';
+    // Each player's bowl sits at their right hand: the bottom player's bowl is
+    // on the screen's right, and the top player's bowl on the screen's left.
+    let blackCol = settings.blackAtBottom === false ? 'left' : 'right';
     let whiteCol = blackCol === 'right' ? 'left' : 'right';
+    if (settings.boardFlipH === true) {
+      blackCol = blackCol === 'right' ? 'left' : 'right';
+      whiteCol = whiteCol === 'right' ? 'left' : 'right';
+    }
     if (settings.boardFlipV === true) {
       blackRow = blackRow === 'bottom' ? 'top' : 'bottom';
       whiteRow = whiteRow === 'bottom' ? 'top' : 'bottom';
@@ -5985,9 +5991,22 @@
     settings.theme = next;
     for (const name of THEMES) document.documentElement.classList.toggle(`theme-${name}`, name === next);
     document.documentElement.dataset.boardTheme = next;
+    if (next === 'basic') {
+      // MultiGo's initial workspace: Comment tab, no Node Name/Variations
+      // strips and no Messages pane, leaving the board and tree prominent.
+      settings.showInfo = true;
+      settings.showTree = true;
+      settings.showNodeName = false;
+      settings.showVariations = false;
+      settings.showMessage = false;
+    }
     refreshPalette();
     scheduleBoardDraw();
-    if (tree) syncMenuState();
+    if (tree) {
+      applyViewState();
+      if (next === 'basic') setTab('comment');
+      syncMenuState();
+    }
     if (persist) saveSettings();
     if (!silent) log(`Board theme: ${next}.`);
   }
@@ -6904,6 +6923,7 @@
       : settings.defaultSize;
     startGame(initialSize, { persistSize: false });
     applyViewState();
+    if (settings.theme === 'basic') setTab('comment');
     applyLanguage();
     renderRecentFiles();
     if (startupSgf) {

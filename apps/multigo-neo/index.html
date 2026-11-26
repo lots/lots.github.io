@@ -9,6 +9,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='6'%20fill='%23e0b070'/%3E%3Cg%20stroke='%238a5f2b'%20stroke-width='1.5'%3E%3Cpath%20d='M8%204v24M16%204v24M24%204v24M4%208h24M4%2016h24M4%2024h24'/%3E%3C/g%3E%3Ccircle%20cx='16'%20cy='16'%20r='5.2'%20fill='%23141414'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="themes/classic.css">
+  <link rel="stylesheet" href="themes/basic.css">
   <link rel="stylesheet" href="themes/flat.css">
   <link rel="stylesheet" href="themes/dark.css">
   <link rel="stylesheet" href="themes/paper.css">
@@ -436,6 +437,7 @@
             <label class="menu-select-label" for="options-theme">Theme</label>
             <select class="menu-select" id="options-theme" data-menu-select="theme">
               <option value="classic">Classic</option>
+              <option value="basic">Basic</option>
               <option value="flat">Flat</option>
               <option value="dark">Dark</option>
               <option value="paper">Paper</option>
@@ -665,7 +667,6 @@
       <div class="right-column" id="right-column" aria-labelledby="sidebar-heading">
         <div class="sidebar-heading" id="sidebar-heading" title="Sidebar parts: Info tabs, Node Name, Variations, Game Tree, Messages">
           <span>Sidebar</span>
-          <span class="panel-meta">Study</span>
         </div>
         <section class="pane pane-info" id="pane-info" aria-label="Info tabs: Info, Comment, Engine and Score">
           <div class="panel-head info-head" id="info-head" title="Info tabs: Info, Comment, Engine, Score">
@@ -979,7 +980,7 @@
       <button type="button" class="icon-button" data-close-dialog aria-label="Close">×</button>
     </div>
     <div class="dialog-body">
-      <p class="about-name">MultiGo Neo <span class="muted">1.1.19</span></p>
+      <p class="about-name">MultiGo Neo <span class="muted">1.1.21</span></p>
       <p>A Go record editor and player modelled on the MultiGo workspace: a 13×13 board,
          game information, a move list, and a status bar in a single-window desktop shell.</p>
       <dl class="about-meta">
@@ -1061,6 +1062,7 @@
           <div class="setup-row"><label for="setup-theme">Board theme</label>
             <select id="setup-theme">
               <option value="classic">Classic</option>
+              <option value="basic">Basic</option>
               <option value="flat">Flat</option>
               <option value="dark">Dark</option>
               <option value="paper">Paper</option>

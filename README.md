@@ -120,12 +120,14 @@ here, or the next sync will overwrite the change.
 | Folder | Built from | Refresh |
 | --- | --- | --- |
 | `apps/chessclock/` | `lots/ChessClock` (the published file whitelist) | copy the runtime files; its README lists the set |
-| `apps/multigo-neo/` | `lots/my-MultiGoNeo` → `npm run dist:web` → `web-portable/` | copy `index.html`, `*.js`, `styles.css`, `themes/`, `embed.*`, `license.html` |
+| `apps/multigo-neo/` | `lots/my-MultiGoNeo` → `npm run dist:web` → `web-portable/` | copy `index.html`, `*.js`, `styles.css`, `themes/`, `embed.*`, `license.html`, `*.pdf` |
 | `apps/sgfmill-ff4/` | `lots/my-sgfmill` → `WebApp/` | copy `index.html`, `styles.css`, `js/`, `standalone.html` |
 
 The portable-only extras (`README.txt`, `Open MultiGo Neo.cmd`, `LICENSE`, the `sgf/` study
 folder) are left out: they only make sense on a USB stick. `license.html` stays because the
-app's Help menu links to it. For sgfmill the webapp's build tooling (`build_standalone.mjs`,
+app's Help menu links to it, and the four help PDFs (`README.pdf`, `Features.pdf`,
+`Tutorial.pdf`, `Reference.pdf`) stay for the same reason — they are what Help → Reference
+opens. For sgfmill the webapp's build tooling (`build_standalone.mjs`,
 `package.json`, `node_modules/`, `tests/`, `serve.py`) is left out too — `standalone.html`
 is kept so the page's "open the single-file version" fallback is not a dead end.
 

@@ -93,6 +93,44 @@ button {
   pointer-events: none;
 }
 
+.toolbar-customize-section {
+  margin: 0 0 16px;
+}
+
+.toolbar-customize-section h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.toolbar-customize-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 14px;
+}
+
+.toolbar-customize-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.toolbar-customize-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Toolbar visibility is controlled from Options → Customize Toolbar. */
+#main-toolbar [hidden],
+#editbar [hidden] {
+  display: none !important;
+}
+
 /* Open SGF and Delete Move need a little more room to read at toolbar size. */
 #tool-delete .icon,
 .tool[data-action="open-sgf"] .icon {
@@ -220,6 +258,26 @@ button {
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
+}
+
+.menu-submenu-toggle .menu-arrow {
+  justify-self: end;
+  font-size: 11px;
+  transition: transform 120ms ease;
+}
+
+.menu-submenu-toggle[aria-expanded="true"] .menu-arrow {
+  transform: rotate(90deg);
+}
+
+.menu-submenu-items {
+  margin: 1px 0 2px 16px;
+  border-left: 1px solid var(--line);
+}
+
+.menu-submenu-items .menu-subitem {
+  padding-left: 14px;
+  font-size: 13px;
 }
 
 .menu-select-row {

@@ -273,6 +273,8 @@
   const customSizeError = $('#custom-size-error');
   const customSizeApply = $('#custom-size-apply');
   const setupDialog = $('#setup-dialog');
+  const toolbarDialog = $('#toolbar-dialog');
+  const toolbarCustomizeBody = $('#toolbar-customize-body');
   const setupTheme = $('#setup-theme');
   const setupBrightness = $('#setup-brightness');
   const setupBrightnessValue = $('#setup-brightness-value');
@@ -375,6 +377,7 @@
     focusMarker: 'triangle',
     focusColor: 'red',
     hideMarkers: false,
+    hideAllStones: false,
     labelStartChar: 'A',
     showResultInTitle: true,
     soundEnabled: false,
@@ -398,6 +401,7 @@
     engineColor: 'off',
     countRules: 'japanese',
     showBowls: true,
+    toolbars: { main: {}, edit: {}, option: {}, traverse: {} },
   };
   let settings = (() => {
     try {
@@ -452,6 +456,7 @@
         focusMarker: ['triangle', 'dot', 'none'].includes(parsed.focusMarker) ? parsed.focusMarker : 'triangle',
         focusColor: ['red', 'blue', 'green', 'yellow', 'white', 'black'].includes(parsed.focusColor) ? parsed.focusColor : 'red',
         hideMarkers: parsed.hideMarkers === true,
+        hideAllStones: parsed.hideAllStones === true,
         labelStartChar: String(parsed.labelStartChar || 'A').slice(0, 1).toUpperCase() || 'A',
         showResultInTitle: parsed.showResultInTitle !== false,
         soundEnabled: parsed.soundEnabled === true,
@@ -494,6 +499,10 @@
         engineColor: ['off', 'B', 'W'].includes(parsed.engineColor) ? parsed.engineColor : 'off',
         countRules: parsed.countRules === 'chinese' ? 'chinese' : 'japanese',
         showBowls: parsed.showBowls !== false,
+        toolbars: Object.fromEntries(['main', 'edit', 'option', 'traverse'].map((group) => {
+          const stored = parsed.toolbars && parsed.toolbars[group];
+          return [group, stored && typeof stored === 'object' && !Array.isArray(stored) ? { ...stored } : {}];
+        })),
       };
     } catch {
       return { ...DEFAULT_SETTINGS };
@@ -502,6 +511,97 @@
 
   function saveSettings() {
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* session only */ }
+  }
+
+  // Toolbar customization ------------------------------------------------
+  const TOOLBAR_GROUPS = [
+    ['main', 'Main Toolbar'],
+    ['edit', 'Edit Toolbar'],
+    ['option', 'Option Toolbar'],
+    ['traverse', 'Traverse Toolbar'],
+  ];
+  const TOOLBAR_TRAVERSE_ACTIONS = new Set([
+    'first', 'fast-prev', 'prev', 'toggle-autoplay', 'next', 'fast-next', 'last', 'pass', 'delete-node',
+  ]);
+  const TOOLBAR_OPTION_ACTIONS = new Set(['toggle-coords', 'toggle-numbers']);
+
+  function toolbarItems() {
+    return [...new Set([
+      ...document.querySelectorAll('#main-toolbar .tool[data-action], #main-toolbar .board-size-select, #editbar .tool, #editbar .color-swatch'),
+    ])];
+  }
+
+  function toolbarGroupFor(element) {
+    if (element.closest('#editbar')) return 'edit';
+    if (element.classList.contains('board-size-select')) return 'option';
+    const action = element.dataset.action || '';
+    if (TOOLBAR_TRAVERSE_ACTIONS.has(action)) return 'traverse';
+    if (TOOLBAR_OPTION_ACTIONS.has(action)) return 'option';
+    return 'main';
+  }
+
+  function toolbarItemKey(element) {
+    if (element.classList.contains('board-size-select')) return 'board-size';
+    if (element.dataset.tool) return `tool:${element.dataset.tool}`;
+    if (element.dataset.action) return `action:${element.dataset.action}`;
+    if (element.classList.contains('color-swatch')) return `color:${element.dataset.color || 'default'}`;
+    return '';
+  }
+
+  function toolbarItemLabel(element) {
+    if (element.classList.contains('board-size-select')) return t('Board Size');
+    const text = element.getAttribute('title') || element.getAttribute('aria-label') || element.textContent || '';
+    return text.replace(/\s*\([^)]*\)\s*$/, '').trim() || t('Button');
+  }
+
+  function applyToolbarVisibility() {
+    for (const element of toolbarItems()) {
+      const group = toolbarGroupFor(element);
+      const key = toolbarItemKey(element);
+      if (!key) continue;
+      element.hidden = settings.toolbars?.[group]?.[key] === false;
+    }
+  }
+
+  function renderToolbarCustomize(focusGroup = null) {
+    const items = toolbarItems();
+    toolbarCustomizeBody.textContent = '';
+    for (const [group, label] of TOOLBAR_GROUPS) {
+      const section = document.createElement('section');
+      section.className = 'toolbar-customize-section';
+      section.dataset.toolbarSection = group;
+      const heading = document.createElement('h3');
+      heading.textContent = t(label);
+      const list = document.createElement('div');
+      list.className = 'toolbar-customize-list';
+      for (const element of items.filter((item) => toolbarGroupFor(item) === group)) {
+        const key = toolbarItemKey(element);
+        if (!key) continue;
+        const item = document.createElement('label');
+        item.className = 'toolbar-customize-item';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = settings.toolbars?.[group]?.[key] !== false;
+        checkbox.addEventListener('change', () => {
+          settings.toolbars[group] = settings.toolbars[group] || {};
+          settings.toolbars[group][key] = checkbox.checked;
+          saveSettings();
+          applyToolbarVisibility();
+        });
+        const text = document.createElement('span');
+        text.textContent = toolbarItemLabel(element);
+        item.append(checkbox, text);
+        list.append(item);
+      }
+      section.append(heading, list);
+      toolbarCustomizeBody.append(section);
+      if (focusGroup === group) section.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function openToolbarCustomize(group = null) {
+    renderToolbarCustomize(group);
+    if (!toolbarDialog.open) toolbarDialog.showModal();
   }
 
   // The "largest SGF" preference is stored in MB so the preference reads the way
@@ -3045,15 +3145,17 @@
     const stoneRadius = spacing * 0.465;
     const numberMap = buildMoveNumberMap(sourceCols);
     const totalMoves = numberMap.total || 0;
-    for (let y = 0; y < sourceRows; y += 1) {
-      for (let x = 0; x < sourceCols; x += 1) {
-        const sign = currentBoard.signMap[y]?.[x] ?? 0;
-        if (!sign) continue;
-        drawStone(x, y, sign, stoneRadius);
+    if (!settings.hideAllStones) {
+      for (let y = 0; y < sourceRows; y += 1) {
+        for (let x = 0; x < sourceCols; x += 1) {
+          const sign = currentBoard.signMap[y]?.[x] ?? 0;
+          if (!sign) continue;
+          drawStone(x, y, sign, stoneRadius);
+        }
       }
     }
 
-    drawDeadStones(stoneRadius);
+    if (!settings.hideAllStones) drawDeadStones(stoneRadius);
 
     for (const range of currentBoard.dimmedRanges || []) {
       let vertices = [];
@@ -3966,6 +4068,9 @@
     setMenuItemChecked('toggle-siblings', settings.showSiblings);
     setMenuItemChecked('estimate', countState.active && countState.mode === 'estimate');
     setMenuItemChecked('score', countState.active && countState.mode === 'score');
+    setMenuItemChecked('hide-all-stones', settings.hideAllStones);
+    setMenuItemChecked('toggle-hide-markers', settings.hideMarkers);
+    setMenuItemChecked('toggle-white-first', settings.whiteFirst);
     setMenuItemChecked('toggle-bowls', !portraitLayout && settings.showBowls !== false);
     setMenuItemDisabled('toggle-bowls', portraitLayout);
     setMenuItemChecked('toggle-auto-layout', settings.autoLayout !== false);
@@ -4002,6 +4107,7 @@
       'new-game', 'save-sgf', 'save-sgf-as', 'toggle-edit',
       'paste-variation', 'duplicate-node', 'insert-node', 'flatten-variation', 'cut-after',
       'import-branch', 'clear-markup', 'paste-sgf', 'toggle-turn',
+    'switch-colors', 'delete-all-comments', 'delete-properties', 'set-move-number',
       'size-9', 'size-13', 'size-19', 'size-custom',
     ];
     for (const action of readOnlyOnly) setMenuItemDisabled(action, readOnly);
@@ -4178,8 +4284,17 @@
   $$('[data-close-dialog]').forEach((button) => {
     button.addEventListener('click', () => button.closest('dialog')?.close());
   });
-  [aboutDialog, shortcutsDialog, setupDialog, labelDialog, customSizeDialog].forEach((dialog) => {
+  [aboutDialog, shortcutsDialog, setupDialog, labelDialog, customSizeDialog, toolbarDialog].forEach((dialog) => {
     dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+  });
+
+  $('#toolbar-customize-close').addEventListener('click', () => toolbarDialog.close());
+  $('#toolbar-dialog-close-icon').addEventListener('click', () => toolbarDialog.close());
+  $('#toolbar-customize-reset').addEventListener('click', () => {
+    settings.toolbars = { main: {}, edit: {}, option: {}, traverse: {} };
+    saveSettings();
+    applyToolbarVisibility();
+    renderToolbarCustomize();
   });
 
   pictureOk.addEventListener('click', confirmPictureDialog);
@@ -5215,6 +5330,111 @@
     mutateTree((draft) => { for (const sibling of siblings) draft.removeNode(sibling.id); }, { message: 'Other variations removed.' });
   }
 
+  async function switchColors() {
+    const nodes = [...tree.listNodes()];
+    const hasColors = nodes.some((node) => {
+      const data = node.data || {};
+      return data.B || data.W || data.AB || data.AW || data.PL;
+    });
+    if (!hasColors) { log('There are no moves or stones to switch.', 'warn'); return; }
+    if (!(await askConfirm('Swap Black and White throughout this game tree?', 'Switch Black/White'))) return;
+    mutateTree((draft) => {
+      for (const node of nodes) {
+        const data = node.data || {};
+        if (data.B || data.W) {
+          const black = data.B ? [...data.B] : null;
+          const white = data.W ? [...data.W] : null;
+          if (black) draft.updateProperty(node.id, 'W', black);
+          else draft.removeProperty(node.id, 'W');
+          if (white) draft.updateProperty(node.id, 'B', white);
+          else draft.removeProperty(node.id, 'B');
+        }
+        if (data.AB || data.AW) {
+          const black = data.AB ? [...data.AB] : null;
+          const white = data.AW ? [...data.AW] : null;
+          if (black) draft.updateProperty(node.id, 'AW', black);
+          else draft.removeProperty(node.id, 'AW');
+          if (white) draft.updateProperty(node.id, 'AB', white);
+          else draft.removeProperty(node.id, 'AB');
+        }
+        if (data.PL) {
+          const current = String(data.PL[0] || '');
+          const next = current === 'B' ? 'W' : 'B';
+          draft.updateProperty(node.id, 'PL', [next]);
+        }
+      }
+    }, { message: 'Switched Black and White throughout the game tree.' });
+  }
+
+  async function deleteAllComments() {
+    const nodes = [...tree.listNodes()].filter((node) => (node.data?.C || []).length);
+    if (!nodes.length) { log('There are no comments to delete.', 'warn'); return; }
+    if (!(await askConfirm(`Delete comments from ${nodes.length} node${nodes.length === 1 ? '' : 's'}?`, 'Delete All Comments'))) return;
+    mutateTree((draft) => {
+      for (const node of nodes) draft.removeProperty(node.id, 'C');
+    }, { message: `Deleted comments from ${nodes.length} node${nodes.length === 1 ? '' : 's'}.` });
+  }
+
+  async function deleteSgfProperties() {
+    const present = new Set();
+    for (const node of tree.listNodes()) {
+      for (const prop of Object.keys(node.data || {})) present.add(prop);
+    }
+    const editable = [...present].filter((prop) => !['B', 'W', 'AB', 'AW', 'AE'].includes(prop)).sort();
+    if (!editable.length) { log('There are no optional SGF properties to delete.', 'warn'); return; }
+    const input = await askText('', `Delete SGF properties (present: ${editable.join(', ')})`);
+    if (input == null) return;
+    const props = input.split(/[\s,;]+/).map((prop) => prop.trim().toUpperCase()).filter(Boolean);
+    if (!props.length) { log('No property names were entered.', 'warn'); return; }
+    if (!(await askConfirm(`Delete ${props.join(', ')} from the whole game tree?`, 'Delete SGF Properties'))) return;
+    const removed = [];
+    mutateTree((draft) => {
+      for (const node of tree.listNodes()) {
+        const data = node.data || {};
+        for (const prop of props) {
+          if (data[prop]) { draft.removeProperty(node.id, prop); removed.push(prop); }
+        }
+      }
+    }, { message: `Removed ${props.join(', ')} from the game tree.` });
+    if (!removed.length) log('No matching properties were found.', 'warn');
+  }
+
+  async function setMoveNumber() {
+    const node = currentNode();
+    if (!node) return;
+    const current = node.data?.MN?.[0] ?? '';
+    const input = await askText(String(current), 'Set move number for this node (empty removes MN)');
+    if (input == null) return;
+    const value = String(input).trim();
+    mutateTree((draft) => {
+      if (!value) draft.removeProperty(nodeId, 'MN');
+      else draft.updateProperty(nodeId, 'MN', [value]);
+    }, { message: value ? `Move number set to ${value}.` : 'Move number removed.' });
+  }
+
+  function toggleHideAllStones() {
+    settings.hideAllStones = !settings.hideAllStones;
+    saveSettings();
+    drawBoard();
+    syncMenuState();
+    log(settings.hideAllStones ? 'All stones hidden.' : 'All stones shown.');
+  }
+
+  function toggleHideMarkers() {
+    settings.hideMarkers = !settings.hideMarkers;
+    saveSettings();
+    drawBoard();
+    syncMenuState();
+    log(settings.hideMarkers ? 'Markers hidden.' : 'Markers shown.');
+  }
+
+  function toggleWhiteFirst() {
+    settings.whiteFirst = !settings.whiteFirst;
+    saveSettings();
+    syncMenuState();
+    log(settings.whiteFirst ? 'New games will start with White to play.' : 'New games will start with Black to play.');
+  }
+
   function clearNodeMarkup() {
     const props = ['CR', 'MA', 'SQ', 'TR', 'LB', 'L', 'AR', 'LN', 'DD', 'SBKDD', 'BM', 'TE', 'DO', 'IT'];
     const node = currentNode();
@@ -5483,7 +5703,7 @@
   const menuEls = $$('.menu');
   const menubar = $('.menubar');
   let activeMenu = null;
-  const menuItems = (menu) => $$('.menu-item:not(:disabled)', menu);
+  const menuItems = (menu) => $$('.menu-item:not(:disabled)', menu).filter((item) => !item.closest('[hidden]'));
   menubar.addEventListener('scroll', () => {
     if (activeMenu) closeMenus();
   }, { passive: true });
@@ -5568,6 +5788,14 @@
       else if (event.key === 'Tab') closeMenus();
     });
     popup.addEventListener('click', (event) => {
+      const submenuToggle = event.target.closest('[data-submenu-toggle]');
+      if (submenuToggle) {
+        const expanded = submenuToggle.getAttribute('aria-expanded') === 'true';
+        submenuToggle.setAttribute('aria-expanded', String(!expanded));
+        const submenu = submenuToggle.closest('.menu-submenu')?.querySelector('.menu-submenu-items');
+        if (submenu) submenu.hidden = expanded;
+        return;
+      }
       const item = event.target.closest('.menu-item');
       if (!item || item.disabled) return;
       if (item.dataset.recentIndex != null) {
@@ -5652,6 +5880,10 @@
     'node-name': () => openNodeNameEditor(),
     'shift-left': () => shiftVariation('left'), 'shift-right': () => shiftVariation('right'),
     'remove-siblings': removeOtherVariations, 'clear-markup': clearNodeMarkup,
+    'switch-colors': switchColors, 'hide-all-stones': toggleHideAllStones,
+    'delete-all-comments': deleteAllComments, 'delete-properties': deleteSgfProperties,
+    'set-move-number': setMoveNumber, 'toggle-hide-markers': toggleHideMarkers,
+    'toggle-white-first': toggleWhiteFirst,
     'focus-info': focusGameInfo,
     pass: passTurn, 'toggle-autoplay': toggleAutoPlay,
     first: goToBeginning, 'fast-prev': () => fastNavigate(-1), prev: goToParent,
@@ -5680,6 +5912,10 @@
     'toggle-messages': () => toggleSidebarPart('showMessage', 'Messages'),
     'toggle-remember-size': toggleRememberBoardSize,
     'reset-settings': resetAllSettings,
+    'customize-main': () => openToolbarCustomize('main'),
+    'customize-edit': () => openToolbarCustomize('edit'),
+    'customize-option': () => openToolbarCustomize('option'),
+    'customize-traverse': () => openToolbarCustomize('traverse'),
     'reset-layout': resetLayout, 'copy-sgf': copySgf, 'paste-sgf': pasteSgf,
     'clear-recents': clearRecentFiles,
     'clear-messages': clearMessages, 'toggle-turn': toggleTurn,
@@ -6882,6 +7118,7 @@
   // Boot -----------------------------------------------------------------
   function boot() {
     updateAcceleratorLabels();
+  applyToolbarVisibility();
     setTheme(settings.theme, { persist: false, silent: true });
     applyBoardAppearance();
     const stored = readLayout();

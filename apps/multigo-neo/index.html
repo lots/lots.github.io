@@ -210,19 +210,6 @@
       </div>
 
       <div class="menu" role="none">
-        <button type="button" class="menu-trigger" id="menu-advanced" role="menuitem"
-                aria-haspopup="true" aria-expanded="false" aria-controls="popup-advanced" data-key="a">Advanced</button>
-        <div class="menu-popup" id="popup-advanced" role="menu" aria-labelledby="menu-advanced" hidden>
-          <button type="button" class="menu-item" role="menuitem" data-action="clear-markup">
-            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Clear Node Markup</span>
-          </button>
-          <button type="button" class="menu-item" role="menuitem" data-action="focus-info">
-            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Edit Game Info</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="menu" role="none">
         <button type="button" class="menu-trigger" id="menu-play" role="menuitem"
                 aria-haspopup="true" aria-expanded="false" aria-controls="popup-play" data-key="p">Play</button>
         <div class="menu-popup" id="popup-play" role="menu" aria-labelledby="menu-play" hidden>
@@ -475,6 +462,9 @@
           </button>
           <button type="button" class="menu-item" role="menuitem" data-action="doc-tutorial">
             <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Tutorial (PDF)</span>
+          </button>
+          <button type="button" class="menu-item" role="menuitem" data-action="doc-reference">
+            <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Reference (PDF)</span>
           </button>
           <div class="menu-separator" role="separator"></div>
           <button type="button" class="menu-item" role="menuitem" data-action="shortcuts">
@@ -980,7 +970,7 @@
       <button type="button" class="icon-button" data-close-dialog aria-label="Close">×</button>
     </div>
     <div class="dialog-body">
-      <p class="about-name">MultiGo Neo <span class="muted">1.1.21</span></p>
+      <p class="about-name">MultiGo Neo <span class="muted">1.1.22</span></p>
       <p>A Go record editor and player modelled on the MultiGo workspace: a 13×13 board,
          game information, a move list, and a status bar in a single-window desktop shell.</p>
       <dl class="about-meta">

@@ -5695,6 +5695,7 @@
     'doc-readme': () => openDocumentation('README.pdf'),
     'doc-features': () => openDocumentation('Features.pdf'),
     'doc-tutorial': () => openDocumentation('Tutorial.pdf'),
+    'doc-reference': () => openDocumentation('Reference.pdf'),
   };
 
   // Game info / preferences / help --------------------------------------

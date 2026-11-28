@@ -1510,7 +1510,7 @@ thead th .sort-arrow { margin-left: 3px; }
 .stat { padding: 11px 15px 10px; }
 .stat-value { font-size: 24px; }
 .stat-note { display: none; }
-.stats-toggle { gap: 6px; }
+.stats-toggle { gap: 6px; white-space: nowrap; }
 .stats-toggle[aria-pressed="false"] { color: var(--muted); }
 .stats-toggle-icon { font-size: 11px; opacity: 0.8; }
 .stats-badge {

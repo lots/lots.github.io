@@ -2700,7 +2700,11 @@
     document.body.classList.toggle('stats-hidden', !state.statsVisible);
     if (E.statsToggleBtn) {
       E.statsToggleBtn.setAttribute('aria-pressed', String(state.statsVisible));
+      E.statsToggleBtn.setAttribute('aria-label', state.statsVisible ? 'Hide statistics' : 'Show statistics');
       E.statsToggleBtn.title = state.statsVisible ? 'Hide statistics' : 'Show statistics';
+    }
+    if (E.statsToggleLabel) {
+      E.statsToggleLabel.textContent = state.statsVisible ? 'Hide stats' : 'Show stats';
     }
     if (save) {
       try { localStorage.setItem(LS_STATS, state.statsVisible ? '1' : '0'); } catch (error) { /* ignore */ }
@@ -2733,7 +2737,7 @@
   function cacheElements() {
     [
       'brandCount', 'brandEdition', 'brandProverbs', 'pdfBtn', 'reviewBtn', 'reviewCount', 'themeBtn', 'helpBtn',
-      'layoutPortrait', 'layoutLandscape', 'statsToggleBtn', 'statsBadge', 'themeMenu',
+      'layoutPortrait', 'layoutLandscape', 'statsToggleBtn', 'statsToggleLabel', 'statsBadge', 'themeMenu',
       'columnsMenuBtn', 'columnsMenu',
       'banner', 'bannerText', 'bannerActions',
       'tabTerms', 'tabProverbs', 'tabTermCount', 'tabProverbCount', 'termsView', 'proverbsView', 'globalHint',

@@ -151,8 +151,8 @@
       </button>
       <div class="menu columns-menu" id="columnsMenu" hidden></div>
     </div>
-    <button type="button" id="statsToggleBtn" class="btn ghost stats-toggle" aria-pressed="true" title="Show or hide the statistics">
-      <span class="stats-toggle-icon">▤</span> Stats <span class="stats-badge" id="statsBadge">0</span>
+    <button type="button" id="statsToggleBtn" class="btn ghost stats-toggle" aria-pressed="true" aria-label="Hide statistics" title="Hide statistics">
+      <span class="stats-toggle-icon">▤</span> <span id="statsToggleLabel">Hide stats</span> <span class="stats-badge" id="statsBadge">0</span>
     </button>
     <button type="button" id="importBtn" class="btn ghost">Import</button>
     <button type="button" id="saveJsonBtn" class="btn">
@@ -792,7 +792,7 @@
         <li>Three themes: <strong>Light</strong> 明亮, <strong>Medium</strong> 米色, <strong>Dark</strong> 深色 — open the ◐ menu.</li>
         <li>Two layouts: <strong>Portrait</strong> stacks the controls; <strong>Landscape</strong> moves navigation and actions into a left rail so the table gets the full height.</li>
         <li><strong>Columns</strong> hides individual list columns (Sec, Group, Pinyin, English, Links, Media…) per section, giving more room on horizontal displays.</li>
-        <li><strong>Stats</strong> hides or restores the statistic cards. Landscape hides them by default; the button keeps a compact total visible.</li>
+        <li><strong>Hide stats / Show stats</strong> collapses or restores the statistic cards. Landscape hides them by default; the button keeps a compact total visible.</li>
       </ul>
     </section>
     <section>

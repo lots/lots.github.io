@@ -401,7 +401,7 @@
     engineColor: 'off',
     countRules: 'japanese',
     showBowls: true,
-    toolbars: { main: {}, edit: {}, option: {}, traverse: {} },
+    toolbars: { main: {}, edit: {}, option: {}, traverse: {}, play: {}, view: {} },
   };
   let settings = (() => {
     try {
@@ -499,7 +499,7 @@
         engineColor: ['off', 'B', 'W'].includes(parsed.engineColor) ? parsed.engineColor : 'off',
         countRules: parsed.countRules === 'chinese' ? 'chinese' : 'japanese',
         showBowls: parsed.showBowls !== false,
-        toolbars: Object.fromEntries(['main', 'edit', 'option', 'traverse'].map((group) => {
+        toolbars: Object.fromEntries(['main', 'edit', 'option', 'traverse', 'play', 'view'].map((group) => {
           const stored = parsed.toolbars && parsed.toolbars[group];
           return [group, stored && typeof stored === 'object' && !Array.isArray(stored) ? { ...stored } : {}];
         })),
@@ -519,10 +519,12 @@
     ['edit', 'Edit Toolbar'],
     ['option', 'Option Toolbar'],
     ['traverse', 'Traverse Toolbar'],
+    ['play', 'Play Toolbar'],
+    ['view', 'View Toolbar'],
   ];
-  const TOOLBAR_TRAVERSE_ACTIONS = new Set([
-    'first', 'fast-prev', 'prev', 'toggle-autoplay', 'next', 'fast-next', 'last', 'pass', 'delete-node',
-  ]);
+  const TOOLBAR_PLAY_ACTIONS = new Set(['toggle-autoplay', 'pass', 'delete-node', 'estimate', 'score']);
+  const TOOLBAR_VIEW_ACTIONS = new Set(['zoom-out', 'zoom-in', 'toggle-fullscreen']);
+  const TOOLBAR_TRAVERSE_ACTIONS = new Set(['first', 'fast-prev', 'prev', 'next', 'fast-next', 'last']);
   const TOOLBAR_OPTION_ACTIONS = new Set(['toggle-coords', 'toggle-numbers']);
 
   function toolbarItems() {
@@ -535,6 +537,8 @@
     if (element.closest('#editbar')) return 'edit';
     if (element.classList.contains('board-size-select')) return 'option';
     const action = element.dataset.action || '';
+    if (TOOLBAR_PLAY_ACTIONS.has(action)) return 'play';
+    if (TOOLBAR_VIEW_ACTIONS.has(action)) return 'view';
     if (TOOLBAR_TRAVERSE_ACTIONS.has(action)) return 'traverse';
     if (TOOLBAR_OPTION_ACTIONS.has(action)) return 'option';
     return 'main';
@@ -1883,6 +1887,9 @@
   }
 
   function updateCountPanel() {
+    for (const [id, mode] of [['tool-estimate', 'estimate'], ['tool-score', 'score']]) {
+      $('#' + id)?.setAttribute('aria-pressed', String(countState.active && countState.mode === mode));
+    }
     countCard.hidden = !countState.active;
     if (scoreEmpty) scoreEmpty.hidden = countState.active;
     if (!countState.active) return;
@@ -4291,7 +4298,7 @@
   $('#toolbar-customize-close').addEventListener('click', () => toolbarDialog.close());
   $('#toolbar-dialog-close-icon').addEventListener('click', () => toolbarDialog.close());
   $('#toolbar-customize-reset').addEventListener('click', () => {
-    settings.toolbars = { main: {}, edit: {}, option: {}, traverse: {} };
+    settings.toolbars = { main: {}, edit: {}, option: {}, traverse: {}, play: {}, view: {} };
     saveSettings();
     applyToolbarVisibility();
     renderToolbarCustomize();
@@ -5916,6 +5923,8 @@
     'customize-edit': () => openToolbarCustomize('edit'),
     'customize-option': () => openToolbarCustomize('option'),
     'customize-traverse': () => openToolbarCustomize('traverse'),
+    'customize-play': () => openToolbarCustomize('play'),
+    'customize-view': () => openToolbarCustomize('view'),
     'reset-layout': resetLayout, 'copy-sgf': copySgf, 'paste-sgf': pasteSgf,
     'clear-recents': clearRecentFiles,
     'clear-messages': clearMessages, 'toggle-turn': toggleTurn,

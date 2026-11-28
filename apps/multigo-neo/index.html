@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="themes/paper.css">
 </head>
 <body>
-    <svg class="sprite" aria-hidden="true" focusable="false">
+  <svg class="sprite" aria-hidden="true" focusable="false">
     <symbol id="i-autoplay" viewBox="0 0 24 24">
 <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/>
       <path d="M10 8l6 4-6 4z" fill="currentColor"/>
@@ -30,12 +30,20 @@
 <path d="M7 18l-3-3L14 5l5 5-9 9z" fill="none" stroke="currentColor" stroke-width="1.6"/>
       <path d="M10 8l6 6M4 21h16" fill="none" stroke="currentColor" stroke-width="1.6"/>
     </symbol>
+    <symbol id="i-estimate" viewBox="0 0 24 24">
+<path d="M12 4v15M8 19h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M4 7l-2 5h4zM20 7l-2 5h4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+    </symbol>
     <symbol id="i-first" viewBox="0 0 24 24">
 <path d="M6 5v14" fill="none" stroke="currentColor" stroke-width="1.8"/>
       <path d="M18 6l-9 6 9 6z" fill="currentColor"/>
     </symbol>
     <symbol id="i-forward" viewBox="0 0 24 24">
 <path d="M13 6l6 6-6 6zM4 6l6 6-6 6z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-fullscreen" viewBox="0 0 24 24">
+<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
     <symbol id="i-grid" viewBox="0 0 24 24">
 <path d="M5 5h14v14H5zM5 12h14M12 5v14" fill="none" stroke="currentColor" stroke-width="1.5"/>
@@ -76,6 +84,11 @@
 <path d="M4 3h13l3 3v15H4z" fill="none" stroke="currentColor" stroke-width="1.6"/>
       <path d="M7 3v6h9V3M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.6"/>
     </symbol>
+    <symbol id="i-score" viewBox="0 0 24 24">
+<rect x="4" y="4" width="16" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <path d="M4 9.3h16M4 14.7h16M9.3 4v16M14.7 4v16" fill="none" stroke="currentColor" stroke-width="1"/>
+  <path d="M12 7.5l1.6 1.6L16.5 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
     <symbol id="i-setup" viewBox="0 0 24 24">
 <path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="1.4"/>
       <path d="M9.3 4v16M14.7 4v16M4 9.3h16M4 14.7h16" fill="none" stroke="currentColor" stroke-width="1"/>
@@ -87,6 +100,16 @@
     </symbol>
     <symbol id="i-white" viewBox="0 0 24 24">
 <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+    </symbol>
+    <symbol id="i-zoom-in" viewBox="0 0 24 24">
+<circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+  <path d="M15.5 15.5L21 21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M7 10.5h7M10.5 7v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-zoom-out" viewBox="0 0 24 24">
+<circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+  <path d="M15.5 15.5L21 21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M7 10.5h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
     </symbol>
   </svg>
 <div class="app">
@@ -484,6 +507,12 @@
               <button type="button" class="menu-item menu-subitem" role="menuitem" data-action="customize-traverse">
                 <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Traverse Toolbar…</span>
               </button>
+              <button type="button" class="menu-item menu-subitem" role="menuitem" data-action="customize-play">
+                <span class="menu-check" aria-hidden="true"></span><span class="menu-label">Play Toolbar…</span>
+              </button>
+              <button type="button" class="menu-item menu-subitem" role="menuitem" data-action="customize-view">
+                <span class="menu-check" aria-hidden="true"></span><span class="menu-label">View Toolbar…</span>
+              </button>
             </div>
           </div>
           <div class="menu-separator" role="separator"></div>
@@ -541,6 +570,9 @@
         <button type="button" class="tool" id="tool-redo" data-action="redo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">
           <svg class="icon"><use href="#i-redo"></use></svg>
         </button>
+        <button type="button" class="tool" id="tool-edit" data-action="toggle-edit" title="Edit mode (Ctrl+E)" aria-label="Edit mode" aria-pressed="false">
+          <svg class="icon"><use href="#i-setup"></use></svg>
+        </button>
       </div>
       <div class="tool-separator"></div>
       <div class="tool-group">
@@ -562,18 +594,21 @@
         <button type="button" class="tool" id="tool-last" data-action="last" title="End of variation (End)" aria-label="End of variation">
           <svg class="icon"><use href="#i-last"></use></svg>
         </button>
-        <button type="button" class="tool" id="tool-autoplay" data-action="toggle-autoplay" title="Auto play (Space)" aria-label="Auto play" aria-pressed="false">
-          <svg class="icon"><use href="#i-autoplay"></use></svg>
-        </button>
       </div>
       <div class="tool-separator"></div>
       <div class="tool-group">
+        <button type="button" class="tool" id="tool-autoplay" data-action="toggle-autoplay" title="Auto play (Space)" aria-label="Auto play" aria-pressed="false">
+          <svg class="icon"><use href="#i-autoplay"></use></svg>
+        </button>
         <button type="button" class="tool tool-text" id="tool-pass" data-action="pass" title="Pass (P)">Pass</button>
         <button type="button" class="tool" id="tool-delete" data-action="delete-node" title="Delete move (Ctrl+Delete)" aria-label="Delete move">
           <svg class="icon"><use href="#i-delete"></use></svg>
         </button>
-        <button type="button" class="tool" id="tool-edit" data-action="toggle-edit" title="Edit mode (Ctrl+E)" aria-label="Edit mode" aria-pressed="false">
-          <svg class="icon"><use href="#i-setup"></use></svg>
+        <button type="button" class="tool" id="tool-estimate" data-action="estimate" title="Estimate (Ctrl+Shift+E)" aria-label="Estimate" aria-pressed="false">
+          <svg class="icon"><use href="#i-estimate"></use></svg>
+        </button>
+        <button type="button" class="tool" id="tool-score" data-action="score" title="Score (Ctrl+Shift+R)" aria-label="Score" aria-pressed="false">
+          <svg class="icon"><use href="#i-score"></use></svg>
         </button>
       </div>
       <div class="tool-separator"></div>
@@ -589,6 +624,18 @@
             <option value="custom">Custom…</option>
           </select>
         </label>
+      </div>
+      <div class="tool-separator"></div>
+      <div class="tool-group">
+        <button type="button" class="tool" id="tool-zoom-out" data-action="zoom-out" title="Zoom out" aria-label="Zoom out">
+          <svg class="icon"><use href="#i-zoom-out"></use></svg>
+        </button>
+        <button type="button" class="tool" id="tool-zoom-in" data-action="zoom-in" title="Zoom in" aria-label="Zoom in">
+          <svg class="icon"><use href="#i-zoom-in"></use></svg>
+        </button>
+        <button type="button" class="tool" id="tool-fullscreen" data-action="toggle-fullscreen" title="Toggle full screen (F11)" aria-label="Toggle full screen">
+          <svg class="icon"><use href="#i-fullscreen"></use></svg>
+        </button>
       </div>
     </div>
 
@@ -1013,7 +1060,7 @@
       <button type="button" class="icon-button" data-close-dialog aria-label="Close">×</button>
     </div>
     <div class="dialog-body">
-      <p class="about-name">MultiGo Neo <span class="muted">1.1.26</span></p>
+      <p class="about-name">MultiGo Neo <span class="muted">1.1.27</span></p>
       <p>A Go record editor and player modelled on the MultiGo workspace: a 13×13 board,
          game information, a move list, and a status bar in a single-window desktop shell.</p>
       <dl class="about-meta">
